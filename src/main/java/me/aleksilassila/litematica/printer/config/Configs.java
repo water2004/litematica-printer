@@ -436,7 +436,7 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
         // 潜影盒冷却
         public static final ConfigInteger SHULKER_COOLDOWN = integerValue("shulkerCooldown")
                 .defaultValue(5)
-                .range(0, 20)
+                .range(0, 100)
                 .build();
 
         // 背包满时有序放回潜影盒
