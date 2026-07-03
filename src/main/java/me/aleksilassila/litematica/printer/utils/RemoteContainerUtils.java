@@ -36,7 +36,7 @@ public class RemoteContainerUtils {
 
     private static final Map<String, ItemFetchState> fetchStates = new ConcurrentHashMap<>();
 
-    // exchange 期间 PrintHandler 必须跳过所有方块，否则手可能被掏空导致放错
+    // exchange 期间 Print 必须跳过所有方块，否则手可能被掏空导致放错
     public static boolean hasPendingExchange() {
         return pendingExchange != null;
     }

@@ -1,11 +1,10 @@
 package me.aleksilassila.litematica.printer.mixin.printer.mc;
 
 import me.aleksilassila.litematica.printer.config.Configs;
-import me.aleksilassila.litematica.printer.enums.WorkingModeType;
-import me.aleksilassila.litematica.printer.handler.ClientPlayerTickHandler;
-import me.aleksilassila.litematica.printer.handler.ClientPlayerTickManager;
+import me.aleksilassila.litematica.printer.handler.Module;
+import me.aleksilassila.litematica.printer.handler.ModuleManager;
 import me.aleksilassila.litematica.printer.handler.GuiBlockInfo;
-import me.aleksilassila.litematica.printer.handler.handlers.GuiHandler;
+import me.aleksilassila.litematica.printer.handler.handlers.GUI;
 import me.aleksilassila.litematica.printer.utils.ConfigUtils;
 import me.aleksilassila.litematica.printer.utils.RenderUtils;
 import net.minecraft.client.DeltaTracker;
@@ -52,7 +51,7 @@ public abstract class MixinHud {
     }
 
     @Unique
-    private List<String> buildHandlerDebugLines(ClientPlayerTickHandler handler, GuiBlockInfo guiInfo) {
+    private List<String> buildHandlerDebugLines(Module handler, GuiBlockInfo guiInfo) {
         List<String> lines = new ArrayList<>();
         lines.add("处理类型: " + handler.getId());
         lines.add("当前位置: " + guiInfo.pos.toShortString());
@@ -105,11 +104,11 @@ public abstract class MixinHud {
     @Unique
     private void drawDebugInfo(float scaledWidth, float scaledHeight) {
         Minecraft mc = Minecraft.getInstance();
-        List<ClientPlayerTickHandler> validHandlers = new ArrayList<>();
+        List<Module> validHandlers = new ArrayList<>();
         int globalMaxTextWidth = MIN_COLUMN_WIDTH;
 
         // 1. 收集有效Handler并计算全局最大宽度
-        for (ClientPlayerTickHandler handler : ClientPlayerTickManager.VALUES) {
+        for (Module handler : ModuleManager.VALUES) {
             GuiBlockInfo guiInfo = handler.nextGuiInfo();
             if (guiInfo == null) continue;
 
@@ -172,7 +171,7 @@ public abstract class MixinHud {
      * @return 实际绘制的Handler数量
      */
     @Unique
-    private int drawHandlerPanels(List<ClientPlayerTickHandler> handlers, int startIndex,
+    private int drawHandlerPanels(List<Module> handlers, int startIndex,
                                   int startX, int startY, int columnWidth,
                                   int maxColumns, int availableHeight, float scaledHeight) {
         int drawnCount = 0;
@@ -181,7 +180,7 @@ public abstract class MixinHud {
         int currentY = startY;
 
         for (int i = startIndex; i < handlers.size(); i++) {
-            ClientPlayerTickHandler handler = handlers.get(i);
+            Module handler = handlers.get(i);
             GuiBlockInfo guiInfo = handler.nextGuiInfo();
             if (guiInfo == null) continue;
 
@@ -235,8 +234,8 @@ public abstract class MixinHud {
     @Unique
     private int drawCommonDebugInfo(int startX, int startY) {
         List<String> commonLines = new ArrayList<>();
-        commonLines.add("全局Tick: " + ClientPlayerTickManager.getCurrentHandlerTime());
-        commonLines.add("活跃Handler数: " + ClientPlayerTickManager.VALUES.size());
+        commonLines.add("全局Tick: " + ModuleManager.getCurrentHandlerTime());
+        commonLines.add("活跃Module数: " + ModuleManager.VALUES.size());
 
         Minecraft mc = Minecraft.getInstance();
         int maxWidth = 0;
@@ -270,33 +269,27 @@ public abstract class MixinHud {
     private void drawHudInfo(float scaledWidth, float scaledHeight) {
         int centerX = (int) (scaledWidth / 2);
         int centerY = (int) (scaledHeight / 2);
-        GuiHandler guiHandler = ClientPlayerTickManager.GUI;
+        GUI guiHandler = ModuleManager.GUI;
 
         // 延迟过大警告
-        if (Configs.Core.LAG_CHECK.getBooleanValue() && ClientPlayerTickManager.getPacketTick() > Configs.Core.LAG_CHECK_MAX.getIntegerValue()) {
+        if (Configs.Core.LAG_CHECK.getBooleanValue() && ModuleManager.getPacketTick() > Configs.Core.LAG_CHECK_MAX.getIntegerValue()) {
             RenderUtils.drawString("延迟过大，已暂停运行", centerX, centerY - 22, Color.ORANGE, true, true);
         }
 
-        // 单模式进度条
-        WorkingModeType workMode = (WorkingModeType) Configs.Core.WORK_MODE.getOptionListValue();
-        if (workMode.equals(WorkingModeType.SINGLE)) {
-            double progress = guiHandler.getTotalProgress().getProgress();
-            RenderUtils.drawString((int) (progress * 100) + "%", centerX, centerY + 22, Color.WHITE, true, true);
-            drawProgressBar(centerX, centerY + 36, 40, 6, progress, new Color(0, 0, 0, 150), new Color(0, 255, 0, 255));
-        }
+        // 进度条显示
+        double progress = guiHandler.getTotalProgress().getProgress();
+        RenderUtils.drawString((int) (progress * 100) + "%", centerX, centerY + 22, Color.WHITE, true, true);
+        drawProgressBar(centerX, centerY + 36, 40, 6, progress, new Color(0, 0, 0, 150), new Color(0, 255, 0, 255));
 
-        // 模式名称显示
-        if (ConfigUtils.isSingleMode()) {
-            String modeName = Configs.Core.WORK_MODE_TYPE.getOptionListValue().getDisplayName();
-            RenderUtils.drawString(modeName, centerX, centerY + 52, Color.WHITE, true, true);
-        } else {
-            HashSet<String> modeNames = new HashSet<>();
-            for (ClientPlayerTickHandler handler : ClientPlayerTickManager.VALUES) {
-                if (handler.getId().equals(GuiHandler.NAME) || handler.getEnableConfig() == null || !handler.getEnableConfig().getBooleanValue()) {
-                    continue;
-                }
-                modeNames.add(handler.getEnableConfig().getPrettyName());
+        // 已启用模块名称显示
+        HashSet<String> modeNames = new HashSet<>();
+        for (Module module : ModuleManager.VALUES) {
+            if (module.getId().equals(GUI.NAME) || module.getEnableConfig() == null || !module.getEnableConfig().getBooleanValue()) {
+                continue;
             }
+            modeNames.add(module.getEnableConfig().getPrettyName());
+        }
+        if (!modeNames.isEmpty()) {
             RenderUtils.drawString(String.join(", ", modeNames), centerX, centerY + 52, Color.WHITE, true, true);
         }
     }
@@ -315,4 +308,3 @@ public abstract class MixinHud {
         }
     }
 }
-

@@ -2,7 +2,6 @@ package me.aleksilassila.litematica.printer;
 
 import fi.dy.masa.malilib.interfaces.IInitializationHandler;
 import me.aleksilassila.litematica.printer.config.Configs;
-import me.aleksilassila.litematica.printer.enums.PrintModeType;
 import me.aleksilassila.litematica.printer.gui.ConfigUi;
 import me.aleksilassila.litematica.printer.printer.ActionManager;
 import me.aleksilassila.litematica.printer.utils.MessageUtils;
@@ -26,10 +25,12 @@ public class InitHandler implements IInitializationHandler {
     private void initConfigCallback() {
         Configs.Hotkeys.CLOSE_ALL_MODE.getKeybind().setCallback((action, keybind) -> {
             if (keybind.isKeybindHeld()) {
-                Configs.Core.MINE.setBooleanValue(false);
-                Configs.Core.FLUID.setBooleanValue(false);
+                Configs.Print.ENABLED.setBooleanValue(false);
+                Configs.Mine.ENABLED.setBooleanValue(false);
+                Configs.Fill.ENABLED.setBooleanValue(false);
+                Configs.Fluid.ENABLED.setBooleanValue(false);
+                Configs.Bedrock.ENABLED.setBooleanValue(false);
                 Configs.Core.WORK_SWITCH.setBooleanValue(false);
-                Configs.Core.WORK_MODE_TYPE.setOptionListValue(PrintModeType.PRINTER);
                 MessageUtils.setOverlayMessage(MessageUtils.nullToEmpty("已关闭全部模式"));
             }
             return true;
@@ -48,9 +49,9 @@ public class InitHandler implements IInitializationHandler {
             }
         });
 
-        // 切换模式时, 关闭破基岩
-        Configs.Core.WORK_MODE_TYPE.setValueChangeCallback(b -> {
-            if (!b.getOptionListValue().equals(PrintModeType.BEDROCK)) {
+        // 切换基岩功能时，关闭破基岩
+        Configs.Bedrock.ENABLED.setValueChangeCallback(b -> {
+            if (!b.getBooleanValue()) {
                 if (ModUtils.isBedrockMinerLoaded() || ModUtils.isBlockMinerLoaded()) {
                     if (BedrockUtils.isWorking()) {
                         BedrockUtils.setWorking(false);
@@ -61,7 +62,6 @@ public class InitHandler implements IInitializationHandler {
         });
 
         // 特殊设置时，自动刷新界面
-        Configs.Core.WORK_MODE.setValueChangeCallback(b -> ConfigUi.refresh());
         Configs.Print.FILL_COMPOSTER.setValueChangeCallback(b -> ConfigUi.refresh());
         Configs.Break.BREAK_LIMITER.setValueChangeCallback(b -> ConfigUi.refresh());
         Configs.Break.BREAK_LIMIT.setValueChangeCallback(b -> ConfigUi.refresh());

@@ -33,14 +33,9 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
     private static final String FILE_PATH = "./config/" + Reference.MOD_ID + ".json";
     private static final File CONFIG_DIR = new File("./config");
 
-    // 配置页面是否可视(函数式, 动态获取, 全局统一使用)
-    private static final BooleanSupplier isSingle = () -> Core.WORK_MODE.getOptionListValue().equals(WorkingModeType.SINGLE);
-    private static final BooleanSupplier isMulti = () -> Core.WORK_MODE.getOptionListValue().equals(WorkingModeType.MULTI);
-
     private static final BooleanSupplier isBreakCustom = () -> Break.BREAK_LIMITER.getOptionListValue().equals(MiningFilterType.CUSTOM);
     private static final BooleanSupplier isBreakWhitelist = () -> isBreakCustom.getAsBoolean() && Break.BREAK_LIMIT.getOptionListValue().equals(UsageRestriction.ListType.WHITELIST);
     private static final BooleanSupplier isBreakBlacklist = () -> isBreakCustom.getAsBoolean() && Break.BREAK_LIMIT.getOptionListValue().equals(UsageRestriction.ListType.BLACKLIST);
-
 
     private static final BooleanSupplier isExcavateCustom = () -> Mine.EXCAVATE_LIMITER.getOptionListValue().equals(MiningFilterType.CUSTOM);
     private static final BooleanSupplier isExcavateWhitelist = () -> isExcavateCustom.getAsBoolean() && Mine.EXCAVATE_LIMIT.getOptionListValue().equals(UsageRestriction.ListType.WHITELIST);
@@ -48,22 +43,21 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
     private static final BooleanSupplier isBlocklist = () -> Fill.FILL_BLOCK_MODE.getOptionListValue().equals(FillBlockModeType.BLOCKLIST);
     private static final BooleanSupplier isRemoteInventoryLoaded = ModUtils::isRemoteInventoryNextLoaded;
 
-
     public static final ImmutableList<IConfigBase> OPTIONS;
     public static final ImmutableList<IHotkey> HOTKEYS;
 
-
     static {
         LinkedHashSet<IConfigBase> optionSet = new LinkedHashSet<>();
-        optionSet.addAll(Core.OPTIONS);           // 核心
-        optionSet.addAll(Placement.OPTIONS);      // 放置
-        optionSet.addAll(Break.OPTIONS);          // 破坏
-        optionSet.addAll(Hotkeys.OPTIONS);        // 热键
-        optionSet.addAll(Print.OPTIONS);          // 打印
-        optionSet.addAll(Mine.OPTIONS);           // 挖掘
-        optionSet.addAll(Fill.OPTIONS);           // 填充
-        optionSet.addAll(Fluid.OPTIONS);          // 排流体
-        optionSet.addAll(Highlight.OPTIONS);      // 高亮
+        optionSet.addAll(Core.OPTIONS);
+        optionSet.addAll(Placement.OPTIONS);
+        optionSet.addAll(Break.OPTIONS);
+        optionSet.addAll(Hotkeys.OPTIONS);
+        optionSet.addAll(Print.OPTIONS);
+        optionSet.addAll(Mine.OPTIONS);
+        optionSet.addAll(Fill.OPTIONS);
+        optionSet.addAll(Fluid.OPTIONS);
+        optionSet.addAll(Bedrock.OPTIONS);
+        optionSet.addAll(Highlight.OPTIONS);
         OPTIONS = ImmutableList.copyOf(optionSet);
 
         List<IHotkey> hotkeys = new ArrayList<>();
@@ -80,70 +74,35 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
             .addAll(Placement.OPTIONS)
             .addAll(Break.OPTIONS)
             .addAll(Hotkeys.OPTIONS)
-            .addAll(Hotkeys.OPTIONS)
             .addAll(Print.OPTIONS)
             .addAll(Mine.OPTIONS)
             .addAll(Fill.OPTIONS)
             .addAll(Fluid.OPTIONS)
+            .addAll(Bedrock.OPTIONS)
             .addAll(Highlight.OPTIONS)
             .build();
 
     public static class Core {
-        // 打印状态
+        // 全局开关
         public static final ConfigBooleanHotkeyed WORK_SWITCH = booleanHotkey("workingSwitch")
                 .defaultValue(false)
                 .defaultHotkey("CAPS_LOCK")
                 .keybindSettings(KeybindSettings.PRESS_ALLOWEXTRA_EMPTY)
                 .build();
 
-        // 核心 - 模式切换
-        public static final ConfigOptionList WORK_MODE = optionList("modeSwitch")
-                .defaultValue(WorkingModeType.SINGLE)
-                .build();
-
-        // 多模 - 打印
-        public static final ConfigBooleanHotkeyed PRINT = booleanHotkey("print")
-                .defaultValue(false)
-                .setVisible(isMulti) // 仅多模式时显示
-                .build();
-
-        // 多模 - 挖掘
-        public static final ConfigBooleanHotkeyed MINE = booleanHotkey("mine")
-                .defaultValue(false)
-                .setVisible(isMulti) // 仅多模式时显示
-                .build();
-
-        // 多模 - 填充
-        public static final ConfigBooleanHotkeyed FILL = booleanHotkey("fill")
-                .defaultValue(false)
-                .setVisible(isMulti) // 仅多模式时显示
-                .build();
-
-        // 多模 - 排流体
-        public static final ConfigBooleanHotkeyed FLUID = booleanHotkey("fluid")
-                .defaultValue(false)
-                .setVisible(isMulti) // 仅多模式时显示
-                .build();
-
-        // 核心 - 单模模式
-        public static final ConfigOptionList WORK_MODE_TYPE = optionList("printerMode")
-                .defaultValue(PrintModeType.PRINTER)
-                .setVisible(isSingle) // 仅单模式时显示
-                .build();
-
-        // 核心 - 工作半径（0 = 自动使用最大可用交互距离）
+        // 工作半径（0 = 自动使用最大可用交互距离）
         public static final ConfigDouble WORK_RANGE = floatValue("workRange")
                 .defaultValue(0)
                 .range(0, 256)
                 .build();
 
-        // 核心 - 迭代占用时长（毫秒）
+        // 迭代占用时长（毫秒）
         public static final ConfigInteger ITERATION_TIME_LIMIT = integerValue("iterationTimeLimit")
                 .defaultValue(8)
                 .range(0, 32)
                 .build();
 
-        // 核心 - 延迟检测
+        // 延迟检测
         public static final ConfigBoolean LAG_CHECK = booleanValue("printerLagCheck")
                 .defaultValue(true)
                 .build();
@@ -154,52 +113,52 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
                 .range(20, 1200)
                 .build();
 
-        // 核心 - 迭代区域形状
+        // 迭代区域形状
         public static final ConfigOptionList ITERATOR_SHAPE = optionList("printerIteratorShape")
                 .defaultValue(RadiusShapeType.SPHERE)
                 .build();
 
-        // 核心 - 遍历顺序
+        // 遍历顺序
         public static final ConfigOptionList ITERATION_ORDER = optionList("printerIteratorMode")
                 .defaultValue(IterationOrderType.XZY)
                 .build();
 
-        // 核心 - 迭代X轴反向
+        // 迭代X轴反向
         public static final ConfigBoolean X_REVERSE = booleanValue("printerXAxisReverse")
                 .defaultValue(false)
                 .build();
 
-        // 核心 - 迭代Y轴反向
+        // 迭代Y轴反向
         public static final ConfigBoolean Y_REVERSE = booleanValue("printerYAxisReverse")
                 .defaultValue(false)
                 .build();
 
-        // 核心 - 迭代Z轴反向
+        // 迭代Z轴反向
         public static final ConfigBoolean Z_REVERSE = booleanValue("printerZAxisReverse")
                 .defaultValue(false)
                 .build();
 
-        // 核心 - 显示打印机HUD
+        // 显示打印机HUD
         public static final ConfigBoolean RENDER_HUD = booleanValue("renderHud")
                 .defaultValue(false)
                 .build();
 
-        // 核心 - 显示缺失材料HUD
+        // 显示缺失材料HUD
         public static final ConfigBoolean MISSING_MATERIAL_HUD = booleanValue("missingMaterialHud")
                 .defaultValue(true)
                 .build();
 
-        // 核心 - 自动禁用打印机
+        // 自动禁用打印机
         public static final ConfigBoolean AUTO_DISABLE_PRINTER = booleanValue("printerAutoDisable")
                 .defaultValue(true)
                 .build();
 
-        // 核心 - 检查更新
+        // 检查更新
         public static final ConfigBoolean UPDATE_CHECK = booleanValue("updateCheck")
                 .defaultValue(true)
                 .build();
 
-        // 核心 - 调试输出
+        // 调试输出
         public static final ConfigBoolean DEBUG_OUTPUT = booleanValue("debugOutput")
                 .defaultValue(false)
                 .build();
@@ -216,15 +175,8 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
                 .range(0, 100)
                 .build();
 
-        // 通用配置项列表（按功能分类排序）
         public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
                 WORK_SWITCH,
-                WORK_MODE,
-                WORK_MODE_TYPE,
-                PRINT,
-                MINE,
-                FILL,
-                FLUID,
                 WORK_RANGE,
                 ITERATION_TIME_LIMIT,
                 RENDER_HUD,
@@ -355,6 +307,11 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
     }
 
     public static class Print {
+        // 启用打印
+        public static final ConfigBooleanHotkeyed ENABLED = booleanHotkey("printEnabled")
+                .defaultValue(false)
+                .build();
+
         // 选区类型
         public static final ConfigOptionList PRINT_SELECTION_TYPE = optionList("printSelectionType")
                 .defaultValue(SelectionType.LITEMATICA_RENDER_LAYER)
@@ -501,6 +458,7 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
                 .build();
 
         public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
+                ENABLED,
                 PRINT_SELECTION_TYPE,
                 EASY_PLACE_PROTOCOL,
                 PLACE_IN_AIR,
@@ -533,6 +491,11 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
     }
 
     public static class Mine {
+        // 启用挖掘
+        public static final ConfigBooleanHotkeyed ENABLED = booleanHotkey("mineEnabled")
+                .defaultValue(false)
+                .build();
+
         // 选区类型
         public static final ConfigOptionList MINE_SELECTION_TYPE = optionList("mineSelectionType")
                 .defaultValue(SelectionType.LITEMATICA_SELECTION)
@@ -560,15 +523,21 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
                 .build();
 
         public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
-                MINE_SELECTION_TYPE,          // 挖掘 - 选区类型
-                EXCAVATE_LIMITER,             // 挖掘 - 挖掘模式限制器
-                EXCAVATE_LIMIT,               // 挖掘 - 挖掘模式限制
-                EXCAVATE_WHITELIST,           // 挖掘 - 挖掘白名单
-                EXCAVATE_BLACKLIST            // 挖掘 - 挖掘黑名单
+                ENABLED,
+                MINE_SELECTION_TYPE,
+                EXCAVATE_LIMITER,
+                EXCAVATE_LIMIT,
+                EXCAVATE_WHITELIST,
+                EXCAVATE_BLACKLIST
         );
     }
 
     public static class Fill {
+        // 启用填充
+        public static final ConfigBooleanHotkeyed ENABLED = booleanHotkey("fillEnabled")
+                .defaultValue(false)
+                .build();
+
         // 选区类型
         public static final ConfigOptionList FILL_SELECTION_TYPE = optionList("fillSelectionType")
                 .defaultValue(SelectionType.LITEMATICA_SELECTION)
@@ -591,14 +560,19 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
                 .build();
 
         public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
-                FILL_SELECTION_TYPE,          // 填充 - 选区类型
-                FILL_BLOCK_MODE,              // 填充 - 填充方块模式
-                FILL_BLOCK_LIST,              // 填充 - 填充方块名单
-                FILL_BLOCK_FACING             // 填充 - 模式朝向
+                ENABLED,
+                FILL_SELECTION_TYPE,
+                FILL_BLOCK_MODE,
+                FILL_BLOCK_LIST,
+                FILL_BLOCK_FACING
         );
     }
 
     public static class Fluid {
+        // 启用排流体
+        public static final ConfigBooleanHotkeyed ENABLED = booleanHotkey("fluidEnabled")
+                .defaultValue(false)
+                .build();
 
         // 选区类型
         public static final ConfigOptionList FLUID_SELECTION_TYPE = optionList("fluidSelectionType")
@@ -621,10 +595,22 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
                 .build();
 
         public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
-                FLUID_SELECTION_TYPE,         // 排流体 - 选区类型
-                FILL_FLOWING_FLUID,           // 排流体 - 填充流动液体
-                FLUID_REPLACE_BLOCK_LIST,             // 排流体 - 方块名单
-                FLUID_LIST                    // 排流体 - 液体名单
+                ENABLED,
+                FLUID_SELECTION_TYPE,
+                FILL_FLOWING_FLUID,
+                FLUID_REPLACE_BLOCK_LIST,
+                FLUID_LIST
+        );
+    }
+
+    public static class Bedrock {
+        // 启用破基岩
+        public static final ConfigBooleanHotkeyed ENABLED = booleanHotkey("bedrockEnabled")
+                .defaultValue(false)
+                .build();
+
+        public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
+                ENABLED
         );
     }
 
@@ -694,30 +680,10 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
                 .defaultStorageString("LEFT_CONTROL,G")
                 .build();
 
-        // 切换模式
-        public static final ConfigHotkey SWITCH_PRINTER_MODE = hotkeyValue("switchPrinterMode")
-                .bindConfig(Core.WORK_MODE_TYPE)
-                .setVisible(isSingle) // 仅单模式时显示
-                .build();
-
-        // 破基岩
-        public static final ConfigBooleanHotkeyed BEDROCK = booleanHotkey("bedrock")
-                .defaultValue(false)
-                .setVisible(isMulti) // 仅多模式时显示
-                .build();
-
         public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
-                OPEN_SCREEN,                  // 打开设置菜单
+                OPEN_SCREEN,
                 Core.WORK_SWITCH,
-                CLOSE_ALL_MODE,               // 关闭全部模式
-                SWITCH_PRINTER_MODE,          // 切换模式
-
-                // 多模
-                Core.PRINT,
-                Core.MINE,                // 挖掘
-                Core.FILL,                    // 填充
-                Core.FLUID,                  // 排流体
-                BEDROCK                       // 破基岩
+                CLOSE_ALL_MODE
         );
     }
 

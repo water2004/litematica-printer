@@ -6,8 +6,7 @@ import fi.dy.masa.tweakeroo.tweaks.PlacementTweaks;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.HighlightType;
 import me.aleksilassila.litematica.printer.enums.MiningFilterType;
-import me.aleksilassila.litematica.printer.enums.PrintModeType;
-import me.aleksilassila.litematica.printer.handler.ClientPlayerTickHandler;
+import me.aleksilassila.litematica.printer.handler.Module;
 import me.aleksilassila.litematica.printer.printer.BlockPosCooldownManager;
 import me.aleksilassila.litematica.printer.mixin.extension.BlockBreakResult;
 import me.aleksilassila.litematica.printer.utils.BreakUtils;
@@ -18,11 +17,11 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-public class MineHandler extends ClientPlayerTickHandler {
+public class Mine extends Module {
     public final static String NAME = "mine";
 
-    public MineHandler() {
-        super(NAME, PrintModeType.MINE, Configs.Core.MINE, Configs.Mine.MINE_SELECTION_TYPE, true);
+    public Mine() {
+        super(NAME, Configs.Mine.ENABLED, Configs.Mine.MINE_SELECTION_TYPE, true);
     }
 
     public static boolean mineRestriction(BlockState blockState) {
@@ -67,7 +66,7 @@ public class MineHandler extends ClientPlayerTickHandler {
 
     @Override
     public boolean canProcessPos(BlockPos pos) {
-        if (isOnCooldown(pos) || BlockPosCooldownManager.INSTANCE.isOnCooldown(level, FluidHandler.NAME, pos)) {
+        if (isOnCooldown(pos) || BlockPosCooldownManager.INSTANCE.isOnCooldown(level, FluidRemoval.NAME, pos)) {
             return false;
         }
         return BreakUtils.canBreakBlock(pos) && mineRestriction(level.getBlockState(pos));

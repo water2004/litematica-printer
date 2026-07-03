@@ -4,7 +4,7 @@ import com.mojang.authlib.GameProfile;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import fi.dy.masa.litematica.world.WorldSchematic;
 import me.aleksilassila.litematica.printer.config.Configs;
-import me.aleksilassila.litematica.printer.handler.ClientPlayerTickManager;
+import me.aleksilassila.litematica.printer.handler.ModuleManager;
 import me.aleksilassila.litematica.printer.printer.BlockPosCooldownManager;
 import me.aleksilassila.litematica.printer.utils.BreakUtils;
 import me.aleksilassila.litematica.printer.utils.LitematicaUtils;
@@ -61,13 +61,13 @@ public class MixinLocalPlayer extends AbstractClientPlayer {
 
     @Inject(at = @At("HEAD"), method = "tick")
     public void tick(CallbackInfo ci) {
-        ClientPlayerTickManager.updateTickHandlerTime();
+        ModuleManager.updateTickHandlerTime();
         BlockPosCooldownManager.INSTANCE.tick();
         BreakUtils.INSTANCE.preprocess();
         if (BreakUtils.INSTANCE.isNeedHandle()) {
             BreakUtils.INSTANCE.onTick();
         } else {
-            ClientPlayerTickManager.tick();
+            ModuleManager.tick();
         }
     }
 

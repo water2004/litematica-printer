@@ -11,8 +11,8 @@ import fi.dy.masa.malilib.interfaces.IRenderer;
 import me.aleksilassila.litematica.printer.Reference;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.HighlightStyleType;
-import me.aleksilassila.litematica.printer.handler.ClientPlayerTickHandler;
-import me.aleksilassila.litematica.printer.handler.ClientPlayerTickManager;
+import me.aleksilassila.litematica.printer.handler.Module;
+import me.aleksilassila.litematica.printer.handler.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -130,10 +130,10 @@ public class BlockHighlightRenderer implements IRenderer {
 
         List<HighlightEntry> entries = new ArrayList<>();
 
-        for (ClientPlayerTickHandler handler : ClientPlayerTickManager.VALUES) {
-            Queue<ClientPlayerTickHandler.PendingHighlight> pending = handler.getPendingHighlights();
+        for (Module module : ModuleManager.VALUES) {
+            Queue<Module.PendingHighlight> pending = module.getPendingHighlights();
             if (pending.isEmpty()) continue;
-            for (ClientPlayerTickHandler.PendingHighlight ph : pending) {
+            for (Module.PendingHighlight ph : pending) {
                 long elapsed = now - ph.time();
                 if (elapsed >= fadeDurationMs) continue;
 

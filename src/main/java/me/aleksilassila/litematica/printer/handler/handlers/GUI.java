@@ -6,32 +6,31 @@ import fi.dy.masa.malilib.config.options.ConfigBase;
 import lombok.Getter;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.BlockMatchingType;
-import me.aleksilassila.litematica.printer.handler.ClientPlayerTickHandler;
-import me.aleksilassila.litematica.printer.handler.ClientPlayerTickManager;
+import me.aleksilassila.litematica.printer.handler.Module;
+import me.aleksilassila.litematica.printer.handler.ModuleManager;
 import me.aleksilassila.litematica.printer.printer.SchematicBlockContext;
-import me.aleksilassila.litematica.printer.utils.ConfigUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.LiquidBlock;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class GuiHandler extends ClientPlayerTickHandler {
+public class GUI extends Module {
     public final static String NAME = "gui";
 
     @Getter
-    private final Progress totalProgress = new Progress(Configs.Core.PRINT);
+    private final Progress totalProgress = new Progress(Configs.Print.ENABLED);
     @Getter
-    private final Progress printProgress = new Progress(Configs.Core.PRINT);
+    private final Progress printProgress = new Progress(Configs.Print.ENABLED);
     @Getter
-    private final Progress fluidProgress = new Progress(Configs.Core.FLUID);
+    private final Progress fluidProgress = new Progress(Configs.Fluid.ENABLED);
     @Getter
-    private final Progress fillProgress = new Progress(Configs.Core.FILL);
+    private final Progress fillProgress = new Progress(Configs.Fill.ENABLED);
     @Getter
-    private final Progress mineProgress = new Progress(Configs.Core.MINE);
+    private final Progress mineProgress = new Progress(Configs.Mine.ENABLED);
 
-    public GuiHandler() {
-        super(NAME, null, Configs.Core.RENDER_HUD, null, true);
+    public GUI() {
+        super(NAME, Configs.Core.RENDER_HUD, null, true);
     }
 
     @Override
@@ -51,7 +50,7 @@ public class GuiHandler extends ClientPlayerTickHandler {
 
     @Override
     protected void executeIteration(BlockPos blockPos, AtomicReference<Boolean> skipIteration) {
-        if (ConfigUtils.isPrintMode()) {
+        if (Configs.Print.ENABLED.getBooleanValue()) {
             WorldSchematic schematic = SchematicWorldHandler.getSchematicWorld();
             if (schematic != null) {
                 SchematicBlockContext context = new SchematicBlockContext(client, level, schematic, blockPos);
@@ -65,7 +64,7 @@ public class GuiHandler extends ClientPlayerTickHandler {
                 }
             }
         }
-        if (isFluidMode()) {
+        if (Configs.Fluid.ENABLED.getBooleanValue()) {
             if (!(level.getBlockState(blockPos).getBlock() instanceof LiquidBlock)) {
                 fluidProgress.finished++;
                 totalProgress.finished++;
@@ -73,15 +72,15 @@ public class GuiHandler extends ClientPlayerTickHandler {
             fluidProgress.total++;
             totalProgress.total++;
         }
-        if (isFillMode()) {
-            if (Arrays.asList(ClientPlayerTickManager.FILL.getFillModeItemList()).contains(level.getBlockState(blockPos).getBlock().asItem())) {
+        if (Configs.Fill.ENABLED.getBooleanValue()) {
+            if (Arrays.asList(ModuleManager.FILL.getFillModeItemList()).contains(level.getBlockState(blockPos).getBlock().asItem())) {
                 fillProgress.finished++;
                 totalProgress.finished++;
             }
             fillProgress.total++;
             totalProgress.total++;
         }
-        if (isMineMode()) {
+        if (Configs.Mine.ENABLED.getBooleanValue()) {
             if (level.getBlockState(blockPos).isAir()) {
                 mineProgress.finished++;
                 totalProgress.finished++;

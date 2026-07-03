@@ -35,21 +35,13 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * 打印机客户端玩家Tick抽象处理器
- */
-public abstract class ClientPlayerTickHandler extends ConfigUtils {
-    // 交互盒引用：存储迭代范围，null表示不使用迭代功能
+public abstract class Module extends ConfigUtils {
     @Getter
     @Nullable
     public final AtomicReference<PrinterBox> boxRef;
 
     @Getter
     private final String id;
-
-    @Getter
-    @Nullable
-    private final PrintModeType printMode;
 
     @Getter
     @Nullable
@@ -67,9 +59,8 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
 
     // 迭代状态缓存（性能优化关键）
     private Iterator<BlockPos> cachedIterator = null;
-    private final BlockPos lastBasePos = null;
-    private int expandRange = -1;
-
+    @Getter
+    private final Queue<PendingHighlight> pendingHighlights = new ConcurrentLinkedQueue<>();
     protected Minecraft mc;
     protected ClientLevel level;
     protected LocalPlayer player;
@@ -80,11 +71,12 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
     protected HitResult hitResult;
     @Nullable
     protected BlockHitResult blockHitResult;
+    protected boolean didWorkThisTick = false;
+    private int expandRange = -1;
     @Nullable
     private PrinterBox lastBox;
     @Nullable
     private BlockPos lastPos;
-    // Cached layer state for rebuild detection
     private int lastLayerMin = Integer.MIN_VALUE;
     private int lastLayerMax = Integer.MIN_VALUE;
     private int lastLayerSingle = Integer.MIN_VALUE;
@@ -94,33 +86,16 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
     private Direction.Axis lastLayerAxis = null;
     @Nullable
     private LayerMode lastLayerMode = null;
-
     private long lastTickTime = -1L;
-
     @Getter
     private int renderIndex = 0;
-
-    // 高亮队列（记录正在处理或已完成但尚在渐隐中的方块）
-    @Getter
-    private final Queue<PendingHighlight> pendingHighlights = new ConcurrentLinkedQueue<>();
-
-    public record PendingHighlight(BlockPos pos, long time, HighlightType type) {
-        public PendingHighlight(BlockPos pos, long time) {
-            this(pos, time, HighlightType.PLACE);
-        }
-    }
-
-    // 扫描状态机
     @Getter
     private ScanState scanState = ScanState.FULL;
     private int idleTicks = 0;
-    protected boolean didWorkThisTick = false;
-
     private int guiCacheTicks;
 
-    protected ClientPlayerTickHandler(String id, @Nullable PrintModeType printMode, @Nullable ConfigBoolean enableConfig, @Nullable ConfigOptionList selectionType, boolean useBox) {
+    protected Module(String id, @Nullable ConfigBoolean enableConfig, @Nullable ConfigOptionList selectionType, boolean useBox) {
         this.id = id;
-        this.printMode = printMode;
         this.enableConfig = enableConfig;
         this.selectionType = selectionType;
         this.boxRef = useBox ? new AtomicReference<>() : null;
@@ -139,11 +114,7 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
                 ? (BlockHitResult) hitResult : null;
     }
 
-    /**
-     * 核心Tick方法：处理GUI缓存、间隔控制、迭代范围更新和方块迭代
-     */
     public void tick() {
-        // GUI缓存倒计时
         if (guiCacheTicks > 0) {
             guiCacheTicks--;
         } else {
@@ -151,10 +122,9 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
             renderIndex = 0;
         }
 
-        // 执行间隔控制
         int tickInterval = getTickInterval();
         if (tickInterval > 0) {
-            long currentTickTime = ClientPlayerTickManager.getCurrentHandlerTime();
+            long currentTickTime = ModuleManager.getCurrentHandlerTime();
             if (lastTickTime != -1L && currentTickTime - lastTickTime < tickInterval) {
                 return;
             }
@@ -181,7 +151,7 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
         }
 
         updateBox();
-        // 例如填充和拍流体等需要额外方块的模式，需要提前处理好转换
+        // 填充和排流体需要提前把方块列表字符串转换成对象
         preprocess();
 
         // Phase 1: 消费 BlockUpdate 脏坐标 → 生成修复操作
@@ -197,7 +167,7 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
             // BlockUpdate 唤醒了我们 → 按脏区域数量决定重扫粒度
             int dirtyRegions = RegionTracker.INSTANCE.getDirtyCount();
             int fullThreshold = Configs.Core.LAZY_DIRTY_WAKE_THRESHOLD.getIntegerValue();
-            if (fullThreshold > 0 && dirtyRegions > 0 && dirtyRegions < fullThreshold) {
+            if (dirtyRegions > 0 && dirtyRegions < fullThreshold) {
                 scanState = ScanState.PARTIAL;
                 cachedIterator = RegionTracker.INSTANCE.createDirtyRegionIterator();
             } else {
@@ -285,8 +255,7 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
     }
 
     /**
-     * 更新交互盒：根据玩家位置和配置动态调整迭代范围
-     * 使用 exact range 计算盒边界 (floor/ceil)，避免 round() 偏移导致边界方块丢失
+     * 更新迭代区域
      */
     private void updateBox() {
         if (boxRef == null) return;
@@ -297,7 +266,7 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
         double effectiveRange = ConfigUtils.getEffectiveRange();
         int currentRange = (int) Math.ceil(effectiveRange);
 
-        // Pre-fetch layer state for rebuild detection and box clamping
+        // 依据渲染层限制，优化迭代效率
         LayerRange layerRange = DataManager.getRenderLayerRange();
         LayerMode layerMode = layerRange.getLayerMode();
         Direction.Axis layerAxis = layerRange.getAxis();
@@ -331,7 +300,6 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
             lastLayerAxis = layerAxis;
             lastLayerMode = layerMode;
 
-            // 直接用 player 精确位置 ±range 算盒子的整数边界，避免 round() 偏移导致边界方块丢失
             int minX = (int) Math.floor(player.getX() - effectiveRange);
             int maxX = (int) Math.ceil(player.getX() + effectiveRange);
             int minY = (int) Math.floor(player.getEyeY() - effectiveRange);
@@ -339,14 +307,10 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
             int minZ = (int) Math.floor(player.getZ() - effectiveRange);
             int maxZ = (int) Math.ceil(player.getZ() + effectiveRange);
 
-            // Clamp box to the active render layer so we never iterate outside it.
-            // 只有 selectionType = LITEMATICA_RENDER_LAYER 时才裁剪迭代框，
-            // 其他选区类型（LITEMATICA_SELECTION 等）不受渲染层限制。
             if (selectionType != null
                     && selectionType.getOptionListValue() == SelectionType.LITEMATICA_RENDER_LAYER
                     && layerMode != LayerMode.ALL) {
                 switch (layerMode) {
-                    // 单层：盒子收窄到指定层
                     case SINGLE_LAYER -> {
                         switch (layerAxis) {
                             case Y -> { minY = layerSingle; maxY = layerSingle; }
@@ -354,7 +318,6 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
                             case Z -> { minZ = layerSingle; maxZ = layerSingle; }
                         }
                     }
-                    // 范围：夹在 [min, max] 之间
                     case LAYER_RANGE -> {
                         switch (layerAxis) {
                             case Y -> { minY = Math.max(minY, layerMin); maxY = Math.min(maxY, layerMax); }
@@ -362,20 +325,18 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
                             case Z -> { minZ = Math.max(minZ, layerMin); maxZ = Math.min(maxZ, layerMax); }
                         }
                     }
-                    // 下方：截断 max
                     case ALL_BELOW -> {
                         switch (layerAxis) {
-                            case Y -> { maxY = Math.min(maxY, layerBelow); }
-                            case X -> { maxX = Math.min(maxX, layerBelow); }
-                            case Z -> { maxZ = Math.min(maxZ, layerBelow); }
+                            case Y -> maxY = Math.min(maxY, layerBelow);
+                            case X -> maxX = Math.min(maxX, layerBelow);
+                            case Z -> maxZ = Math.min(maxZ, layerBelow);
                         }
                     }
-                    // 上方：截断 min
                     case ALL_ABOVE -> {
                         switch (layerAxis) {
-                            case Y -> { minY = Math.max(minY, layerAbove); }
-                            case X -> { minX = Math.max(minX, layerAbove); }
-                            case Z -> { minZ = Math.max(minZ, layerAbove); }
+                            case Y -> minY = Math.max(minY, layerAbove);
+                            case X -> minX = Math.max(minX, layerAbove);
+                            case Z -> minZ = Math.max(minZ, layerAbove);
                         }
                     }
                 }
@@ -420,8 +381,8 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
             // 仅在玩家移动或配置变更时重置空闲计数；扫描周期自然完成（lastPos == null）不清零，
             // 否则空闲计数永远达不到惰性阈值
             if (box != null) { // 非首次初始化
-                boolean playerMoved = lastPos != null && !lastPos.closerThan(eyePos, effectiveRange * 0.4);
-                if (playerMoved || expandRange != currentRange) {
+            boolean playerMoved = lastPos != null && !lastPos.closerThan(eyePos, effectiveRange * 0.4);
+            if (playerMoved || expandRange != currentRange) {
                     idleTicks = 0;
                 }
             } else {
@@ -432,31 +393,25 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
 
     private boolean iterateBlocks(int maxExecs) {
         if (boxRef == null || !canExecute()) return false;
-    
+
         PrinterBox box = boxRef.get();
         if (box == null || !canIterate()) return false;
-    
+
         if (cachedIterator == null) {
             cachedIterator = box.iterator();
             // 清理已超出渐隐时长的过期条目，保留仍在渐隐中的条目不影响显示
             long expireCutoff = System.currentTimeMillis() - Configs.Highlight.HIGHLIGHT_FADE_DURATION.getIntegerValue() * 100L;
             pendingHighlights.removeIf(ph -> ph.time() < expireCutoff);
         }
-    
-        int timeLimit = getIterationTimeLimit();
-        int execCount = 0;
-    
-        boolean debugMode = Configs.Core.DEBUG_OUTPUT.getBooleanValue();
-        boolean needRangeCheck = needsRangeCheck();
-        boolean isSchematic = isSchematicHandler();
 
-        // 缓存不变值到循环外，消除每位置的 getEyePosition() Vec3 分配
+        int execCount = 0;
+
         Vec3 eyePos = player.getEyePosition();
         double effectiveRange = ConfigUtils.getEffectiveRange();
         RadiusShapeType shapeType = Configs.Core.ITERATOR_SHAPE.getOptionListValue() instanceof RadiusShapeType s ? s : null;
 
-        long startTime = timeLimit > 0 ? System.nanoTime() : 0;
-        long timeLimitNanos = timeLimit * 1_000_000L;
+        long startTime = getIterationTimeLimit() > 0 ? System.nanoTime() : 0;
+        long timeLimitNanos = getIterationTimeLimit() * 1_000_000L;
         int checkInterval = 10;
         int iterCount = 0;
 
@@ -465,7 +420,7 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
         renderIndex = 0;
 
         while (cachedIterator.hasNext()) {
-            if (timeLimit > 0 && ++iterCount % checkInterval == 0) {
+            if (getIterationTimeLimit() > 0 && ++iterCount % checkInterval == 0) {
                 if (System.nanoTime() - startTime >= timeLimitNanos) {
                     stopIteration(true);
                     return true;
@@ -483,20 +438,16 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
             if (shapeType != null) {
                 if (!PlayerUtils.canInteracted(pos, eyePos, effectiveRange, shapeType)) continue;
             } else if (!PlayerUtils.canInteracted(pos)) continue;
-    
-            if (needRangeCheck) {
-                if (isSchematic ? !SchematicSnapshot.INSTANCE.contains(pos)
+
+            if (needsRangeCheck()) {
+                if (isSchematicHandler() ? !SchematicSnapshot.INSTANCE.contains(pos)
                         : !LitematicaUtils.isWithinSelection1ModeRange(pos)) {
                     continue;
                 }
-    
-                if (selectionType != null && !PlayerUtils.isPositionInSelectionRange(player, pos, selectionType)) {
-                    continue;
-                }
             }
-    
-            if (debugMode) {
-                GuiBlockInfo gui = isSchematic
+
+            if (Configs.Core.DEBUG_OUTPUT.getBooleanValue()) {
+                GuiBlockInfo gui = isSchematicHandler()
                         ? new GuiBlockInfo(level, SchematicWorldHandler.getSchematicWorld(), pos)
                         : new GuiBlockInfo(level, null, pos);
                 gui.interacted = true;
@@ -504,10 +455,10 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
                 gui.execute = canProcessPos(pos) && !isOnCooldown(pos);
                 addGuiInfo(gui);
             }
-    
-                if (!isOnCooldown(pos) && canProcessPos(pos)) {
-                    executeIteration(pos, skipIteration);
-                    didWorkThisTick = true;
+
+            if (!isOnCooldown(pos) && canProcessPos(pos)) {
+                executeIteration(pos, skipIteration);
+                didWorkThisTick = true;
 
                 if (skipIteration.get() || (maxExecs > 0 && ++execCount >= maxExecs)) {
                     stopIteration(true);
@@ -515,7 +466,7 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
                 }
             }
         }
-    
+
         cachedIterator = null;
         stopIteration(false);
         return false;
@@ -528,9 +479,6 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
         return false;
     }
 
-    /**
-     * 添加GUI信息到队列
-     */
     private void addGuiInfo(GuiBlockInfo info) {
         if (info != null) {
             guiQueue.add(info);
@@ -538,9 +486,6 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
         }
     }
 
-    /**
-     * 获取下一个GUI信息（渲染阶段调用）
-     */
     @Nullable
     public GuiBlockInfo nextGuiInfo() {
         if (guiQueue.isEmpty()) return null;
@@ -553,38 +498,12 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
         return arr[renderIndex++];
     }
 
-    /**
-     * 获取最后一个GUI信息
-     */
-    @Nullable
-    public GuiBlockInfo getLastGuiInfo() {
-        if (guiQueue.isEmpty()) return null;
-        GuiBlockInfo[] arr = guiQueue.toArray(new GuiBlockInfo[0]);
-        return arr[arr.length - 1];
-    }
-
-    public void setGuiInfo(@Nullable GuiBlockInfo info) {
-        addGuiInfo(info);
-    }
-
     public int getGuiQueueSize() {
         return guiQueue.size();
     }
 
-    /**
-     * 配置层面的执行权限校验
-     */
     private boolean isConfigAllowed() {
         if (!ConfigUtils.isPrinterEnable()) return false;
-
-        if (printMode != null && enableConfig != null) {
-            WorkingModeType mode = (WorkingModeType) Configs.Core.WORK_MODE.getOptionListValue();
-            return switch (mode) {
-                case SINGLE -> Configs.Core.WORK_MODE_TYPE.getOptionListValue().equals(printMode);
-                case MULTI -> enableConfig.getBooleanValue();
-            };
-        }
-
         return enableConfig == null || enableConfig.getBooleanValue();
     }
 
@@ -596,9 +515,6 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
         return -1;
     }
 
-    /**
-     * 获取迭代时间限制（毫秒），0表示禁用
-     */
     protected int getIterationTimeLimit() {
         return Configs.Core.ITERATION_TIME_LIMIT.getIntegerValue();
     }
@@ -614,11 +530,6 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
         return true;
     }
 
-    /**
-     * 当前 handler 是否需要处理操作队列中的修复操作。
-     * 仅实际执行方块操作的 handler（PRINT、FILL 等）应返回 true；
-     * GUI handler 仅负责 HUD 渲染，不应消费队列操作。
-     */
     protected boolean shouldProcessQueue() {
         return true;
     }
@@ -627,55 +538,24 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
         return true;
     }
 
-    /**
-     * 获取当前 handler 的默认高亮类型
-     */
-    protected HighlightType getHighlightType() {
-        return HighlightType.PLACE;
-    }
-
-    /**
-     * 添加一个高亮方块到队列
-     */
     protected void addHighlight(BlockPos pos, HighlightType type) {
         BlockPos immutable = pos.immutable();
-        // 如果同一位置已有未完成的高亮，替换为最新的请求
         pendingHighlights.removeIf(ph -> ph.pos().equals(immutable));
         pendingHighlights.add(new PendingHighlight(immutable, System.currentTimeMillis(), type));
     }
 
-    /**
-     * 单次方块迭代的核心执行方法，子类重写实现具体逻辑
-     */
     protected void executeIteration(BlockPos pos, AtomicReference<Boolean> skipIteration) {
     }
 
-    /**
-     * 判断方块是否处于冷却中
-     */
     public boolean isOnCooldown(@Nullable BlockPos pos) {
         if (level == null || pos == null) return true;
         return BlockPosCooldownManager.INSTANCE.isOnCooldown(level, id, pos);
     }
 
-    public boolean isOnCooldown(String name, @Nullable BlockPos pos) {
-        if (level == null || pos == null) return true;
-        return BlockPosCooldownManager.INSTANCE.isOnCooldown(level, id + "_" + name, pos);
-    }
-
-    /**
-     * 设置方块冷却时间
-     */
     public void setCooldown(@Nullable BlockPos pos, int ticks) {
         if (level == null || pos == null || ticks < 1) return;
         BlockPosCooldownManager.INSTANCE.setCooldown(level, id, pos, ticks);
     }
-
-    public void setCooldown(String name, @Nullable BlockPos pos, int ticks) {
-        if (level == null || pos == null || ticks < 1) return;
-        BlockPosCooldownManager.INSTANCE.setCooldown(level, id + "_" + name, pos, ticks);
-    }
-
 
     protected Direction[] getPlayerOrderedByNearest() {
         return Direction.orderedByNearest(player);
@@ -687,5 +567,11 @@ public abstract class ClientPlayerTickHandler extends ConfigUtils {
 
     protected boolean needsRangeCheck() {
         return true;
+    }
+
+    public record PendingHighlight(BlockPos pos, long time, HighlightType type) {
+        public PendingHighlight(BlockPos pos, long time) {
+            this(pos, time, HighlightType.PLACE);
+        }
     }
 }

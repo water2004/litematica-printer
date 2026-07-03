@@ -5,8 +5,7 @@ import me.aleksilassila.litematica.printer.I18n;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.FillBlockModeType;
 import me.aleksilassila.litematica.printer.enums.HighlightType;
-import me.aleksilassila.litematica.printer.enums.PrintModeType;
-import me.aleksilassila.litematica.printer.handler.ClientPlayerTickHandler;
+import me.aleksilassila.litematica.printer.handler.Module;
 import me.aleksilassila.litematica.printer.printer.*;
 import me.aleksilassila.litematica.printer.printer.action.Action;
 import me.aleksilassila.litematica.printer.utils.*;
@@ -23,15 +22,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class FillHandler extends ClientPlayerTickHandler {
+public class Fill extends Module {
     public final static String NAME = "fill";
 
     private List<String> fillCacheBlocklist = new ArrayList<>();
     @Getter
     private Item[] fillModeItemList = new Item[0];
 
-    public FillHandler() {
-        super(NAME, PrintModeType.FILL, Configs.Core.FILL, Configs.Fill.FILL_SELECTION_TYPE, true);
+    public Fill() {
+        super(NAME, Configs.Fill.ENABLED, Configs.Fill.FILL_SELECTION_TYPE, true);
     }
 
     @Override

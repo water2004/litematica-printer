@@ -7,8 +7,7 @@ import lombok.Setter;
 import me.aleksilassila.litematica.printer.I18n;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.HighlightType;
-import me.aleksilassila.litematica.printer.enums.PrintModeType;
-import me.aleksilassila.litematica.printer.handler.ClientPlayerTickHandler;
+import me.aleksilassila.litematica.printer.handler.Module;
 import me.aleksilassila.litematica.printer.interfaces.Implementation;
 import me.aleksilassila.litematica.printer.printer.*;
 import me.aleksilassila.litematica.printer.printer.action.Action;
@@ -29,7 +28,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class PrintHandler extends ClientPlayerTickHandler {
+public class Print extends Module {
     public final static String NAME = "print";
 
     private final PlacementGuide guide;
@@ -52,8 +51,8 @@ public class PrintHandler extends ClientPlayerTickHandler {
     private Block lastSkipBlock = null;
     private boolean lastSkipResult = false;
 
-    public PrintHandler() {
-        super(NAME, PrintModeType.PRINTER, Configs.Core.PRINT, Configs.Print.PRINT_SELECTION_TYPE, true);
+    public Print() {
+        super(NAME, Configs.Print.ENABLED, Configs.Print.PRINT_SELECTION_TYPE, true);
         this.guide = new PlacementGuide(client);
     }
 

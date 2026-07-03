@@ -4,17 +4,18 @@ import me.aleksilassila.litematica.printer.I18n;
 import me.aleksilassila.litematica.printer.utils.ModUtils;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.HighlightType;
-import me.aleksilassila.litematica.printer.enums.PrintModeType;
-import me.aleksilassila.litematica.printer.handler.ClientPlayerTickHandler;
+import me.aleksilassila.litematica.printer.handler.Module;
 import me.aleksilassila.litematica.printer.utils.MessageUtils;
 import me.aleksilassila.litematica.printer.utils.bedrock.BedrockUtils;
 import net.minecraft.core.BlockPos;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-public class BedrockHandler extends ClientPlayerTickHandler {
-    public BedrockHandler() {
-        super("bedrock", PrintModeType.BEDROCK, Configs.Hotkeys.BEDROCK, null, true);
+public class Bedrock extends Module {
+    public final static String NAME = "bedrock";
+
+    public Bedrock() {
+        super(NAME, Configs.Bedrock.ENABLED, null, true);
     }
 
     @Override

@@ -1,13 +1,12 @@
 package me.aleksilassila.litematica.printer.mixin.printer.mc;
 
-import me.aleksilassila.litematica.printer.handler.ClientPlayerTickManager;
+import me.aleksilassila.litematica.printer.handler.ModuleManager;
 import me.aleksilassila.litematica.printer.utils.RenderUtils;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.ScanState;
-import me.aleksilassila.litematica.printer.enums.WorkingModeType;
-import me.aleksilassila.litematica.printer.handler.ClientPlayerTickHandler;
+import me.aleksilassila.litematica.printer.handler.Module;
 import me.aleksilassila.litematica.printer.handler.GuiBlockInfo;
-import me.aleksilassila.litematica.printer.handler.handlers.GuiHandler;
+import me.aleksilassila.litematica.printer.handler.handlers.GUI;
 import me.aleksilassila.litematica.printer.printer.RegionTracker;
 import me.aleksilassila.litematica.printer.utils.ConfigUtils;
 import net.minecraft.client.Minecraft;
@@ -43,9 +42,9 @@ public abstract class MixinGui {
     @Unique
     private static final int MIN_COLUMN_WIDTH = 120;
     @Unique
-    private static final int SIDE_MARGIN = 10; // 屏幕左右边距
+    private static final int SIDE_MARGIN = 10;
     @Unique
-    private static final int COLUMN_SPACING = DEBUG_PADDING * 3; // 列之间的间距
+    private static final int COLUMN_SPACING = DEBUG_PADDING * 3;
     @Unique
     private static final int COMMON_INFO_OFFSET_Y = 10;
 
@@ -62,10 +61,10 @@ public abstract class MixinGui {
     }
 
     @Unique
-    private List<String> buildHandlerDebugLines(ClientPlayerTickHandler handler, GuiBlockInfo guiInfo) {
+    private List<String> buildHandlerDebugLines(Module module, GuiBlockInfo guiInfo) {
         List<String> lines = new ArrayList<>();
-        lines.add("处理类型: " + handler.getId());
-        ScanState state = handler.getScanState();
+        lines.add("处理类型: " + module.getId());
+        ScanState state = module.getScanState();
         String stateColor = state == ScanState.LAZY ? "§b" : state == ScanState.PARTIAL ? "§e" : "§a";
         lines.add("扫描状态: " + stateColor + state);
         lines.add("当前位置: " + guiInfo.pos.toShortString());
@@ -77,8 +76,8 @@ public abstract class MixinGui {
         lines.add("选区类型: " + booleanToColoredString(guiInfo.posInSelectionRange));
         lines.add("已经执行: " + booleanToColoredString(guiInfo.execute));
 
-        int renderIndex = handler.getRenderIndex();
-        int queueSize = handler.getGuiQueueSize();
+        int renderIndex = module.getRenderIndex();
+        int queueSize = module.getGuiQueueSize();
         lines.add("同刻迭代(GUI): " + formatAlignedNumber(renderIndex, queueSize) + "/" + queueSize);
 
         return lines;
@@ -114,7 +113,6 @@ public abstract class MixinGui {
         float scaledWidth = mc.getWindow().getGuiScaledWidth();
         float scaledHeight = mc.getWindow().getGuiScaledHeight();
 
-        // 初始化渲染矩阵
         //#if MC > 11904
         RenderUtils.initGuiGraphics(guiGraphics);
         //#else
@@ -131,49 +129,43 @@ public abstract class MixinGui {
     }
     // @formatter:on
 
-    // 调试信息绘制
     @Unique
     private void drawDebugInfo(float scaledWidth, float scaledHeight) {
         Minecraft mc = Minecraft.getInstance();
-        List<ClientPlayerTickHandler> validHandlers = new ArrayList<>();
+        List<Module> validModules = new ArrayList<>();
         int globalMaxTextWidth = MIN_COLUMN_WIDTH;
 
-        // 1. 收集有效Handler并计算全局最大宽度
-        for (ClientPlayerTickHandler handler : ClientPlayerTickManager.VALUES) {
-            GuiBlockInfo guiInfo = handler.nextGuiInfo();
+        for (Module module : ModuleManager.VALUES) {
+            GuiBlockInfo guiInfo = module.nextGuiInfo();
             if (guiInfo == null) continue;
 
-            validHandlers.add(handler);
-            List<String> lines = buildHandlerDebugLines(handler, guiInfo);
+            validModules.add(module);
+            List<String> lines = buildHandlerDebugLines(module, guiInfo);
             for (String line : lines) {
                 String cleanLine = line.replaceAll("§[0-9a-fA-Fklmnor]", "");
                 globalMaxTextWidth = Math.max(globalMaxTextWidth, mc.font.width(cleanLine));
             }
         }
 
-        if (validHandlers.isEmpty()) return;
+        if (validModules.isEmpty()) return;
 
-        // 2. 绘制公共信息（左上角）
         int commonInfoBottomY = drawCommonDebugInfo(SIDE_MARGIN, SIDE_MARGIN);
 
-        // 3. 计算布局参数（动态适配屏幕）
         int columnWidth = globalMaxTextWidth + DEBUG_PADDING * 2;
         int maxColumnsPerSide = calculateMaxColumnsPerSide(scaledWidth, columnWidth);
         int availableHeight = (int) (scaledHeight - commonInfoBottomY - COMMON_INFO_OFFSET_Y - SIDE_MARGIN);
 
-        // 4. 优先绘制左侧面板，再绘制右侧
-        int drawnHandlers = drawHandlerPanels(
-                validHandlers, 0,
+        int drawnModules = drawModulePanels(
+                validModules, 0,
                 SIDE_MARGIN, commonInfoBottomY + COMMON_INFO_OFFSET_Y,
                 columnWidth, maxColumnsPerSide, availableHeight,
                 scaledHeight
         );
 
-        // 如果左侧绘制不完，绘制右侧面板
-        if (drawnHandlers < validHandlers.size()) {
+        if (drawnModules < validModules.size()) {
             int rightStartX = (int) (scaledWidth - SIDE_MARGIN - columnWidth);
-            drawHandlerPanels(
-                    validHandlers, drawnHandlers,
+            drawModulePanels(
+                    validModules, drawnModules,
                     rightStartX, commonInfoBottomY + COMMON_INFO_OFFSET_Y,
                     columnWidth, maxColumnsPerSide, availableHeight,
                     scaledHeight
@@ -181,28 +173,17 @@ public abstract class MixinGui {
         }
     }
 
-    /**
-     * 计算单侧边最多能显示的列数（根据屏幕宽度动态调整）
-     */
     @Unique
     private int calculateMaxColumnsPerSide(float scaledWidth, int columnWidth) {
-        // 屏幕中间预留核心游戏区域（占总宽度的50%）
         float centerAreaWidth = scaledWidth * 0.5f;
         float sideAvailableWidth = (scaledWidth - centerAreaWidth) / 2 - SIDE_MARGIN * 2;
 
-        // 计算单侧边能容纳的列数（至少1列）
         int maxColumns = Math.max(1, (int) (sideAvailableWidth / (columnWidth + COLUMN_SPACING)));
-        return Math.min(maxColumns, 3); // 最多3列，避免过于拥挤
+        return Math.min(maxColumns, 3);
     }
 
-    /**
-     * 绘制指定范围的Handler面板
-     *
-     * @param startIndex 起始Handler索引
-     * @return 实际绘制的Handler数量
-     */
     @Unique
-    private int drawHandlerPanels(List<ClientPlayerTickHandler> handlers, int startIndex,
+    private int drawModulePanels(List<Module> modules, int startIndex,
                                   int startX, int startY, int columnWidth,
                                   int maxColumns, int availableHeight, float scaledHeight) {
         int drawnCount = 0;
@@ -210,47 +191,40 @@ public abstract class MixinGui {
         int currentX = startX;
         int currentY = startY;
 
-        for (int i = startIndex; i < handlers.size(); i++) {
-            ClientPlayerTickHandler handler = handlers.get(i);
-            GuiBlockInfo guiInfo = handler.nextGuiInfo();
+        for (int i = startIndex; i < modules.size(); i++) {
+            Module module = modules.get(i);
+            GuiBlockInfo guiInfo = module.nextGuiInfo();
             if (guiInfo == null) continue;
 
-            // 构建调试文本并计算面板高度
-            List<String> debugLines = buildHandlerDebugLines(handler, guiInfo);
+            List<String> debugLines = buildHandlerDebugLines(module, guiInfo);
             int panelHeight = debugLines.size() * DEBUG_LINE_HEIGHT + DEBUG_PADDING * 2;
 
-            // 列数满了，换行
             if (currentColumn >= maxColumns) {
                 currentColumn = 0;
                 currentX = startX;
                 currentY += panelHeight + DEBUG_PADDING * 2;
 
-                // 超出屏幕高度，停止绘制
                 if (currentY + panelHeight > scaledHeight - SIDE_MARGIN) {
                     break;
                 }
             }
 
-            // 绘制面板背景
             RenderUtils.fill(
                     currentX, currentY,
                     currentX + columnWidth, currentY + panelHeight,
                     new Color(0, 0, 0, 50)
             );
 
-            // 绘制文本
             int lineY = currentY + DEBUG_PADDING;
             for (String line : debugLines) {
                 drawDebugLine(line, currentX + DEBUG_PADDING, lineY);
                 lineY += DEBUG_LINE_HEIGHT;
             }
 
-            // 更新位置和计数
             drawnCount++;
             currentColumn++;
             currentX += columnWidth + COLUMN_SPACING;
 
-            // 检查是否超出当前列的高度限制
             if (currentY + panelHeight > scaledHeight - SIDE_MARGIN) {
                 break;
             }
@@ -259,20 +233,16 @@ public abstract class MixinGui {
         return drawnCount;
     }
 
-    /**
-     * 绘制公共调试信息（左上角）
-     */
     @Unique
     private int drawCommonDebugInfo(int startX, int startY) {
         List<String> commonLines = new ArrayList<>();
-        commonLines.add("全局Tick: " + ClientPlayerTickManager.getCurrentHandlerTime());
-        commonLines.add("活跃Handler数: " + ClientPlayerTickManager.VALUES.size());
+        commonLines.add("全局Tick: " + ModuleManager.getCurrentHandlerTime());
+        commonLines.add("活跃模块数: " + ModuleManager.VALUES.size());
 
-        // 扫描模式 + 脏区域信息
         boolean allLazy = true;
         ScanState dominantState = ScanState.FULL;
-        for (ClientPlayerTickHandler handler : ClientPlayerTickManager.VALUES) {
-            ScanState s = handler.getScanState();
+        for (Module m : ModuleManager.VALUES) {
+            ScanState s = m.getScanState();
             if (s != ScanState.LAZY) allLazy = false;
             dominantState = s;
         }
@@ -304,14 +274,12 @@ public abstract class MixinGui {
         int bgWidth = maxWidth + DEBUG_PADDING * 2;
         int bgHeight = commonLines.size() * DEBUG_LINE_HEIGHT + DEBUG_PADDING * 2;
 
-        // 绘制公共信息背景
         RenderUtils.fill(
                 startX, startY,
                 startX + bgWidth, startY + bgHeight,
                 new Color(0, 0, 0, 50)
         );
 
-        // 绘制文本
         int lineY = startY + DEBUG_PADDING;
         for (String line : commonLines) {
             drawDebugLine(line, startX + DEBUG_PADDING, lineY);
@@ -321,38 +289,30 @@ public abstract class MixinGui {
         return startY + bgHeight;
     }
 
-    // ========== HUD进度条等信息绘制 ==========
     @Unique
     private void drawHudInfo(float scaledWidth, float scaledHeight) {
         int centerX = (int) (scaledWidth / 2);
         int centerY = (int) (scaledHeight / 2);
-        GuiHandler guiHandler = ClientPlayerTickManager.GUI;
+        GUI guiHandler = ModuleManager.GUI;
 
-        // 延迟过大警告
-        if (Configs.Core.LAG_CHECK.getBooleanValue() && ClientPlayerTickManager.getPacketTick() > Configs.Core.LAG_CHECK_MAX.getIntegerValue()) {
+        if (Configs.Core.LAG_CHECK.getBooleanValue() && ModuleManager.getPacketTick() > Configs.Core.LAG_CHECK_MAX.getIntegerValue()) {
             RenderUtils.drawString("延迟过大，已暂停运行", centerX, centerY - 22, Color.ORANGE, true, true);
         }
 
-        // 单模式进度条
-        WorkingModeType workMode = (WorkingModeType) Configs.Core.WORK_MODE.getOptionListValue();
-        if (workMode.equals(WorkingModeType.SINGLE)) {
-            double progress = guiHandler.getTotalProgress().getProgress();
-            RenderUtils.drawString((int) (progress * 100) + "%", centerX, centerY + 22, Color.WHITE, true, true);
-            drawProgressBar(centerX, centerY + 36, 40, 6, progress, new Color(0, 0, 0, 150), new Color(0, 255, 0, 255));
-        }
+        double progress = guiHandler.getTotalProgress().getProgress();
+        RenderUtils.drawString((int) (progress * 100) + "%", centerX, centerY + 22, Color.WHITE, true, true);
+        drawProgressBar(centerX, centerY + 36, 40, 6, progress, new Color(0, 0, 0, 150), new Color(0, 255, 0, 255));
 
-        // 扫描模式指示
         boolean anyLazy = false;
         boolean anyPartial = false;
-        for (ClientPlayerTickHandler h : ClientPlayerTickManager.VALUES) {
-            ScanState s = h.getScanState();
+        for (Module m : ModuleManager.VALUES) {
+            ScanState s = m.getScanState();
             if (s == ScanState.LAZY) anyLazy = true;
             else if (s == ScanState.PARTIAL) anyPartial = true;
         }
         String scanLabel;
         Color scanColor;
         if (anyLazy && !anyPartial) {
-            // 全部 LAZY
             scanLabel = "扫描: LAZY";
             scanColor = new Color(100, 200, 255);
         } else if (anyPartial) {
@@ -366,20 +326,14 @@ public abstract class MixinGui {
 
         int infoY = centerY + 64;
 
-        // 模式名称显示
-        if (ConfigUtils.isSingleMode()) {
-            String modeName = Configs.Core.WORK_MODE_TYPE.getOptionListValue().getDisplayName();
-            RenderUtils.drawString(modeName, centerX, infoY, Color.WHITE, true, true);
-        } else {
-            HashSet<String> modeNames = new HashSet<>();
-            for (ClientPlayerTickHandler handler : ClientPlayerTickManager.VALUES) {
-                if (handler.getId().equals(GuiHandler.NAME) || handler.getEnableConfig() == null || !handler.getEnableConfig().getBooleanValue()) {
-                    continue;
-                }
-                modeNames.add(handler.getEnableConfig().getPrettyName());
+        HashSet<String> modeNames = new HashSet<>();
+        for (Module module : ModuleManager.VALUES) {
+            if (module.getId().equals(GUI.NAME) || module.getEnableConfig() == null || !module.getEnableConfig().getBooleanValue()) {
+                continue;
             }
-            RenderUtils.drawString(String.join(", ", modeNames), centerX, infoY, Color.WHITE, true, true);
+            modeNames.add(module.getEnableConfig().getPrettyName());
         }
+        RenderUtils.drawString(String.join(", ", modeNames), centerX, infoY, Color.WHITE, true, true);
     }
 
     @Unique

@@ -2,8 +2,7 @@ package me.aleksilassila.litematica.printer.handler.handlers;
 
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.HighlightType;
-import me.aleksilassila.litematica.printer.enums.PrintModeType;
-import me.aleksilassila.litematica.printer.handler.ClientPlayerTickHandler;
+import me.aleksilassila.litematica.printer.handler.Module;
 import me.aleksilassila.litematica.printer.printer.*;
 import me.aleksilassila.litematica.printer.printer.action.Action;
 import me.aleksilassila.litematica.printer.printer.ActionManager;
@@ -13,24 +12,23 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class FluidHandler extends ClientPlayerTickHandler {
+public class FluidRemoval extends Module {
     public final static String NAME = "fluid";
 
     private List<String> fillBlocks = new ArrayList<>();
     private List<Item> fillItems = new ArrayList<>();
 
     private List<String> fluidBlocks = new ArrayList<>();
-    private List<Fluid> fluids = List.of(new Fluid[0]);
+    private List<net.minecraft.world.level.material.Fluid> fluids = List.of(new net.minecraft.world.level.material.Fluid[0]);
 
-    public FluidHandler() {
-        super(NAME, PrintModeType.FLUID, Configs.Core.FLUID, Configs.Fluid.FLUID_SELECTION_TYPE, true);
+    public FluidRemoval() {
+        super(NAME, Configs.Fluid.ENABLED, Configs.Fluid.FLUID_SELECTION_TYPE, true);
     }
 
     @Override
@@ -64,7 +62,7 @@ public class FluidHandler extends ClientPlayerTickHandler {
             if (!fluidBlocks.isEmpty()) {
                 fluids = new ArrayList<>();
                 for (String itemName : this.fluidBlocks) {
-                    List<Fluid> list = BuiltInRegistries.FLUID.stream().filter(item -> PinYinSearchUtils.matchName(itemName, item.defaultFluidState().createLegacyBlock())).toList();
+                    List<net.minecraft.world.level.material.Fluid> list = BuiltInRegistries.FLUID.stream().filter(item -> PinYinSearchUtils.matchName(itemName, item.defaultFluidState().createLegacyBlock())).toList();
                     fluids.addAll(list);
                 }
             }
