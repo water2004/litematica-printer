@@ -267,6 +267,8 @@
   "litematica-printer.config.lazyEnterTicks.desc": "進入惰性掃描模式前的空閒 tick 數（跳過全量迭代掃描）。\n設為 0 徹底停用惰性模式。",
   "litematica-printer.config.lazyDirtyWakeThreshold": "惰性喚醒髒區域閾值",
   "litematica-printer.config.lazyDirtyWakeThreshold.desc": "從惰性模式喚醒時，若髒子區塊數量低於此值，只掃描髒子區塊（PARTIAL）；高於此值則全量重掃（FULL）。\n設為 0 始終全量重掃。",
+  "litematica-printer.config.verifyAccuracyThreshold": "驗證正確率閾值",
+  "litematica-printer.config.verifyAccuracyThreshold.desc": "第二次驗證掃描後，若方塊放置正確率超過此百分比，立即進入惰性掃描模式。\n設為 100 要求完美正確率。",
   "litematica-printer.config.category.highlight": "§6高亮顯示",
   "litematica-printer.config.category.highlight.desc": "列印時方塊高亮顯示設定",
   "litematica-printer.config.highlightEnabled": "啟用方塊高亮",

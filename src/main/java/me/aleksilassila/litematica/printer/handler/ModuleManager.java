@@ -44,6 +44,9 @@ public class ModuleManager {
         boolean printerEnabled = ConfigUtils.isPrinterEnable();
         if (printerEnabled && !lastPrinterEnabled) {
             MissingMaterialTracker.getInstance().reset();
+            for (Module module : VALUES) {
+                module.resetScanState();
+            }
         }
         lastPrinterEnabled = printerEnabled;
 

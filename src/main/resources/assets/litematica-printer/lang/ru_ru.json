@@ -145,6 +145,8 @@
   "litematica-printer.config.last.desc": "Переключиться на предыдущий привязанный контейнер",
   "litematica-printer.config.lazyDirtyWakeThreshold": "Порог пробуждения из ленивого режима",
   "litematica-printer.config.lazyDirtyWakeThreshold.desc": "При пробуждении из ленивого режима: если число «грязных» суб-чанков ниже этого порога — сканируются только они (ЧАСТИЧНОЕ). Если выше — выполняется полное пересканирование.\nУстановите 0 для всегда полного пересканирования.",
+  "litematica-printer.config.verifyAccuracyThreshold": "Порог точности проверки",
+  "litematica-printer.config.verifyAccuracyThreshold.desc": "После второй проверочной развертки, если процент правильно установленных блоков достигает этого порога, немедленно войти в ленивый режим.\nУстановите 100 для требования идеальной точности.",
   "litematica-printer.config.lazyEnterTicks": "Тики до ленивого режима",
   "litematica-printer.config.lazyEnterTicks.desc": "Количество простойных тиков до перехода в ленивый режим сканирования (пропускает полный перебор объёма).\nУстановите 0 для полного отключения ленивого режима.",
   "litematica-printer.config.mine": "Добыча",

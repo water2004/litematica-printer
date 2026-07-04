@@ -10,6 +10,7 @@ import fi.dy.masa.litematica.selection.SelectionMode;
 import fi.dy.masa.litematica.util.EasyPlaceProtocol;
 import fi.dy.masa.litematica.util.PlacementHandler;
 import fi.dy.masa.litematica.util.WorldUtils;
+import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.printer.PrinterBox;
 import net.fabricmc.api.EnvType;
@@ -47,14 +48,7 @@ public class LitematicaUtils {
         }
         return null;
     }
-    /**
-     * 判断位置是否位于当前加载的投影范围内，且子区域处于启用状态。
-     * 仅检查子区域的启用状态，不检查渲染开启状态或渲染层范围。
-     * 渲染层限制由 {@link PlayerUtils#isPositionInSelectionRange} 单独处理。
-     *
-     * @param pos 要检测的方块位置
-     * @return 如果位置属于已启用的图纸结构部分，则返回 true，否则返回 false
-     */
+
     public static boolean isSchematicBlock(BlockPos pos) {
         SchematicPlacementManager schematicPlacementManager = DataManager.getSchematicPlacementManager();
         //#if MC < 11900
@@ -92,24 +86,26 @@ public class LitematicaUtils {
         return null;
     }
 
-    public static boolean isWithinSelection1ModeRange(BlockPos pos) {
+    public static boolean inSelection(BlockPos pos) {
         AreaSelection selection = DataManager.getSelectionManager().getCurrentSelection();
         if (selection == null) return false;
         if (DataManager.getSelectionManager().getSelectionMode() == SelectionMode.NORMAL) {
+            // 普通选区
             List<Box> arr = selection.getAllSubRegionBoxes();
             for (Box box : arr) {
-                if (comparePos(box, pos)) {
+                if (isPosInBox(box, pos)) {
                     return true;
                 }
             }
             return false;
         } else {
+            // 简单选区
             Box box = selection.getSubRegionBox(DataManager.getSimpleArea().getName());
-            return comparePos(box, pos);
+            return isPosInBox(box, pos);
         }
     }
 
-    private static boolean comparePos(Box box, BlockPos pos) {
+    private static boolean isPosInBox(Box box, BlockPos pos) {
         if (box == null || box.getPos1() == null || box.getPos2() == null || pos == null) return false;
         PrinterBox printerBox = new PrinterBox(box.getPos1(), box.getPos2());
         return printerBox.contains(pos);
@@ -163,4 +159,7 @@ public class LitematicaUtils {
         return new PrinterBox(box.getPos1(), box.getPos2());
     }
 
+    public static BlockState getBlockState(BlockPos pos) {
+        return SchematicWorldHandler.getSchematicWorld().getBlockState(pos);
+    }
 }

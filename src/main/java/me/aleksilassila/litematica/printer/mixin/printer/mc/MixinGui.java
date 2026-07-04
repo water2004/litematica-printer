@@ -7,7 +7,6 @@ import me.aleksilassila.litematica.printer.enums.ScanState;
 import me.aleksilassila.litematica.printer.handler.Module;
 import me.aleksilassila.litematica.printer.handler.GuiBlockInfo;
 import me.aleksilassila.litematica.printer.handler.handlers.GUI;
-import me.aleksilassila.litematica.printer.printer.RegionTracker;
 import me.aleksilassila.litematica.printer.utils.ConfigUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
@@ -19,10 +18,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.awt.*;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 //#if MC <= 11904
 //$$import com.mojang.blaze3d.vertex.PoseStack;
@@ -54,19 +54,11 @@ public abstract class MixinGui {
     }
 
     @Unique
-    private static String formatAlignedNumber(int current, int total) {
-        int totalDigits = total == 0 ? 1 : String.valueOf(total).length();
-        DecimalFormat formatter = new DecimalFormat(String.format("%0" + totalDigits + "d", 0));
-        return formatter.format(current);
-    }
-
-    @Unique
     private List<String> buildHandlerDebugLines(Module module, GuiBlockInfo guiInfo) {
         List<String> lines = new ArrayList<>();
         lines.add("处理类型: " + module.getId());
         ScanState state = module.getScanState();
-        String stateColor = state == ScanState.LAZY ? "§b" : state == ScanState.PARTIAL ? "§e" : "§a";
-        lines.add("扫描状态: " + stateColor + state);
+        lines.add("扫描状态: §a" + state);
         lines.add("当前位置: " + guiInfo.pos.toShortString());
         if (guiInfo.requiredState != null) {
             lines.add("投影方块: " + guiInfo.requiredState.getBlock().getName().getString());
@@ -75,10 +67,6 @@ public abstract class MixinGui {
         lines.add("交互范围: " + booleanToColoredString(guiInfo.interacted));
         lines.add("选区类型: " + booleanToColoredString(guiInfo.posInSelectionRange));
         lines.add("已经执行: " + booleanToColoredString(guiInfo.execute));
-
-        int renderIndex = module.getRenderIndex();
-        int queueSize = module.getGuiQueueSize();
-        lines.add("同刻迭代(GUI): " + formatAlignedNumber(renderIndex, queueSize) + "/" + queueSize);
 
         return lines;
     }
@@ -133,13 +121,16 @@ public abstract class MixinGui {
     private void drawDebugInfo(float scaledWidth, float scaledHeight) {
         Minecraft mc = Minecraft.getInstance();
         List<Module> validModules = new ArrayList<>();
+        Map<Module, GuiBlockInfo> guiInfoMap = new HashMap<>();
         int globalMaxTextWidth = MIN_COLUMN_WIDTH;
 
+        // 每个模块只调用一次 getGuiInfo()，避免多次消费导致数据错乱
         for (Module module : ModuleManager.VALUES) {
-            GuiBlockInfo guiInfo = module.nextGuiInfo();
+            GuiBlockInfo guiInfo = module.getGuiInfo();
             if (guiInfo == null) continue;
 
             validModules.add(module);
+            guiInfoMap.put(module, guiInfo);
             List<String> lines = buildHandlerDebugLines(module, guiInfo);
             for (String line : lines) {
                 String cleanLine = line.replaceAll("§[0-9a-fA-Fklmnor]", "");
@@ -156,7 +147,7 @@ public abstract class MixinGui {
         int availableHeight = (int) (scaledHeight - commonInfoBottomY - COMMON_INFO_OFFSET_Y - SIDE_MARGIN);
 
         int drawnModules = drawModulePanels(
-                validModules, 0,
+                validModules, guiInfoMap, 0,
                 SIDE_MARGIN, commonInfoBottomY + COMMON_INFO_OFFSET_Y,
                 columnWidth, maxColumnsPerSide, availableHeight,
                 scaledHeight
@@ -165,7 +156,7 @@ public abstract class MixinGui {
         if (drawnModules < validModules.size()) {
             int rightStartX = (int) (scaledWidth - SIDE_MARGIN - columnWidth);
             drawModulePanels(
-                    validModules, drawnModules,
+                    validModules, guiInfoMap, drawnModules,
                     rightStartX, commonInfoBottomY + COMMON_INFO_OFFSET_Y,
                     columnWidth, maxColumnsPerSide, availableHeight,
                     scaledHeight
@@ -183,7 +174,7 @@ public abstract class MixinGui {
     }
 
     @Unique
-    private int drawModulePanels(List<Module> modules, int startIndex,
+    private int drawModulePanels(List<Module> modules, Map<Module, GuiBlockInfo> guiInfoMap, int startIndex,
                                   int startX, int startY, int columnWidth,
                                   int maxColumns, int availableHeight, float scaledHeight) {
         int drawnCount = 0;
@@ -193,7 +184,7 @@ public abstract class MixinGui {
 
         for (int i = startIndex; i < modules.size(); i++) {
             Module module = modules.get(i);
-            GuiBlockInfo guiInfo = module.nextGuiInfo();
+            GuiBlockInfo guiInfo = guiInfoMap.get(module);
             if (guiInfo == null) continue;
 
             List<String> debugLines = buildHandlerDebugLines(module, guiInfo);
@@ -239,30 +230,11 @@ public abstract class MixinGui {
         commonLines.add("全局Tick: " + ModuleManager.getCurrentHandlerTime());
         commonLines.add("活跃模块数: " + ModuleManager.VALUES.size());
 
-        boolean allLazy = true;
-        ScanState dominantState = ScanState.FULL;
+        ScanState dominantState = ScanState.COLLECT;
         for (Module m : ModuleManager.VALUES) {
-            ScanState s = m.getScanState();
-            if (s != ScanState.LAZY) allLazy = false;
-            dominantState = s;
+            dominantState = m.getScanState();
         }
-        StringBuilder scanLine = new StringBuilder("扫描模式: ");
-        if (allLazy) {
-            scanLine.append("§bLAZY");
-        } else {
-            scanLine.append(dominantState == ScanState.PARTIAL ? "§ePARTIAL" : "§aFULL");
-        }
-        int dirtyTotal = RegionTracker.INSTANCE.getDirtyCount();
-        if (dirtyTotal > 0) {
-            scanLine.append("§r | 脏区域: §c").append(dirtyTotal);
-        }
-        int lazyThreshold = Configs.Core.LAZY_ENTER_TICKS.getIntegerValue();
-        if (lazyThreshold > 0) {
-            scanLine.append("§r | 惰性阈值: ").append(lazyThreshold).append("tick");
-        } else {
-            scanLine.append("§r | §7惰性已禁用");
-        }
-        commonLines.add(scanLine.toString());
+        commonLines.add("扫描模式: §a" + dominantState);
 
         Minecraft mc = Minecraft.getInstance();
         int maxWidth = 0;
@@ -303,28 +275,7 @@ public abstract class MixinGui {
         RenderUtils.drawString((int) (progress * 100) + "%", centerX, centerY + 22, Color.WHITE, true, true);
         drawProgressBar(centerX, centerY + 36, 40, 6, progress, new Color(0, 0, 0, 150), new Color(0, 255, 0, 255));
 
-        boolean anyLazy = false;
-        boolean anyPartial = false;
-        for (Module m : ModuleManager.VALUES) {
-            ScanState s = m.getScanState();
-            if (s == ScanState.LAZY) anyLazy = true;
-            else if (s == ScanState.PARTIAL) anyPartial = true;
-        }
-        String scanLabel;
-        Color scanColor;
-        if (anyLazy && !anyPartial) {
-            scanLabel = "扫描: LAZY";
-            scanColor = new Color(100, 200, 255);
-        } else if (anyPartial) {
-            scanLabel = "扫描: PARTIAL";
-            scanColor = new Color(255, 200, 50);
-        } else {
-            scanLabel = "扫描: FULL";
-            scanColor = new Color(100, 255, 100);
-        }
-        RenderUtils.drawString(scanLabel, centerX, centerY + 52, scanColor, true, true);
-
-        int infoY = centerY + 64;
+        int infoY = centerY + 52;
 
         HashSet<String> modeNames = new HashSet<>();
         for (Module module : ModuleManager.VALUES) {

@@ -18,7 +18,6 @@ public class PrinterBox implements Iterable<BlockPos> {
     public boolean xIncrement = true;
     public boolean zIncrement = true;
     public IterationOrderType iterationMode = IterationOrderType.XZY;
-    private Iterator<BlockPos> iterator;
 
     public PrinterBox(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
         this.minX = Math.min(minX, maxX);
@@ -73,10 +72,7 @@ public class PrinterBox implements Iterable<BlockPos> {
 
     @Override
     public @NotNull Iterator<BlockPos> iterator() {
-        if (this.iterator == null) {
-            this.iterator = new BoxIterator();
-        }
-        return this.iterator;
+        return new BoxIterator();
     }
 
     @Override

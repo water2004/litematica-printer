@@ -145,6 +145,8 @@
   "litematica-printer.config.last.desc": "切换至上一个绑定的容器",
   "litematica-printer.config.lazyDirtyWakeThreshold": "惰性唤醒脏区域阈值",
   "litematica-printer.config.lazyDirtyWakeThreshold.desc": "从惰性模式唤醒时，若脏子区块数量低于此值，只扫描脏子区块（PARTIAL）；高于此值则全量重扫（FULL）。\n设为 0 始终全量重扫。",
+  "litematica-printer.config.verifyAccuracyThreshold": "验证正确率阈值",
+  "litematica-printer.config.verifyAccuracyThreshold.desc": "第二次验证扫描后，若方块放置正确率超过此百分比，立即进入惰性扫描模式。\n设为 100 要求完美正确率。",
   "litematica-printer.config.lazyEnterTicks": "惰性进入间隔",
   "litematica-printer.config.lazyEnterTicks.desc": "进入惰性扫描模式前的空闲 tick 数（跳过全量迭代扫描）。\n设为 0 彻底禁用惰性模式。",
   "litematica-printer.config.mine": "挖掘",

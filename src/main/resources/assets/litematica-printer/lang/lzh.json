@@ -145,6 +145,8 @@
   "litematica-printer.config.last.desc": "轉至前繫之器",
   "litematica-printer.config.lazyDirtyWakeThreshold": "惰醒髒區閾",
   "litematica-printer.config.lazyDirtyWakeThreshold.desc": "惰模醒時，若髒子區塊少於此值，惟掃髒區(PARTIAL)；多則全掃(FULL)。\n設0則恆全掃。",
+  "litematica-printer.config.verifyAccuracyThreshold": "驗證正確率閾",
+  "litematica-printer.config.verifyAccuracyThreshold.desc": "二驗掃畢，若方塊置正率逾此百比，立入惰掃。\n設百則求全正。",
   "litematica-printer.config.lazyEnterTicks": "惰入間隔",
   "litematica-printer.config.lazyEnterTicks.desc": "入惰掃描前之閒刻(跳全量迭代)。\n設0則永禁惰模。",
   "litematica-printer.config.mine": "掘",

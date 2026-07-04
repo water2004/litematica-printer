@@ -73,10 +73,14 @@ public class Mine extends Module {
     }
 
     @Override
+    public boolean isCorrectBlock(BlockPos pos) {
+        return level.getBlockState(pos).isAir();
+    }
+
+    @Override
     protected void executeIteration(BlockPos blockPos, AtomicReference<Boolean> skipIteration) {
         BlockBreakResult result = BreakUtils.INSTANCE.continueDestroyBlock(blockPos);
         addHighlight(blockPos, HighlightType.BREAK);
-        didWorkThisTick = true;
         if (result == BlockBreakResult.IN_PROGRESS || result == BlockBreakResult.COMPLETED_WAIT) {
             skipIteration.set(true);
         }

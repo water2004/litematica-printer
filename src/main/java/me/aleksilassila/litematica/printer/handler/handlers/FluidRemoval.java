@@ -81,6 +81,12 @@ public class FluidRemoval extends Module {
     }
 
     @Override
+    public boolean isCorrectBlock(BlockPos pos) {
+        FluidState fluidState = level.getBlockState(pos).getFluidState();
+        return !fluids.contains(fluidState.getType());
+    }
+
+    @Override
     protected void executeIteration(BlockPos blockPos, AtomicReference<Boolean> skipIteration) {
         FluidState fluidState = level.getBlockState(blockPos).getFluidState();
         if (fluids.contains(fluidState.getType())) {
@@ -102,7 +108,6 @@ public class FluidRemoval extends Module {
                 return;
             }
             Action action = new Action().queueAction(blockPos, Direction.UP, false, player);
-            didWorkThisTick = true;
             addHighlight(blockPos, HighlightType.PLACE);
             ActionManager.INSTANCE.setNeedWaitModifyLookFromAction(action.getNeedWaitModifyLook());
             if (ActionManager.INSTANCE.sendQueue(player).needWaitModifyLook) {

@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import me.aleksilassila.litematica.printer.I18n;
 import me.aleksilassila.litematica.printer.config.Configs;
+import me.aleksilassila.litematica.printer.enums.BlockMatchingType;
 import me.aleksilassila.litematica.printer.enums.HighlightType;
 import me.aleksilassila.litematica.printer.handler.Module;
 import me.aleksilassila.litematica.printer.interfaces.Implementation;
@@ -21,6 +22,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -54,6 +56,7 @@ public class Print extends Module {
     public Print() {
         super(NAME, Configs.Print.ENABLED, Configs.Print.PRINT_SELECTION_TYPE, true);
         this.guide = new PlacementGuide(client);
+        this.needSchematic = true;
     }
 
     @Override
@@ -67,11 +70,6 @@ public class Print extends Module {
     }
 
     @Override
-    protected boolean isSchematicHandler() {
-        return true;
-    }
-
-    @Override
     public boolean canProcessPos(BlockPos blockPos) {
         WorldSchematic schematic = SchematicWorldHandler.getSchematicWorld();
         if (schematic == null) return false;
@@ -79,24 +77,21 @@ public class Print extends Module {
         BlockState required = schematic.getBlockState(blockPos);
         BlockState current = level.getBlockState(blockPos);
 
+        // 如果原理图为空气且不破坏多余方块，则无法处理
         if (required.isAir()) {
-            if (!Configs.Print.BREAK_EXTRA_BLOCK.getBooleanValue() || current.isAir()) return false;
-        } else if (required == current) {
-            return false;
+            if (!Configs.Print.BREAK_EXTRA_BLOCK.getBooleanValue()) return false;
         }
 
         this.ctx = new SchematicBlockContext(client, level, schematic, blockPos, current, required);
 
         if (Configs.Print.PRINT_SKIP.getBooleanValue()) {
-            // 缓存 skipSet，避免每次新建 HashSet 和流式匹配开销
             List<String> currentConfig = Configs.Print.PRINT_SKIP_LIST.getStrings();
             if (!currentConfig.equals(lastSkipConfig)) {
                 skipSet = new HashSet<>(currentConfig);
                 lastSkipConfig = currentConfig;
-                lastSkipBlock = null; // 强制重新计算缓存
+                lastSkipBlock = null;
             }
 
-            // 缓存每类方块的 skip 结果，相邻同种方块只做一次拼音匹配
             Block block = ctx.requiredState.getBlock();
             if (block != lastSkipBlock) {
                 lastSkipBlock = block;
@@ -115,6 +110,23 @@ public class Print extends Module {
         if (action == null) return false;
         this.action = action;
         return true;
+    }
+
+    @Override
+    public boolean isCorrectBlock(BlockPos pos) {
+        BlockState required = LitematicaUtils.getBlockState(pos);
+        BlockState current = level.getBlockState(pos);
+        return BlockMatchingType.get(required, current) == BlockMatchingType.CORRECT;
+    }
+
+    @Override
+    @Nullable
+    protected Item[] getRequiredItems(BlockPos pos) {
+        // canProcessPos 已设置 this.action 和 this.ctx
+        if (this.action != null && this.ctx != null) {
+            return this.action.getRequiredItems(this.ctx.requiredState.getBlock());
+        }
+        return null;
     }
 
     @Override
@@ -173,7 +185,6 @@ public class Print extends Module {
             useShift = action.getShift();
         }
         action.queueAction(blockPos, side, useShift, player);
-        didWorkThisTick = true;
         Vec3 hitModifier = LitematicaUtils.usePrecisionPlacement(blockPos, ctx.requiredState);
         if (hitModifier != null) {
             ActionManager.INSTANCE.hitModifier = hitModifier;

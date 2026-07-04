@@ -34,18 +34,18 @@ public class GUI extends Module {
     }
 
     @Override
-    protected boolean needsRangeCheck() {
-        return false;
-    }
-
-    @Override
-    protected boolean shouldProcessQueue() {
+    protected boolean needsAreaCheck() {
         return false;
     }
 
     @Override
     public boolean canProcessPos(BlockPos pos) {
-        return super.canProcessPos(pos);
+        return true;
+    }
+
+    @Override
+    public boolean isCorrectBlock(BlockPos pos) {
+        return true;
     }
 
     @Override
@@ -95,17 +95,6 @@ public class GUI extends Module {
         totalProgress.calculateProgress();
     }
 
-    @Override
-    protected void stopIteration(boolean interrupt) {
-        if (!interrupt) {
-            totalProgress.reset();
-            printProgress.reset();
-            fluidProgress.reset();
-            fillProgress.reset();
-            mineProgress.reset();
-        }
-    }
-
     /**
      * 进度管理内部类（独立计数+自动修正进度范围）
      */
@@ -131,12 +120,6 @@ public class GUI extends Module {
         public void calculateProgress() {
             progress = total < 1 ? lastProgress : (float) finished / total;
             lastProgress = progress;
-        }
-
-        public void reset() {
-            this.total = 0;
-            this.finished = 0;
-            this.progress = 0.0;
         }
     }
 }

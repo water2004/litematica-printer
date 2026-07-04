@@ -66,7 +66,7 @@ public class RemoteContainerUtils {
         // MC >= 1.20.6: server sends ResourceKey#toString() format
         return mc.level.dimension().toString();
         //#else
-        // MC < 1.20.6: server sends the identifier format
+        //$$ // MC < 1.20.6: server sends the identifier format
         //$$ return mc.level.dimension().location().toString();
         //#endif
     }

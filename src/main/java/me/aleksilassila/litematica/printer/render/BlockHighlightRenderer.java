@@ -185,13 +185,13 @@ public class BlockHighlightRenderer implements IRenderer {
                 ? MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_NO_DEPTH_NO_CULL
                 : MaLiLibPipelines.DEBUG_LINES_MASA_SIMPLE_LEQUAL_DEPTH;
         //#if MC >= 12108
-        //$$ RenderPipeline filledPipeline = seeThrough
-        //$$         ? MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_NO_DEPTH_NO_CULL
-        //$$         : MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_LEQUAL_DEPTH_NO_CULL;
-        //#else
         RenderPipeline filledPipeline = seeThrough
                 ? MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_NO_DEPTH_NO_CULL
-                : MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_LEQUAL_DEPTH;
+                : MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_LEQUAL_DEPTH_NO_CULL;
+        //#else
+        //$$ RenderPipeline filledPipeline = seeThrough
+        //$$         ? MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_NO_DEPTH_NO_CULL
+        //$$         : MaLiLibPipelines.POSITION_COLOR_TRANSLUCENT_LEQUAL_DEPTH;
         //#endif
 
         //#if MC >= 260200
@@ -206,9 +206,7 @@ public class BlockHighlightRenderer implements IRenderer {
                 //#if MC >= 260200
                 //$$ ctx.start(() -> "highlight_outline", linePipeline, 0);
                 //#elseif MC >= 12108
-                //$$ ctx.start(() -> "highlight_outline", linePipeline);
-                //#else
-                // BufferBuilder already set in constructor
+                ctx.start(() -> "highlight_outline", linePipeline);
                 //#endif
                 BufferBuilder lineBuf = ctx.getBuilder();
                 for (HighlightEntry e : entries) {

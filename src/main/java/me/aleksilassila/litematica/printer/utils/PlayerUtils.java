@@ -270,19 +270,4 @@ public class PlayerUtils {
             case CUBE -> isWithinWorkInteractedCubeRange(x, y, z, eyePos, range);
         };
     }
-
-    public static boolean isPositionInSelectionRange(Player player, @NotNull BlockPos pos, ConfigOptionList selectionTypeConfig) {
-        if (player == null || selectionTypeConfig == null) {
-            return false;
-        }
-        if (!(selectionTypeConfig.getOptionListValue() instanceof SelectionType selectionType)) {
-            return false;
-        }
-        return switch (selectionType) {
-            case LITEMATICA_RENDER_LAYER -> LitematicaUtils.isPositionWithinRange(pos);
-            case LITEMATICA_SELECTION_BELOW_PLAYER -> pos.getY() <= Math.floor(player.getY());
-            case LITEMATICA_SELECTION_ABOVE_PLAYER -> pos.getY() >= Math.ceil(player.getY());
-            default -> true;
-        };
-    }
 }

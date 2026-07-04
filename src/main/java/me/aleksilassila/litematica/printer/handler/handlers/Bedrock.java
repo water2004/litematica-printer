@@ -8,6 +8,7 @@ import me.aleksilassila.litematica.printer.handler.Module;
 import me.aleksilassila.litematica.printer.utils.MessageUtils;
 import me.aleksilassila.litematica.printer.utils.bedrock.BedrockUtils;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.Blocks;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -41,17 +42,26 @@ public class Bedrock extends Module {
         if (!BedrockUtils.isWorking()) {
             BedrockUtils.setWorking(true);
         }
-        if (BedrockUtils.isBedrockMinerFeatureEnable()) {   // 限制原功能(手动点击或使用方块：添加、开关)
+        if (BedrockUtils.isBedrockMinerFeatureEnable()) {
             BedrockUtils.setBedrockMinerFeatureEnable(false);
         }
         return true;
     }
 
     @Override
+    public boolean canProcessPos(BlockPos pos) {
+        return level.getBlockState(pos).is(Blocks.BEDROCK);
+    }
+
+    @Override
+    public boolean isCorrectBlock(BlockPos pos) {
+        return !level.getBlockState(pos).is(Blocks.BEDROCK);
+    }
+
+    @Override
     protected void executeIteration(BlockPos blockPos, AtomicReference<Boolean> skipIteration) {
         BedrockUtils.addToBreakList(blockPos, client.level);
         addHighlight(blockPos, HighlightType.BREAK);
-        didWorkThisTick = true;
         setCooldown(blockPos, 100);
     }
 }

@@ -18,10 +18,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.awt.*;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 @Mixin(Hud.class)
 public abstract class MixinHud {
@@ -44,13 +45,6 @@ public abstract class MixinHud {
     }
 
     @Unique
-    private static String formatAlignedNumber(int current, int total) {
-        int totalDigits = total == 0 ? 1 : String.valueOf(total).length();
-        DecimalFormat formatter = new DecimalFormat(String.format("%0" + totalDigits + "d", 0));
-        return formatter.format(current);
-    }
-
-    @Unique
     private List<String> buildHandlerDebugLines(Module handler, GuiBlockInfo guiInfo) {
         List<String> lines = new ArrayList<>();
         lines.add("处理类型: " + handler.getId());
@@ -63,10 +57,6 @@ public abstract class MixinHud {
         lines.add("选区类型: " + booleanToColoredString(guiInfo.posInSelectionRange));
         lines.add("已经执行: " + booleanToColoredString(guiInfo.execute));
 
-        int renderIndex = handler.getRenderIndex();
-        int queueSize = handler.getGuiQueueSize();
-        lines.add("同刻迭代(GUI): " + formatAlignedNumber(renderIndex, queueSize) + "/" + queueSize);
-
         return lines;
     }
 
@@ -78,7 +68,7 @@ public abstract class MixinHud {
     // @formatter:off
     @Inject(method = "extractHotbarAndDecorations", at = @At("TAIL"))
 
-    private void hookRenderItemHotbar(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+    private void hookRenderItemHotbar(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.player.isSpectator() || !ConfigUtils.isPrinterEnable()) {
             return;
@@ -88,7 +78,7 @@ public abstract class MixinHud {
         float scaledHeight = mc.getWindow().getGuiScaledHeight();
 
         // 初始化渲染矩阵
-        RenderUtils.initGuiGraphics(guiGraphics);
+        RenderUtils.initGuiGraphics(graphics);
 
         if (Configs.Core.DEBUG_OUTPUT.getBooleanValue()) {
             drawDebugInfo(scaledWidth, scaledHeight);
@@ -105,14 +95,15 @@ public abstract class MixinHud {
     private void drawDebugInfo(float scaledWidth, float scaledHeight) {
         Minecraft mc = Minecraft.getInstance();
         List<Module> validHandlers = new ArrayList<>();
+        Map<Module, GuiBlockInfo> guiInfoMap = new HashMap<>();
         int globalMaxTextWidth = MIN_COLUMN_WIDTH;
 
-        // 1. 收集有效Handler并计算全局最大宽度
         for (Module handler : ModuleManager.VALUES) {
-            GuiBlockInfo guiInfo = handler.nextGuiInfo();
+            GuiBlockInfo guiInfo = handler.getGuiInfo();
             if (guiInfo == null) continue;
 
             validHandlers.add(handler);
+            guiInfoMap.put(handler, guiInfo);
             List<String> lines = buildHandlerDebugLines(handler, guiInfo);
             for (String line : lines) {
                 String cleanLine = line.replaceAll("§[0-9a-fA-Fklmnor]", "");
@@ -122,29 +113,24 @@ public abstract class MixinHud {
 
         if (validHandlers.isEmpty()) return;
 
-        // 2. 绘制公共信息（左上角）
         int commonInfoBottomY = drawCommonDebugInfo(SIDE_MARGIN, SIDE_MARGIN);
 
-        // 3. 计算布局参数（动态适配屏幕）
         int columnWidth = globalMaxTextWidth + DEBUG_PADDING * 2;
         int maxColumnsPerSide = calculateMaxColumnsPerSide(scaledWidth, columnWidth);
-        int availableHeight = (int) (scaledHeight - commonInfoBottomY - COMMON_INFO_OFFSET_Y - SIDE_MARGIN);
 
-        // 4. 优先绘制左侧面板，再绘制右侧
         int drawnHandlers = drawHandlerPanels(
-                validHandlers, 0,
+                validHandlers, guiInfoMap, 0,
                 SIDE_MARGIN, commonInfoBottomY + COMMON_INFO_OFFSET_Y,
-                columnWidth, maxColumnsPerSide, availableHeight,
+                columnWidth, maxColumnsPerSide,
                 scaledHeight
         );
 
-        // 如果左侧绘制不完，绘制右侧面板
         if (drawnHandlers < validHandlers.size()) {
             int rightStartX = (int) (scaledWidth - SIDE_MARGIN - columnWidth);
             drawHandlerPanels(
-                    validHandlers, drawnHandlers,
+                    validHandlers, guiInfoMap, drawnHandlers,
                     rightStartX, commonInfoBottomY + COMMON_INFO_OFFSET_Y,
-                    columnWidth, maxColumnsPerSide, availableHeight,
+                    columnWidth, maxColumnsPerSide,
                     scaledHeight
             );
         }
@@ -171,9 +157,9 @@ public abstract class MixinHud {
      * @return 实际绘制的Handler数量
      */
     @Unique
-    private int drawHandlerPanels(List<Module> handlers, int startIndex,
+    private int drawHandlerPanels(List<Module> handlers, Map<Module, GuiBlockInfo> guiInfoMap, int startIndex,
                                   int startX, int startY, int columnWidth,
-                                  int maxColumns, int availableHeight, float scaledHeight) {
+                                  int maxColumns, float scaledHeight) {
         int drawnCount = 0;
         int currentColumn = 0;
         int currentX = startX;
@@ -181,7 +167,7 @@ public abstract class MixinHud {
 
         for (int i = startIndex; i < handlers.size(); i++) {
             Module handler = handlers.get(i);
-            GuiBlockInfo guiInfo = handler.nextGuiInfo();
+            GuiBlockInfo guiInfo = guiInfoMap.get(handler);
             if (guiInfo == null) continue;
 
             // 构建调试文本并计算面板高度
@@ -296,7 +282,7 @@ public abstract class MixinHud {
 
     @Unique
     private void drawProgressBar(int x, int y, int barWidth, int barHeight, double progress, Color bgColor, Color fgColor) {
-        double clampedProgress = Math.max(0.0, Math.min(1.0, progress));
+        double clampedProgress = Math.clamp(progress, 0.0, 1.0);
         int barXStart = x - (barWidth / 2);
         int barXEnd = x + (barWidth / 2);
         int barYEnd = y + barHeight;

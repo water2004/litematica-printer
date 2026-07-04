@@ -98,6 +98,15 @@ public class Fill extends Module {
     }
 
     @Override
+    public boolean isCorrectBlock(BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        if (state.isAir()) return false;
+        if (state.getBlock() instanceof LiquidBlock) return false;
+        if (Configs.Print.REPLACEABLE_LIST.getStrings().stream().anyMatch(s -> PinYinSearchUtils.matchName(s, state))) return false;
+        return true;
+    }
+
+    @Override
     protected void executeIteration(BlockPos blockPos, AtomicReference<Boolean> skipIteration) {
         BlockState currentState = level.getBlockState(blockPos);
         if (currentState.isAir()
@@ -136,7 +145,6 @@ public class Fill extends Module {
                 action = new Action()
                         .queueAction(blockPos, getPlayerPlacementDirection(), false, player);
             }
-            didWorkThisTick = true;
             addHighlight(blockPos, HighlightType.PLACE);
             ActionManager.INSTANCE.setLook(action.getPlayerLook());
             ActionManager.INSTANCE.setNeedWaitModifyLookFromAction(action.getNeedWaitModifyLook());

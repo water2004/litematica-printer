@@ -1,15 +1,15 @@
 package me.aleksilassila.litematica.printer.enums;
 
 /**
- * 扫描状态机：控制迭代扫描的粒度和惰性行为。
+ * 扫描状态机：控制迭代扫描的阶段。
  * <p>
- * FULL    — 全量扫描整个 PrinterBox（默认行为，积积极响应）
- * PARTIAL — 只扫描 RegionTracker 中标记为 DIRTY 的子区块
- * LAZY    — 跳过迭代扫描，仅通过 OperationQueue 处理 BlockUpdate 修复
+ * COLLECT — 收集全坐标，按材料分组以最小化物品切换
+ * PROCESS — 按材料分组依次处理坐标
+ * VERIFY  — 验证方块状态，发现错误则重新收集
  * </p>
  */
 public enum ScanState {
-    FULL,
-    PARTIAL,
-    LAZY
+    COLLECT,
+    PROCESS,
+    VERIFY
 }
