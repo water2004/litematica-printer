@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.ShulkerSource;
+import me.aleksilassila.litematica.printer.interfaces.compat.QuickShulkerCompat;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -41,26 +42,16 @@ public class QuickShulkerUtils {
     private static int shulkerBoxSlot = -1;
     @Getter
     private static final Set<Item> lastNeedItemList = new HashSet<>();
-    /** Items previously extracted from the shulker that should be returned when inventory is full. */
+    /** 之前从潜影盒取出、背包满时需要归还的物品 */
     private static final LinkedList<Item> itemsToReturn = new LinkedList<>();
 
     private QuickShulkerUtils() {}
-
-    // ========== Mod Detection ==========
-
-    public static boolean isQuickShulkerLoaded() {
-        return QUICK_SHULKER_LOADED;
-    }
-
-    // ========== Tick / Cooldown ==========
 
     public static void tick() {
         if (shulkerCooldown > 0) {
             shulkerCooldown--;
         }
     }
-
-    // ========== State Accessors ==========
 
     public static void addLastNeedItem(Item item) {
         lastNeedItemList.add(item);
@@ -70,16 +61,9 @@ public class QuickShulkerUtils {
         lastNeedItemList.clear();
     }
 
-    // ========== Open Shulker (dispatch by ShulkerSource config) ==========
+    // ========== Open Shulker ==========
 
-    /**
-     * Open a shulker box at the given inventory slot, using the method
-     * configured by {@link Configs.Print#SHULKER_SOURCE}.
-     * <ul>
-     *   <li>{@link ShulkerSource#MOD} — uses QuickShulker mod API (CheckAndSend)</li>
-     *   <li>{@link ShulkerSource#PLUGIN} — right-clicks on the slot for plugin servers</li>
-     * </ul>
-     */
+    /** 根据 SHULKER_SOURCE 配置选择打开方式：MOD 走 QuickShulker API，PLUGIN 走右键模拟 */
     public static void openShulker(ItemStack stack, int inventorySlot) {
         ShulkerSource source = (ShulkerSource) Configs.Print.SHULKER_SOURCE.getOptionListValue();
         switch (source) {
@@ -98,28 +82,12 @@ public class QuickShulkerUtils {
         }
     }
 
-    /** Open via QuickShulker mod's ClientUtil.CheckAndSend API. */
     private static void openShulkerViaMod(ItemStack stack, int inventorySlot) {
-        if (!QUICK_SHULKER_LOADED) return;
-        try {
-            Class<?> clientUtil = Class.forName("net.kyrptonaught.quickshulker.client.ClientUtil");
-            clientUtil.getMethod("CheckAndSend", ItemStack.class, int.class)
-                    .invoke(null, stack, inventorySlot);
-        } catch (Exception ignored) {}
+        QuickShulkerCompat.openShulker(stack, inventorySlot);
     }
 
-    // ====================================================================
-    //  Click Slot via ServerboundContainerClickPacket
-    // ====================================================================
+    // ========== 容器槽位点击 ==========
 
-    /**
-     * Click a slot in the given container by sending ServerboundContainerClickPacket.
-     *
-     * @param container the container to interact with
-     * @param slotIndex the slot index to click
-     * @param button    the button (0 = left, 1 = right; for SWAP: hotbar slot 0-8)
-     * @param type      the click type (PICKUP, SWAP, QUICK_MOVE, etc.)
-     */
     public static void clickSlot(AbstractContainerMenu container, int slotIndex, int button, ClickType type) {
         ClientPacketListener connection = mc.getConnection();
         if (connection == null || mc.player == null) return;
@@ -175,57 +143,35 @@ public class QuickShulkerUtils {
         container.clicked(slotIndex, button, type, mc.player);
     }
 
-    /**
-     * Left-click on a slot to pick up items (or place held items).
-     */
     public static void pickupSlot(AbstractContainerMenu container, int slotIndex) {
         clickSlot(container, slotIndex, 0, ClickType.PICKUP);
     }
 
-    /**
-     * Swap the contents of a slot with a hotbar slot.
-     * Uses ClickType.SWAP, where the button is the target hotbar slot (0-8).
-     */
+    /** button 即目标快捷栏槽位 0-8 */
     public static void swapWithHotbar(AbstractContainerMenu container, int slotIndex, int hotbarSlot) {
         clickSlot(container, slotIndex, hotbarSlot, ClickType.SWAP);
     }
 
-    // ====================================================================
-    //  Plugin-Server Right-Click Opening (via handleInventoryMouseClick)
-    // ====================================================================
+    // ========== 插件服右键开箱 ==========
 
-    /**
-     * Right-click on a slot in the player inventory to trigger server plugin
-     * shulker box opening. Plugin servers intercept right-clicks on shulker
-     * box slots and open them as containers.
-     */
     public static void openShulkerByRightClick(int inventorySlot) {
         if (mc.player == null || mc.gameMode == null) return;
         mc.gameMode.handleInventoryMouseClick(
                 mc.player.containerMenu.containerId,
                 inventorySlot,
-                1, // right click
+                1, // 右键
                 ClickType.PICKUP,
                 mc.player);
     }
 
-    // ====================================================================
-    //  Shulker Box Extraction Logic
-    //  Phase 1 (only when full): return previously-extracted items to shulker
-    //  Phase 2: one-way extraction of the needed item
-    // ====================================================================
+    // ========== 潜影盒取物逻辑 ==========
+    // 阶段1（背包满时）：把之前取出的物品放回潜影盒
+    // 阶段2：单向取出所需物品
 
     /**
-     * Called when a ContainerSetContent packet is received while the shulker
-     * handler is active.
-     *
-     * <p>Phase 1 — if {@link Configs.Print#RETURN_TO_SHULKER_WHEN_FULL} is
-     * enabled and the player's main inventory has no empty slots, items in
-     * {@link #itemsToReturn} are swapped back into the shulker one by one.
-     *
-     * <p>Phase 2 — finds the needed item in the shulker and swaps it into any
-     * empty inventory slot (one-way). The next tick, {@code switchToItems}
-     * picks it up from the inventory and brings it to hand.
+     * 收到 ContainerSetContent 包时调用。
+     * 背包满且开启归还配置时，先把 itemsToReturn 里的东西放回潜影盒；
+     * 然后从潜影盒中找到所需物品，交换到背包空位（单向取出）。
      */
     public static void switchFromShulker() {
         LocalPlayer player = mc.player;
@@ -237,7 +183,7 @@ public class QuickShulkerUtils {
         AbstractContainerMenu container = player.containerMenu;
         Inventory inventory = player.getInventory();
 
-        // ── Phase 1: return previously-extracted items when full ──
+        // ── 阶段1：背包满时归还物品 ──
         if (Configs.Print.RETURN_TO_SHULKER_WHEN_FULL.getBooleanValue()
                 && !hasEmptySlot(inventory)) {
             Iterator<Item> it = itemsToReturn.iterator();
@@ -245,7 +191,7 @@ public class QuickShulkerUtils {
                 Item returnItem = it.next();
                 for (int i = 0; i < Math.min(inventory.getContainerSize(), 36); i++) {
                     if (inventory.getItem(i).is(returnItem)) {
-                        // Find an empty shulker slot to return it to
+                        // 找潜影盒空槽放回去
                         for (Slot s : container.slots) {
                             if (!s.hasItem()) {
                                 int ownSlots = container.slots.size() - 36;
@@ -267,13 +213,13 @@ public class QuickShulkerUtils {
             }
         }
 
-        // ── Phase 2: one-way extraction into any empty slot ──
+        // ── 阶段2：从潜影盒取出所需物品 ──
         for (Slot slot : container.slots) {
             if (!slot.hasItem()) continue;
             for (Item item : lastNeedItemList) {
                 if (slot.getItem().getItem().equals(item)) {
                     itemsToReturn.addLast(slot.getItem().getItem());
-                    // Find any empty slot in the inventory (hotbar 0-8 first, then main 9-35)
+                    // 找背包空位（优先快捷栏，再主背包）
                     int emptyInvSlot = -1;
                     for (int i = 0; i < inventory.getContainerSize(); i++) {
                         if (inventory.getItem(i).isEmpty()) {
@@ -282,17 +228,17 @@ public class QuickShulkerUtils {
                         }
                     }
                     if (emptyInvSlot != -1 && mc.gameMode != null) {
-                        // Convert Inventory index to container slot index
-                        int ownSlots = container.slots.size() - 36; // container slots before player inventory
+                        // 背包索引 → 容器槽位索引的转换
+                        int ownSlots = container.slots.size() - 36; // 容器自身槽数
                         int containerTarget;
                         if (emptyInvSlot < 9) {
-                            // Hotbar: at the end of the container
+                            // 快捷栏在容器末尾
                             containerTarget = ownSlots + 27 + emptyInvSlot;
                         } else {
-                            // Main inventory: right after container's own slots
+                            // 主背包紧接容器自身槽位
                             containerTarget = ownSlots + (emptyInvSlot - 9);
                         }
-                        // Pick up from shulker slot, then place into target slot
+                        // 先拾取潜影盒槽位，再放到目标槽位
                         mc.gameMode.handleInventoryMouseClick(container.containerId, slot.index, 0, ClickType.PICKUP, player);
                         mc.gameMode.handleInventoryMouseClick(container.containerId, containerTarget, 0, ClickType.PICKUP, player);
                     }
@@ -310,10 +256,7 @@ public class QuickShulkerUtils {
         lastNeedItemList.clear();
     }
 
-    /**
-     * Find a shulker box in the player's inventory that contains the target item.
-     * Searches from slot 9 onwards (skipping the hotbar slots).
-     */
+    /** 在玩家背包（跳过快捷栏）中找到包含目标物品的潜影盒，返回背包槽位索引，未找到返回 -1 */
     public static int findShulkerWithItem(LocalPlayer player, Item target) {
         for (int i = 9; i < player.getInventory().getContainerSize(); i++) {
             ItemStack stack = player.getInventory().getItem(i);

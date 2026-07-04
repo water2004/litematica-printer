@@ -8,6 +8,7 @@ import me.aleksilassila.litematica.printer.handler.Module;
 import me.aleksilassila.litematica.printer.handler.GuiBlockInfo;
 import me.aleksilassila.litematica.printer.handler.handlers.GUI;
 import me.aleksilassila.litematica.printer.utils.ConfigUtils;
+import me.aleksilassila.litematica.printer.utils.MessageUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
@@ -36,6 +37,31 @@ import net.minecraft.client.DeltaTracker;
 @Mixin(Gui.class)
 public abstract class MixinGui {
     @Unique
+    private static final String KEY_HANDLER_TYPE = "litematica-printer.hud.debug.handlerType";
+    @Unique
+    private static final String KEY_SCAN_STATE = "litematica-printer.hud.debug.scanState";
+    @Unique
+    private static final String KEY_CURRENT_POS = "litematica-printer.hud.debug.currentPos";
+    @Unique
+    private static final String KEY_SCHEMATIC_BLOCK = "litematica-printer.hud.debug.schematicBlock";
+    @Unique
+    private static final String KEY_CURRENT_BLOCK = "litematica-printer.hud.debug.currentBlock";
+    @Unique
+    private static final String KEY_INTERACTED = "litematica-printer.hud.debug.interacted";
+    @Unique
+    private static final String KEY_IN_SELECTION = "litematica-printer.hud.debug.inSelection";
+    @Unique
+    private static final String KEY_EXECUTED = "litematica-printer.hud.debug.executed";
+    @Unique
+    private static final String KEY_GLOBAL_TICK = "litematica-printer.hud.debug.globalTick";
+    @Unique
+    private static final String KEY_ACTIVE_MODULES = "litematica-printer.hud.debug.activeModules";
+    @Unique
+    private static final String KEY_SCAN_MODE = "litematica-printer.hud.debug.scanMode";
+    @Unique
+    private static final String KEY_LAG_PAUSED = "litematica-printer.hud.lagPaused";
+
+    @Unique
     private static final int DEBUG_PADDING = 4;
     @Unique
     private static final int DEBUG_LINE_HEIGHT = 12;
@@ -56,17 +82,17 @@ public abstract class MixinGui {
     @Unique
     private List<String> buildHandlerDebugLines(Module module, GuiBlockInfo guiInfo) {
         List<String> lines = new ArrayList<>();
-        lines.add("处理类型: " + module.getId());
+        lines.add(MessageUtils.translatable(KEY_HANDLER_TYPE, module.getId()).getString());
         ScanState state = module.getScanState();
-        lines.add("扫描状态: §a" + state);
-        lines.add("当前位置: " + guiInfo.pos.toShortString());
+        lines.add(MessageUtils.translatable(KEY_SCAN_STATE, state).getString());
+        lines.add(MessageUtils.translatable(KEY_CURRENT_POS, guiInfo.pos.toShortString()).getString());
         if (guiInfo.requiredState != null) {
-            lines.add("投影方块: " + guiInfo.requiredState.getBlock().getName().getString());
+            lines.add(MessageUtils.translatable(KEY_SCHEMATIC_BLOCK, guiInfo.requiredState.getBlock().getName().getString()).getString());
         }
-        lines.add("当前方块: " + guiInfo.currentState.getBlock().getName().getString());
-        lines.add("交互范围: " + booleanToColoredString(guiInfo.interacted));
-        lines.add("选区类型: " + booleanToColoredString(guiInfo.posInSelectionRange));
-        lines.add("已经执行: " + booleanToColoredString(guiInfo.execute));
+        lines.add(MessageUtils.translatable(KEY_CURRENT_BLOCK, guiInfo.currentState.getBlock().getName().getString()).getString());
+        lines.add(MessageUtils.translatable(KEY_INTERACTED, booleanToColoredString(guiInfo.interacted)).getString());
+        lines.add(MessageUtils.translatable(KEY_IN_SELECTION, booleanToColoredString(guiInfo.posInSelectionRange)).getString());
+        lines.add(MessageUtils.translatable(KEY_EXECUTED, booleanToColoredString(guiInfo.execute)).getString());
 
         return lines;
     }
@@ -227,14 +253,14 @@ public abstract class MixinGui {
     @Unique
     private int drawCommonDebugInfo(int startX, int startY) {
         List<String> commonLines = new ArrayList<>();
-        commonLines.add("全局Tick: " + ModuleManager.getCurrentHandlerTime());
-        commonLines.add("活跃模块数: " + ModuleManager.VALUES.size());
+        commonLines.add(MessageUtils.translatable(KEY_GLOBAL_TICK, ModuleManager.getCurrentHandlerTime()).getString());
+        commonLines.add(MessageUtils.translatable(KEY_ACTIVE_MODULES, ModuleManager.VALUES.size()).getString());
 
         ScanState dominantState = ScanState.COLLECT;
         for (Module m : ModuleManager.VALUES) {
             dominantState = m.getScanState();
         }
-        commonLines.add("扫描模式: §a" + dominantState);
+        commonLines.add(MessageUtils.translatable(KEY_SCAN_MODE, dominantState).getString());
 
         Minecraft mc = Minecraft.getInstance();
         int maxWidth = 0;
@@ -268,7 +294,7 @@ public abstract class MixinGui {
         GUI guiHandler = ModuleManager.GUI;
 
         if (Configs.Core.LAG_CHECK.getBooleanValue() && ModuleManager.getPacketTick() > Configs.Core.LAG_CHECK_MAX.getIntegerValue()) {
-            RenderUtils.drawString("延迟过大，已暂停运行", centerX, centerY - 22, Color.ORANGE, true, true);
+            RenderUtils.drawString(MessageUtils.translatable(KEY_LAG_PAUSED).getString(), centerX, centerY - 22, Color.ORANGE, true, true);
         }
 
         double progress = guiHandler.getTotalProgress().getProgress();

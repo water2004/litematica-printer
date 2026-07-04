@@ -5,8 +5,8 @@ import me.aleksilassila.litematica.printer.utils.ModUtils;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.HighlightType;
 import me.aleksilassila.litematica.printer.handler.Module;
+import me.aleksilassila.litematica.printer.interfaces.compat.BedrockCompat;
 import me.aleksilassila.litematica.printer.utils.MessageUtils;
-import me.aleksilassila.litematica.printer.utils.bedrock.BedrockUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Blocks;
 
@@ -39,11 +39,11 @@ public class Bedrock extends Module {
             MessageUtils.setOverlayMessage(I18n.BEDROCK_MOD_MISSING.getName());
             return false;
         }
-        if (!BedrockUtils.isWorking()) {
-            BedrockUtils.setWorking(true);
+        if (!BedrockCompat.isWorking()) {
+            BedrockCompat.setWorking(true);
         }
-        if (BedrockUtils.isBedrockMinerFeatureEnable()) {
-            BedrockUtils.setBedrockMinerFeatureEnable(false);
+        if (BedrockCompat.isFeatureEnable()) {
+            BedrockCompat.setFeatureEnable(false);
         }
         return true;
     }
@@ -60,7 +60,7 @@ public class Bedrock extends Module {
 
     @Override
     protected void executeIteration(BlockPos blockPos, AtomicReference<Boolean> skipIteration) {
-        BedrockUtils.addToBreakList(blockPos, client.level);
+        BedrockCompat.addToBreakList(blockPos, client.level);
         addHighlight(blockPos, HighlightType.BREAK);
         setCooldown(blockPos, 100);
     }

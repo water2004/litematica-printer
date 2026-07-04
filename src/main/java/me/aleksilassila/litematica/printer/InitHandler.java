@@ -8,8 +8,7 @@ import me.aleksilassila.litematica.printer.utils.MessageUtils;
 import fi.dy.masa.malilib.event.RenderEventHandler;
 import me.aleksilassila.litematica.printer.render.BlockHighlightRenderer;
 import me.aleksilassila.litematica.printer.render.MissingMaterialHudRenderer;
-import me.aleksilassila.litematica.printer.utils.ModUtils;
-import me.aleksilassila.litematica.printer.utils.bedrock.BedrockUtils;
+import me.aleksilassila.litematica.printer.interfaces.compat.BedrockCompat;
 
 public class InitHandler implements IInitializationHandler {
     @Override
@@ -63,10 +62,10 @@ public class InitHandler implements IInitializationHandler {
         Configs.Core.WORK_SWITCH.setValueChangeCallback(b -> {
             if (!b.getBooleanValue()) {
                 ActionManager.INSTANCE.clearQueue();
-                if (ModUtils.isBedrockMinerLoaded() || ModUtils.isBlockMinerLoaded()) {
-                    if (BedrockUtils.isWorking()) {
-                        BedrockUtils.setWorking(false);
-                        BedrockUtils.setBedrockMinerFeatureEnable(true);
+                if (BedrockCompat.isAvailable()) {
+                    if (BedrockCompat.isWorking()) {
+                        BedrockCompat.setWorking(false);
+                        BedrockCompat.setFeatureEnable(true);
                     }
                 }
             }
@@ -75,10 +74,10 @@ public class InitHandler implements IInitializationHandler {
         // 切换基岩功能时，关闭破基岩
         Configs.Bedrock.ENABLED.setValueChangeCallback(b -> {
             if (!b.getBooleanValue()) {
-                if (ModUtils.isBedrockMinerLoaded() || ModUtils.isBlockMinerLoaded()) {
-                    if (BedrockUtils.isWorking()) {
-                        BedrockUtils.setWorking(false);
-                        BedrockUtils.setBedrockMinerFeatureEnable(true);
+                if (BedrockCompat.isAvailable()) {
+                    if (BedrockCompat.isWorking()) {
+                        BedrockCompat.setWorking(false);
+                        BedrockCompat.setFeatureEnable(true);
                     }
                 }
             }

@@ -12,6 +12,7 @@ import me.aleksilassila.litematica.printer.utils.ConfigUtils;
 import me.aleksilassila.litematica.printer.utils.ModUtils;
 import me.aleksilassila.litematica.printer.utils.QuickShulkerUtils;
 import me.aleksilassila.litematica.printer.utils.RemoteContainerUtils;
+import me.aleksilassila.litematica.printer.interfaces.compat.TakeItOutCompat;
 import net.minecraft.client.Minecraft;
 
 public class ModuleManager {
@@ -37,6 +38,10 @@ public class ModuleManager {
     private static boolean lastPrinterEnabled = false;
 
     public static void tick() {
+        // If TakeItOut is waiting for a server-side shulker extraction, skip
+        // all processing so the printer does not interfere.
+        if (TakeItOutCompat.isAwaitingItem()) return;
+
         QuickShulkerUtils.tick();
         if (ModUtils.isRemoteInventoryNextLoaded()) {
             RemoteContainerUtils.tick();

@@ -5,11 +5,9 @@ package me.aleksilassila.litematica.printer.enums;
  * <p>
  * COLLECT — 收集全坐标，按材料分组以最小化物品切换
  * PROCESS — 按材料分组依次处理坐标
- * VERIFY  — 验证方块状态，发现错误则重新收集
  * </p>
  */
 public enum ScanState {
     COLLECT,
-    PROCESS,
-    VERIFY
+    PROCESS
 }

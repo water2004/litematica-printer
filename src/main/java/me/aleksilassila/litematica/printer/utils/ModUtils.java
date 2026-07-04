@@ -56,6 +56,14 @@ public class ModUtils {
         return isLoadMod("remote-inventory-next");
     }
 
+    public static boolean isQuickShulkerLoaded() {
+        return isLoadMod("quickshulker");
+    }
+
+    public static boolean isTakeItOutLoaded() {
+        return isLoadMod("takeitout");
+    }
+
     private static @Nullable Object tweakToolSwitchEnum;
     private static @Nullable Method trySwitchToEffectiveToolMethod;
     private static @Nullable Method getBooleanValueMethod;
