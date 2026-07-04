@@ -666,10 +666,15 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
                 .defaultStorageString("LEFT_CONTROL,G")
                 .build();
 
+        // 轮换模式
+        public static final ConfigHotkey CYCLE_MODE = hotkeyValue("cycleMode")
+                .build();
+
         public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
                 OPEN_SCREEN,
                 Core.WORK_SWITCH,
-                CLOSE_ALL_MODE
+                CLOSE_ALL_MODE,
+                CYCLE_MODE
         );
     }
 

@@ -23,6 +23,29 @@ public class InitHandler implements IInitializationHandler {
     }
 
     private void initConfigCallback() {
+        Configs.Hotkeys.CYCLE_MODE.getKeybind().setCallback((action, keybind) -> {
+            var modes = new fi.dy.masa.malilib.config.options.ConfigBooleanHotkeyed[]{
+                    Configs.Print.ENABLED,
+                    Configs.Mine.ENABLED,
+                    Configs.Fill.ENABLED,
+                    Configs.Fluid.ENABLED,
+                    Configs.Bedrock.ENABLED
+            };
+            int current = -1;
+            for (int i = 0; i < modes.length; i++) {
+                if (modes[i].getBooleanValue()) {
+                    current = i;
+                    break;
+                }
+            }
+            for (var m : modes) m.setBooleanValue(false);
+            int next = (current + 1) % modes.length;
+            modes[next].setBooleanValue(true);
+            Configs.Core.WORK_SWITCH.setBooleanValue(true);
+            MessageUtils.setOverlayMessage(modes[next].getPrettyName());
+            return true;
+        });
+
         Configs.Hotkeys.CLOSE_ALL_MODE.getKeybind().setCallback((action, keybind) -> {
             if (keybind.isKeybindHeld()) {
                 Configs.Print.ENABLED.setBooleanValue(false);

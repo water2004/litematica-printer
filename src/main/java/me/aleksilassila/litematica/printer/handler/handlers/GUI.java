@@ -15,8 +15,12 @@ import net.minecraft.world.level.block.LiquidBlock;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * GUI 统计处理器 — 增量遍历 box 计算进度，每 tick 分摊扫描量避免卡顿。
+ */
 public class GUI extends Module {
     public final static String NAME = "gui";
+    private static final int SCAN_BUDGET_MS = 2;
 
     @Getter
     private final Progress totalProgress = new Progress(Configs.Print.ENABLED);
@@ -29,12 +33,19 @@ public class GUI extends Module {
     @Getter
     private final Progress mineProgress = new Progress(Configs.Mine.ENABLED);
 
+    private boolean scanning = false;
+
     public GUI() {
         super(NAME, Configs.Core.RENDER_HUD, null, true);
     }
 
     @Override
     protected boolean needsAreaCheck() {
+        return false;
+    }
+
+    @Override
+    protected boolean canExecute() {
         return false;
     }
 
@@ -49,11 +60,47 @@ public class GUI extends Module {
     }
 
     @Override
-    protected void executeIteration(BlockPos blockPos, AtomicReference<Boolean> skipIteration) {
+    protected void preprocess() {
+        if (box == null || box.get() == null || level == null) return;
+
+        if (!scanning) {
+            startScan();
+        }
+
+        long deadline = System.currentTimeMillis() + SCAN_BUDGET_MS;
+        BlockPos pos;
+        while ((pos = iteratorManager.next()) != null) {
+            countPosition(pos);
+            if (System.currentTimeMillis() >= deadline) return;
+        }
+
+        finishScan();
+    }
+
+    private void startScan() {
+        scanning = true;
+        totalProgress.resetCounters();
+        printProgress.resetCounters();
+        fluidProgress.resetCounters();
+        fillProgress.resetCounters();
+        mineProgress.resetCounters();
+        iteratorManager.reset();
+    }
+
+    private void finishScan() {
+        scanning = false;
+        printProgress.calculateProgress();
+        fluidProgress.calculateProgress();
+        fillProgress.calculateProgress();
+        mineProgress.calculateProgress();
+        totalProgress.calculateProgress();
+    }
+
+    private void countPosition(BlockPos blockPos) {
         if (Configs.Print.ENABLED.getBooleanValue()) {
             WorldSchematic schematic = SchematicWorldHandler.getSchematicWorld();
             if (schematic != null) {
-                SchematicBlockContext context = new SchematicBlockContext(client, level, schematic, blockPos);
+                SchematicBlockContext context = new SchematicBlockContext(mc, level, schematic, blockPos);
                 if (!context.requiredState.isAir()) {
                     if (BlockMatchingType.get(context) == BlockMatchingType.CORRECT) {
                         printProgress.finished++;
@@ -88,16 +135,8 @@ public class GUI extends Module {
             mineProgress.total++;
             totalProgress.total++;
         }
-        printProgress.calculateProgress();
-        fluidProgress.calculateProgress();
-        fillProgress.calculateProgress();
-        mineProgress.calculateProgress();
-        totalProgress.calculateProgress();
     }
 
-    /**
-     * 进度管理内部类（独立计数+自动修正进度范围）
-     */
     @Getter
     public static class Progress {
         private final ConfigBase<?> config;
@@ -115,6 +154,11 @@ public class GUI extends Module {
 
         public double getProgress() {
             return progress <= 0 ? lastProgress : progress;
+        }
+
+        public void resetCounters() {
+            this.total = 0;
+            this.finished = 0;
         }
 
         public void calculateProgress() {

@@ -26,10 +26,21 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 public abstract class Module extends ConfigUtils {
+    private static final ScheduledExecutorService TIMEOUT_SCHEDULER =
+            Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread t = new Thread(r, "Printer-TimeoutGuard");
+                t.setDaemon(true);
+                return t;
+            });
     @Getter
     @Nullable
     public final AtomicReference<PrinterBox> box;
@@ -44,6 +55,7 @@ public abstract class Module extends ConfigUtils {
     @Nullable
     private final ConfigOptionList selectionType;
     private final AtomicReference<Boolean> skipIteration = new AtomicReference<>(false);
+    private final AtomicBoolean timeLimitExceeded = new AtomicBoolean(false);
     @Getter
     private final Queue<PendingHighlight> pendingHighlights = new ConcurrentLinkedQueue<>();
     protected Minecraft mc;
@@ -130,7 +142,6 @@ public abstract class Module extends ConfigUtils {
         switch (scanState) {
             case COLLECT -> collectPhase(maxExecs);
             case PROCESS -> processPhase(maxExecs);
-            case VERIFY   -> verifyPhase(maxExecs);
         }
     }
 
@@ -139,7 +150,7 @@ public abstract class Module extends ConfigUtils {
     }
 
     private boolean collectPhase(int maxExecs) {
-        return iteratePhase(maxExecs,
+        return iteratePhase(0,
                 iteratorManager::next,
                 pos -> needsWork(pos) && collectAndReturn(pos),
                 () -> {
@@ -156,19 +167,6 @@ public abstract class Module extends ConfigUtils {
                 pos -> needsWork(pos) && executeAndReturn(pos),
                 () -> {
                     processIter = null;
-                    scanState = ScanState.VERIFY;
-                    iteratorManager.reset();
-                });
-    }
-
-    private boolean verifyPhase(int maxExecs) {
-        return iteratePhase(maxExecs,
-                iteratorManager::next,
-                pos -> {
-                    isCorrectBlock(pos);
-                    return true;
-                },
-                () -> {
                     scanState = ScanState.COLLECT;
                     scanPlan.reset();
                     iteratorManager.reset();
@@ -188,31 +186,41 @@ public abstract class Module extends ConfigUtils {
     private boolean iteratePhase(int maxExecs, Supplier<@Nullable BlockPos> nextPos,
                                   java.util.function.Predicate<BlockPos> onPosition, Runnable onComplete) {
         int execCount = 0;
-        long deadline = getIterationTimeLimit() > 0
-                ? System.nanoTime() + getIterationTimeLimit() * 1_000_000L : 0;
-        int checkInterval = 10;
-        int iterCount = 0;
+        int timeLimitMs = getIterationTimeLimit();
 
         skipIteration.set(false);
+        timeLimitExceeded.set(false);
 
-        while (true) {
-            if (deadline > 0 && ++iterCount % checkInterval == 0 && System.nanoTime() >= deadline) return true;
-            if (skipIteration.get() || ActionManager.INSTANCE.needWaitModifyLook) return true;
+        ScheduledFuture<?> timeoutTask = null;
+        if (timeLimitMs > 0) {
+            timeoutTask = TIMEOUT_SCHEDULER.schedule(
+                    () -> timeLimitExceeded.set(true),
+                    timeLimitMs, TimeUnit.MILLISECONDS);
+        }
 
-            BlockPos pos = nextPos.get();
-            if (pos == null) { onComplete.run(); return false; }
+        try {
+            while (true) {
+                if (timeLimitExceeded.get()) return true;
+                if (skipIteration.get() || ActionManager.INSTANCE.needWaitModifyLook) return true;
 
-            if (needsAreaCheck() && !isPosInWorkspace(pos)) continue;
+                BlockPos pos = nextPos.get();
+                if (pos == null) { onComplete.run(); return false; }
 
-            boolean executed = onPosition.test(pos);
-            if (executed) {
-                if (maxExecs > 0 && ++execCount >= maxExecs) return true;
+                if (needsAreaCheck() && !isPosInWorkspace(pos)) continue;
+
+                boolean executed = onPosition.test(pos);
+                if (executed) {
+                    if (maxExecs > 0 && ++execCount >= maxExecs) return true;
+                }
+
+                currentGuiInfo = new GuiBlockInfo(pos,
+                        level.getBlockState(pos), LitematicaUtils.getBlockState(pos),
+                        PlayerUtils.canInteracted(pos), executed,
+                        isPosInWorkspace(pos) && PlayerUtils.canInteracted(pos));
             }
-
-            currentGuiInfo = new GuiBlockInfo(pos,
-                    level.getBlockState(pos), LitematicaUtils.getBlockState(pos),
-                    PlayerUtils.canInteracted(pos), executed,
-                    isPosInWorkspace(pos) && PlayerUtils.canInteracted(pos));
+        } finally {
+            if (timeoutTask != null) timeoutTask.cancel(false);
+            timeLimitExceeded.set(false);
         }
     }
 
