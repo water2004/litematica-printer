@@ -1,14 +1,17 @@
 package me.aleksilassila.litematica.printer.interfaces.compat;
 
 import me.aleksilassila.litematica.printer.utils.ModUtils;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.Container;
 import org.jetbrains.annotations.Nullable;
+
+//#if MC >= 260102
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+//#endif
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -61,7 +64,6 @@ public class TakeItOutCompat {
         payloadConstructor = null;
     }
 
-    /** True while TakeItOut is waiting for a server reply. */
     public static boolean isAwaitingItem() {
         if (!ModUtils.isTakeItOutLoaded()) return false;
         init();
@@ -74,11 +76,10 @@ public class TakeItOutCompat {
         }
     }
 
-    /**
-     * If any required item lives inside a shulker, ask the TakeItOut server
-     * handler to extract it and return true (caller should await).
-     */
     public static boolean tryExtract(LocalPlayer player, Item... items) {
+        //#if MC < 260102
+        //$$ return false;
+        //#else
         if (!ModUtils.isTakeItOutLoaded()) return false;
         if (items == null || items.length == 0) return false;
         if (isAwaitingItem()) return false;
@@ -93,7 +94,6 @@ public class TakeItOutCompat {
                 if (item == null) continue;
                 ItemStack needed = new ItemStack(item);
 
-                // Skip if already in inventory
                 if (inv.findSlotMatchingItem(needed) != -1) continue;
 
                 int shulkerSlot = (int) getShulkerWithStackMethod.invoke(null, inv, needed);
@@ -104,15 +104,14 @@ public class TakeItOutCompat {
                 int slotInShulker = (int) getSlotWithStackMethod.invoke(null, shulkerInv, needed);
                 if (slotInShulker == -1) continue;
 
-                // Build payload and send
                 CustomPacketPayload payload = (CustomPacketPayload) payloadConstructor.newInstance(slotInShulker, shulkerSlot);
                 ClientPlayNetworking.send(payload);
 
-                // Block until server replies
                 awaitingStackField.set(null, needed);
                 return true;
             }
         } catch (Exception ignored) { }
         return false;
+        //#endif
     }
 }

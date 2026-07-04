@@ -11,9 +11,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.Getter;
 import lombok.Setter;
 import me.aleksilassila.litematica.printer.config.Configs;
-import me.aleksilassila.litematica.printer.enums.ShulkerSource;
-import me.aleksilassila.litematica.printer.interfaces.compat.QuickShulkerCompat;
-import me.aleksilassila.litematica.printer.interfaces.compat.TakeItOutCompat;
 import me.aleksilassila.litematica.printer.mixin.printer.litematica.EasyPlaceUtilsAccessor;
 import me.aleksilassila.litematica.printer.mixin.printer.litematica.InventoryUtilsAccessor;
 import net.minecraft.client.Minecraft;
@@ -405,34 +402,7 @@ public class InventoryUtils {
                 return InventoryUtils.setPickedItemToHand(slot, itemStack, client);
             }
         }
-        if (Configs.Print.USE_QUICK_SHULKER.getBooleanValue()) {
-            // Skip MOD-mode attempt when QuickShulker mod is not installed
-            ShulkerSource source = (ShulkerSource) Configs.Print.SHULKER_SOURCE.getOptionListValue();
-            if (source == ShulkerSource.MOD && !ModUtils.isQuickShulkerLoaded()) {
-                return false;
-            }
-            if (!QuickShulkerUtils.isOpenHandler() && QuickShulkerUtils.getShulkerCooldown() <= 0) {
-                for (Item item : items) {
-                    int shulkerSlot = QuickShulkerUtils.findShulkerWithItem(player, item);
-                    if (shulkerSlot != -1) {
-                        ItemStack shulkerStack = inventory.getItem(shulkerSlot);
-                        QuickShulkerUtils.setShulkerBoxSlot(shulkerSlot);
-                        QuickShulkerUtils.clearLastNeedItems();
-                        QuickShulkerUtils.addLastNeedItem(item);
-                        ModUtils.closeScreen++;
-                        QuickShulkerUtils.setOpenHandler(true);
-                        QuickShulkerUtils.setShulkerCooldown(Configs.Print.SHULKER_COOLDOWN.getIntegerValue());
-                        QuickShulkerUtils.openShulker(shulkerStack, shulkerSlot);
-                        return false;
-                    }
-                }
-            }
-        }
-        // Try TakeItOut server-side shulker extraction as a last resort
-        if (TakeItOutCompat.tryExtract(player, items)) {
-            // Request sent; printer must wait for the server response.
-            // switchToItems will succeed on the next attempt once the
-            // item has arrived in the player's inventory.
+        if (QuickShulkerUtils.requestShulkerItem(player, items)) {
             return false;
         }
         return false;

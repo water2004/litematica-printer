@@ -10,6 +10,7 @@ import lombok.Setter;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.ShulkerSource;
 import me.aleksilassila.litematica.printer.interfaces.compat.QuickShulkerCompat;
+import me.aleksilassila.litematica.printer.interfaces.compat.TakeItOutCompat;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -59,6 +60,53 @@ public class QuickShulkerUtils {
 
     public static void clearLastNeedItems() {
         lastNeedItemList.clear();
+    }
+
+    // ========== 统一取物入口 ==========
+
+    /**
+     * 根据 ShulkerSource 配置分发潜影盒取物请求。
+     * @return true 已发起请求（调用方应等待），false 无法处理
+     */
+    public static boolean requestShulkerItem(LocalPlayer player, Item[] items) {
+        if (!Configs.Print.USE_QUICK_SHULKER.getBooleanValue()) return false;
+
+        ShulkerSource source = (ShulkerSource) Configs.Print.SHULKER_SOURCE.getOptionListValue();
+        switch (source) {
+            //#if MC >= 260102
+            case TAKE_IT_OUT:
+                return TakeItOutCompat.tryExtract(player, items);
+            //#endif
+            case MOD:
+                if (!QUICK_SHULKER_LOADED) return false;
+                // fall through: MOD 和 PLUGIN 共用开箱取物流程
+            case PLUGIN:
+                return requestViaOpenShulker(player, items);
+            default:
+                return false;
+        }
+    }
+
+    /** MOD/PLUGIN 模式：找到含目标物品的潜影盒并打开 */
+    private static boolean requestViaOpenShulker(LocalPlayer player, Item[] items) {
+        if (isOpenHandler || shulkerCooldown > 0) return false;
+
+        Inventory inventory = player.getInventory();
+        for (Item item : items) {
+            int shulkerSlot = findShulkerWithItem(player, item);
+            if (shulkerSlot != -1) {
+                ItemStack shulkerStack = inventory.getItem(shulkerSlot);
+                setShulkerBoxSlot(shulkerSlot);
+                clearLastNeedItems();
+                addLastNeedItem(item);
+                ModUtils.closeScreen++;
+                setOpenHandler(true);
+                setShulkerCooldown(Configs.Print.SHULKER_COOLDOWN.getIntegerValue());
+                openShulker(shulkerStack, shulkerSlot);
+                return true;
+            }
+        }
+        return false;
     }
 
     // ========== Open Shulker ==========
