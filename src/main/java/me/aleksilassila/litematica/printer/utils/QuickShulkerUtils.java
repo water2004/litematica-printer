@@ -34,9 +34,12 @@ public class QuickShulkerUtils {
 
     @Getter @Setter
     private static boolean isOpenHandler;
+    @Setter
+    @Getter
     private static int shulkerCooldown;
     @Getter @Setter
     private static int shulkerBoxSlot = -1;
+    @Getter
     private static final Set<Item> lastNeedItemList = new HashSet<>();
     /** Items previously extracted from the shulker that should be returned when inventory is full. */
     private static final LinkedList<Item> itemsToReturn = new LinkedList<>();
@@ -58,18 +61,6 @@ public class QuickShulkerUtils {
     }
 
     // ========== State Accessors ==========
-
-    public static int getShulkerCooldown() {
-        return shulkerCooldown;
-    }
-
-    public static void setShulkerCooldown(int cooldown) {
-        shulkerCooldown = cooldown;
-    }
-
-    public static Set<Item> getLastNeedItemList() {
-        return lastNeedItemList;
-    }
 
     public static void addLastNeedItem(Item item) {
         lastNeedItemList.add(item);
