@@ -54,6 +54,8 @@
   "litematica-printer.config.category.print.desc": "Настройки режима печати",
   "litematica-printer.config.closeAllMode": "Закрыть все режимы",
   "litematica-printer.config.closeAllMode.desc": "Закрывает все активные рабочие модули.",
+  "litematica-printer.config.cycleMode": "Циклический режим",
+  "litematica-printer.config.cycleMode.desc": "Переключение режимов по порядку: Печать → Добыча → Заполнение → Жидкость → Бедрок. Также включает рабочий переключатель.",
   "litematica-printer.config.containerReturnInterval": "Интервал возврата в контейнер",
   "litematica-printer.config.containerReturnInterval.desc": "Задержка между попытками возврата в контейнер (в игровых тактах). Более высокие значения снижают нагрузку на сеть, но увеличивают задержку.",
   "litematica-printer.config.debugOutput": "Показывать отладочную информацию",

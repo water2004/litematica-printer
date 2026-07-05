@@ -53,6 +53,8 @@
   "litematica-printer.config.category.print.desc": "列印模式相關設定",
   "litematica-printer.config.closeAllMode": "關閉全部模式",
   "litematica-printer.config.closeAllMode.desc": "關閉所有已啟用的工作模組。",
+  "litematica-printer.config.cycleMode": "輪換模式",
+  "litematica-printer.config.cycleMode.desc": "按順序輪換工作模式：列印→挖掘→填充→排流體→破基岩，同時自動開啟工作開關。",
   "litematica-printer.config.debugOutput": "顯示除錯資訊",
   "litematica-printer.config.debugOutput.desc": "啟用後，控制台會輸出印表機的除錯資訊。\n如果同時開啟了§6§l顯示工作狀態§r,那麼在操作介面也會顯示一些資訊。",
   "litematica-printer.config.easyPlaceProtocol": "使用輕鬆放置協定",

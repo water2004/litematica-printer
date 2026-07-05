@@ -54,6 +54,8 @@
   "litematica-printer.config.category.print.desc": "Printing mode related settings",
   "litematica-printer.config.closeAllMode": "Close All Modes",
   "litematica-printer.config.closeAllMode.desc": "Close all enabled working modules.",
+  "litematica-printer.config.cycleMode": "Cycle Mode",
+  "litematica-printer.config.cycleMode.desc": "Cycle through working modes in order: Print → Mine → Fill → Fluid → Bedrock. Also enables the work switch.",
   "litematica-printer.config.containerReturnInterval": "Container Return Interval",
   "litematica-printer.config.containerReturnInterval.desc": "Cooldown between container return attempts (in game ticks). Higher values reduce network overhead but increase delay before items are returned.",
   "litematica-printer.config.debugOutput": "Show Debug Information",

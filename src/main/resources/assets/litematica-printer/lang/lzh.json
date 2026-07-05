@@ -54,6 +54,8 @@
   "litematica-printer.config.category.print.desc": "印模式之設",
   "litematica-printer.config.closeAllMode": "閉全模",
   "litematica-printer.config.closeAllMode.desc": "閉所有已啟之工作模組。",
+  "litematica-printer.config.cycleMode": "輪換模式",
+  "litematica-printer.config.cycleMode.desc": "依序輪換：印→掘→填→排→破基岩，並啟工作開關。",
   "litematica-printer.config.containerReturnInterval": "歸塞冷間",
   "litematica-printer.config.containerReturnInterval.desc": "歸塞操作間之冷刻。高則減網耗而增延。",
   "litematica-printer.config.debugOutput": "示除錯訊",

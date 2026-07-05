@@ -54,6 +54,8 @@
   "litematica-printer.config.category.print.desc": "打印模式相关设置",
   "litematica-printer.config.closeAllMode": "关闭全部模式",
   "litematica-printer.config.closeAllMode.desc": "关闭所有已启用的工作模块。",
+  "litematica-printer.config.cycleMode": "轮换模式",
+  "litematica-printer.config.cycleMode.desc": "按顺序轮换工作模式：打印→挖掘→填充→排流体→破基岩，同时自动开启工作开关。",
   "litematica-printer.config.containerReturnInterval": "回塞冷却间隔",
   "litematica-printer.config.containerReturnInterval.desc": "回塞操作之间的冷却时间（游戏刻）。较高值减少网络开销但增加回塞延迟。",
   "litematica-printer.config.debugOutput": "显示调试信息",
