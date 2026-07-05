@@ -6,7 +6,6 @@ import fi.dy.masa.malilib.config.options.ConfigOptionList;
 import fi.dy.masa.malilib.hotkeys.IHotkeyCallback;
 import fi.dy.masa.malilib.hotkeys.KeybindSettings;
 import me.aleksilassila.litematica.printer.I18n;
-import me.aleksilassila.litematica.printer.config.HotkeysCallback;
 import me.aleksilassila.litematica.printer.utils.MessageUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,12 +46,8 @@ public class HotkeyConfigBuilder extends BaseConfigBuilder<ConfigHotkey, HotkeyC
     @Override
     public ConfigHotkey build() {
         ConfigHotkey config = new ConfigHotkey(i18n.getNameKey(), defaultStorageString, keybindSettings, descKey);
-        if (keybindCallback == null) {
-            if (bindConfig == null) {
-                keybindCallback = HotkeysCallback::onKeyAction;
-            } else {
-                keybindCallback = (action, key) -> onKeyAction(bindConfig);
-            }
+        if (keybindCallback == null && bindConfig != null) {
+            keybindCallback = (action, key) -> onKeyAction(bindConfig);
         }
         config.getKeybind().setCallback(keybindCallback);
         return buildExtension(config);
