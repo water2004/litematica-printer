@@ -40,7 +40,6 @@ public class InitHandler implements IInitializationHandler {
             for (var m : modes) m.setBooleanValue(false);
             int next = (current + 1) % modes.length;
             modes[next].setBooleanValue(true);
-            Configs.Core.WORK_SWITCH.setBooleanValue(true);
             MessageUtils.setOverlayMessage(modes[next].getPrettyName());
             return true;
         });
