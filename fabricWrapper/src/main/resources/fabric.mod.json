@@ -31,6 +31,9 @@
       }
     }
   ],
+  "depends": {
+    "litematica-printer": ">=${mod_version}"
+  },
   "contact": {
     "homepage": "${mod_homepage}",
     "issues": "${mod_sources}/issues",
