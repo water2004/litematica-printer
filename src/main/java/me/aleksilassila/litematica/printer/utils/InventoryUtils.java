@@ -386,7 +386,7 @@ public class InventoryUtils {
 
     public static boolean switchToItems(LocalPlayer player, Item[] items) {
         if (items == null || items.length == 0) {
-            items = new Item[]{Items.AIR};
+            return true;
         }
         Inventory inventory = player.getInventory();
         boolean isCreativeMode = PlayerUtils.getAbilities(player).instabuild;

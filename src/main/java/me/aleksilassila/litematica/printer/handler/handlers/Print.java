@@ -133,22 +133,10 @@ public class Print extends Module {
 
     @Override
     protected void executeIteration(BlockPos blockPos, AtomicReference<Boolean> skipIteration) {
-        if (Configs.Print.PRINT_ICE_FOR_WATER.getBooleanValue()) {
-            if (BlockUtils.isNeedsWater(ctx.requiredState)) {
-                if (!BlockUtils.isPureWaterSource(ctx.currentState)) {
-                    if (mc.gameMode == null) {
-                        return;
-                    }
-                    if (mc.gameMode.getPlayerMode().isCreative()) {
-                        MessageUtils.setOverlayMessage(I18n.ICE_CREATIVE_MODE.getName());
-                        return;
-                    }
-                    action.setItem(Items.ICE);
-                }
-            }
+        if (Configs.Print.PRINT_ICE_FOR_WATER.getBooleanValue()
+            && BlockUtils.isNeedsWater(ctx.requiredState)) {
             // 破冰后等水生成
-            if (BlockUtils.isNeedsWater(ctx.requiredState)
-                    && watingForWaterList.contains(blockPos)) {
+            if (watingForWaterList.contains(blockPos)) {
                 if (BlockUtils.isPureWaterSource(ctx.currentState))
                     watingForWaterList.remove(blockPos);
                 else {
@@ -158,8 +146,7 @@ public class Print extends Module {
                 }
             }
             // 单步阻塞式破冰放水：目标是水且当前是冰才触发
-            if (BlockUtils.isNeedsWater(ctx.requiredState)
-                    && ctx.currentState.getBlock() instanceof IceBlock) {
+            if (ctx.currentState.getBlock() instanceof IceBlock) {
                 if (!BreakUtils.INSTANCE.inQueue(blockPos)) {
                     BreakUtils.INSTANCE.add(blockPos);
                     watingForWaterList.add(blockPos);
