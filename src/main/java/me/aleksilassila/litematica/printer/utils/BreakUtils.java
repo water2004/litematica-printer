@@ -24,23 +24,14 @@ import java.util.*;
 
 @Environment(EnvType.CLIENT)
 public class BreakUtils {
-    public static final Minecraft client = Minecraft.getInstance();
+    private static final Minecraft client = Minecraft.getInstance();
     public static final BreakUtils INSTANCE = new BreakUtils();
 
     private final Queue<BlockPos> breakQueue = new LinkedList<>();
     private BlockPos breakPos;
 
-    /**
-     * 记录最近完成破坏的方块位置及其剩余冷却刻数。
-     * 用于破冰放水等场景：冰破坏后客户端预测为空气，需等待服务端方块更新到达。
-     * 冷却期间打印处理器应跳过该位置。
-     */
-    private final Map<BlockPos, Integer> recentlyBroken = new HashMap<>();
+    private BreakUtils() {}
 
-    private BreakUtils() {
-    }
-
-    // Add methods from LitematicaUtils
     public static boolean canBreakBlock(BlockPos pos) {
         ClientLevel world = LitematicaUtils.client.level;
         LocalPlayer player = LitematicaUtils.client.player;
@@ -102,34 +93,13 @@ public class BreakUtils {
         return inQueue(ctx.blockPos);
     }
 
-    /**
-     * 每tick递减recentlyBroken冷却，移除到期项。需在preprocess前调用。
-     */
-    private void tickRecentlyBroken() {
-        if (recentlyBroken.isEmpty()) return;
-        Iterator<Map.Entry<BlockPos, Integer>> it = recentlyBroken.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<BlockPos, Integer> entry = it.next();
-            int remaining = entry.getValue() - 1;
-            if (remaining <= 0) {
-                it.remove();
-            } else {
-                entry.setValue(remaining);
-            }
-        }
-    }
-
     public void preprocess() {
-        tickRecentlyBroken();
         if (!ConfigUtils.isPrinterEnable()) {
             if (!breakQueue.isEmpty()) {
                 breakQueue.clear();
             }
             if (breakPos != null) {
                 breakPos = null;
-            }
-            if (!recentlyBroken.isEmpty()) {
-                recentlyBroken.clear();
             }
         }
     }
@@ -166,22 +136,12 @@ public class BreakUtils {
                     breakPos = pos;
                     break;
                 } else if (breakResult == BlockBreakResult.COMPLETED) {
-                    recentlyBroken.put(pos, 4);
+                    break;
                 }
             }
         } else if (continueDestroyBlock(breakPos, Direction.DOWN) != BlockBreakResult.IN_PROGRESS) {
-            BlockPos completedPos = breakPos;
             breakPos = null;
-            recentlyBroken.put(completedPos, 1);
-            onTick();
         }
-    }
-
-    /**
-     * 检查指定位置是否在最近破坏冷却中
-     */
-    public boolean isRecentlyBroken(BlockPos pos) {
-        return pos != null && recentlyBroken.containsKey(pos);
     }
 
     public BlockBreakResult continueDestroyBlock(final BlockPos blockPos, Direction direction, boolean localPrediction) {

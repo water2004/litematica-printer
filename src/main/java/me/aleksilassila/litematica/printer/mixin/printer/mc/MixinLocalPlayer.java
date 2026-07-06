@@ -66,9 +66,8 @@ public class MixinLocalPlayer extends AbstractClientPlayer {
         BreakUtils.INSTANCE.preprocess();
         if (BreakUtils.INSTANCE.isNeedHandle()) {
             BreakUtils.INSTANCE.onTick();
-        } else {
-            ModuleManager.tick();
         }
+        ModuleManager.tick();
     }
 
     @Inject(method = "openTextEdit", at = @At("HEAD"), cancellable = true)

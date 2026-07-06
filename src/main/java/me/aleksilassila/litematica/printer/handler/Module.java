@@ -7,6 +7,7 @@ import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.*;
 import me.aleksilassila.litematica.printer.printer.*;
 import me.aleksilassila.litematica.printer.Reference;
+import me.aleksilassila.litematica.printer.utils.BreakUtils;
 import me.aleksilassila.litematica.printer.utils.ConfigUtils;
 import me.aleksilassila.litematica.printer.utils.LitematicaUtils;
 import me.aleksilassila.litematica.printer.utils.PlayerUtils;
@@ -75,6 +76,9 @@ public abstract class Module extends ConfigUtils {
 
     private Iterator<BlockPos> processIter = null;
 
+    @Nullable
+    private BlockPos waitingPos = null;
+
     private volatile GuiBlockInfo currentGuiInfo = null;
 
     protected Module(String id, @Nullable ConfigBoolean enableConfig, @Nullable ConfigOptionList selectionType, boolean useBox) {
@@ -123,6 +127,7 @@ public abstract class Module extends ConfigUtils {
             scanState = ScanState.COLLECT;
             scanPlan.reset();
             processIter = null;
+            waitingPos = null;
             iteratorManager.reset();
         }
 
@@ -142,7 +147,26 @@ public abstract class Module extends ConfigUtils {
         switch (scanState) {
             case COLLECT -> collectPhase(maxExecs);
             case PROCESS -> processPhase(maxExecs);
+            case WAITING -> waitingPhase(maxExecs);
         }
+    }
+
+    protected void enterWaiting(@Nullable BlockPos pos) {
+        scanState = ScanState.WAITING;
+        waitingPos = pos;
+    }
+
+    private boolean waitingPhase(int maxExecs) {
+        // 恢复：优先处理等待位置，然后继续 PROCESS
+        BlockPos pos = waitingPos;
+        waitingPos = null;
+        scanState = ScanState.PROCESS;
+        if (processIter == null) processIter = scanPlan.createFlatIterator();
+
+        if (pos != null && needsWork(pos)) {
+            executeAndReturn(pos);
+        }
+        return true;
     }
 
     private boolean needsWork(BlockPos pos) {
@@ -239,6 +263,7 @@ public abstract class Module extends ConfigUtils {
         scanState = ScanState.COLLECT;
         scanPlan.reset();
         processIter = null;
+        waitingPos = null;
         iteratorManager.reset();
     }
 

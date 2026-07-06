@@ -19,15 +19,14 @@ import me.aleksilassila.litematica.printer.utils.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.WaterFluid;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class Print extends Module {
@@ -52,6 +51,9 @@ public class Print extends Module {
     private Set<String> skipSet = Collections.emptySet();
     private Block lastSkipBlock = null;
     private boolean lastSkipResult = false;
+
+    // 等待水产生队列
+    private final List<BlockPos> watingForWaterList = new ArrayList<>();
 
     public Print() {
         super(NAME, Configs.Print.ENABLED, Configs.Print.PRINT_SELECTION_TYPE, true);
@@ -131,9 +133,41 @@ public class Print extends Module {
 
     @Override
     protected void executeIteration(BlockPos blockPos, AtomicReference<Boolean> skipIteration) {
-        if (BreakUtils.INSTANCE.isRecentlyBroken(blockPos)) {
-            addHighlight(blockPos, HighlightType.FAILED);
-            return;
+        if (Configs.Print.PRINT_ICE_FOR_WATER.getBooleanValue()) {
+            if (BlockUtils.isNeedsWater(ctx.requiredState)) {
+                if (!BlockUtils.isPureWaterSource(ctx.currentState)) {
+                    if (mc.gameMode == null) {
+                        return;
+                    }
+                    if (mc.gameMode.getPlayerMode().isCreative()) {
+                        MessageUtils.setOverlayMessage(I18n.ICE_CREATIVE_MODE.getName());
+                        return;
+                    }
+                    action.setItem(Items.ICE);
+                }
+            }
+            // 破冰后等水生成
+            if (BlockUtils.isNeedsWater(ctx.requiredState)
+                    && watingForWaterList.contains(blockPos)) {
+                if (BlockUtils.isPureWaterSource(ctx.currentState))
+                    watingForWaterList.remove(blockPos);
+                else {
+                    enterWaiting(blockPos);
+                    skipIteration.set(true);
+                    return;
+                }
+            }
+            // 单步阻塞式破冰放水：目标是水且当前是冰才触发
+            if (BlockUtils.isNeedsWater(ctx.requiredState)
+                    && ctx.currentState.getBlock() instanceof IceBlock) {
+                if (!BreakUtils.INSTANCE.inQueue(blockPos)) {
+                    BreakUtils.INSTANCE.add(blockPos);
+                    watingForWaterList.add(blockPos);
+                }
+                enterWaiting(blockPos);
+                skipIteration.set(true);
+                return;
+            }
         }
         if (Configs.Placement.FALLING_CHECK.getBooleanValue()
                 && ctx.requiredState.getBlock() instanceof FallingBlock) {
@@ -153,9 +187,8 @@ public class Print extends Module {
         }
         Item[] reqItems = action.getRequiredItems(ctx.requiredState.getBlock());
         if (RemoteContainerUtils.hasPendingExchange()) {
-            recordMissingMaterial(reqItems);
-            setCooldown(blockPos, ConfigUtils.getPlaceCooldown());
-            addHighlight(blockPos, HighlightType.FAILED);
+            enterWaiting(blockPos);
+            skipIteration.set(true);
             return;
         }
         Direction side = action.getValidSide(level, blockPos);
@@ -164,6 +197,11 @@ public class Print extends Module {
             return;
         }
         if (!InventoryUtils.switchToItems(player, reqItems)) {
+            if (QuickShulkerUtils.isOpenHandler()) {
+                enterWaiting(blockPos);
+                skipIteration.set(true);
+                return;
+            }
             setCooldown(blockPos, ConfigUtils.getPlaceCooldown());
             recordMissingMaterial(reqItems);
             if (reqItems != null && reqItems.length > 0 && reqItems[0] != null

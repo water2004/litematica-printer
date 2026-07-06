@@ -22,6 +22,8 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.piston.PistonBaseBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.*;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.level.material.WaterFluid;
 import net.minecraft.world.level.portal.PortalShape;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -74,39 +76,20 @@ public class PlacementGuide {
     @SuppressWarnings("EnhancedSwitchMigration")
     private @Nullable Action buildAction(SchematicBlockContext ctx, ClassHook requiredType, BlockMatchingType state, AtomicReference<Boolean> skip) {
         // 跳过含水方块
-        if (Configs.Print.SKIP_WATERLOGGED_BLOCK.getBooleanValue() && BlockUtils.isWaterBlock(ctx.requiredState)) {
+        if (Configs.Print.SKIP_WATERLOGGED_BLOCK.getBooleanValue() && BlockUtils.isNeedsWater(ctx.requiredState)) {
             return null;
         }
-        // 破冰放水
-        if (Configs.Print.PRINT_ICE_FOR_WATER.getBooleanValue() && BlockUtils.isWaterBlock(ctx.requiredState)) {
-            if (mc.gameMode == null) {
-                return null;
-            }
-            if (mc.gameMode.getPlayerMode().isCreative()) {
-                MessageUtils.setOverlayMessage(I18n.ICE_CREATIVE_MODE.getName());
-                return null;
-            }
-                if (ctx.currentState.getBlock() instanceof IceBlock) {  // 冰块
-                    if (BreakUtils.INSTANCE.inQueue(ctx)) {
-                        return null;
-                    } else {
-                        BreakUtils.INSTANCE.add(ctx);
-                    }
+        if (Configs.Print.PRINT_ICE_FOR_WATER.getBooleanValue()
+                && BlockUtils.isNeedsWater(ctx.requiredState)) {
+            if (!BlockUtils.isPureWaterSource(ctx.currentState) && state != BlockMatchingType.ERROR_BLOCK_STATE) {
+                if (mc.gameMode == null) {
                     return null;
                 }
-                if (!BlockUtils.isCorrectWaterLevel(ctx.requiredState, ctx.currentState)) {
-                    if (!ctx.currentState.isAir() && !(ctx.currentState.getBlock() instanceof LiquidBlock)) {
-                        if (Configs.Print.BREAK_WRONG_BLOCK.getBooleanValue()) {
-                            BreakUtils.INSTANCE.add(ctx);
-                        }
-                        return null;
-                    }
-                    // 冰刚被破坏后客户端预测为空气，等待服务端方块更新到达
-                    // 避免同一tick内重新放置冰块导致死循环
-                    if (BreakUtils.INSTANCE.isRecentlyBroken(ctx.blockPos)) {
-                        return null;
-                    }
-                    return new Action().setItem(Items.ICE);
+                if (mc.gameMode.getPlayerMode().isCreative()) {
+                    MessageUtils.setOverlayMessage(I18n.ICE_CREATIVE_MODE.getName());
+                    return null;
+                }
+                return new Action().setItem(Items.ICE);
             }
         }
         Action action;

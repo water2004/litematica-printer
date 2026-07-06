@@ -144,12 +144,20 @@ public class BlockUtils {
      * @param blockState 要判断的方块
      * @return 是否含水（是水）
      */
-    public static boolean isWaterBlock(BlockState blockState) {
-        return blockState.is(Blocks.WATER) && blockState.getValue(LiquidBlock.LEVEL) == 0
+    public static boolean isNeedsWater(BlockState blockState) {
+        return isPureWaterSource(blockState)
                 || (blockState.getProperties().contains(BlockStateProperties.WATERLOGGED)
                         && blockState.getValue(BlockStateProperties.WATERLOGGED))
                 || blockState.getBlock() instanceof BubbleColumnBlock
                 || blockState.getBlock() instanceof SeagrassBlock;
+    }
+
+    /**
+     * 纯水源判断，不含 waterlogged 方块。
+     * 破冰放水只针对纯水源，含水方块走正常放置逻辑。
+     */
+    public static boolean isPureWaterSource(BlockState blockState) {
+        return blockState.is(Blocks.WATER) && blockState.getValue(LiquidBlock.LEVEL) == 0;
     }
 
     public static boolean isCorrectWaterLevel(BlockState requiredState, BlockState currentState) {

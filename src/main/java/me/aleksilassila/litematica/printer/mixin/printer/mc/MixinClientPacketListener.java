@@ -2,6 +2,7 @@ package me.aleksilassila.litematica.printer.mixin.printer.mc;
 
 import me.aleksilassila.litematica.printer.I18n;
 import me.aleksilassila.litematica.printer.config.Configs;
+import me.aleksilassila.litematica.printer.utils.BreakUtils;
 import me.aleksilassila.litematica.printer.utils.ConfigUtils;
 import me.aleksilassila.litematica.printer.utils.LitematicaUtils;
 import me.aleksilassila.litematica.printer.utils.QuickShulkerUtils;
@@ -10,7 +11,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
+import net.minecraft.network.protocol.game.ClientboundSectionBlocksUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundSetHealthPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -36,4 +39,14 @@ public abstract class MixinClientPacketListener {
             QuickShulkerUtils.switchFromShulker();
         }
     }
+
+//    @Inject(method = "handleBlockUpdate", at = @At("RETURN"))
+//    private void onBlockUpdate(ClientboundBlockUpdatePacket packet, CallbackInfo ci) {
+//        BreakUtils.INSTANCE.confirmServerBlockUpdate(packet.getPos());
+//    }
+//
+//    @Inject(method = "handleChunkBlocksUpdate", at = @At("RETURN"))
+//    private void onChunkBlocksUpdate(ClientboundSectionBlocksUpdatePacket packet, CallbackInfo ci) {
+//        packet.runUpdates((pos, state) -> BreakUtils.INSTANCE.confirmServerBlockUpdate(pos));
+//    }
 }
