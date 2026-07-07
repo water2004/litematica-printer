@@ -44,7 +44,7 @@
 - [Litematica](https://modrinth.com/mod/litematica)
 
 ### 可选
-- [Tweakeroo](https://modrinth.com/mod/tweakeroo) - 破基岩模式
+- [Tweakeroo](https://modrinth.com/mod/tweakeroo) - 挖掘限制名单，自动选择工具
 - [Quick Shulker](https://modrinth.com/mod/quick-shulker) 或 [AxShulkers](https://modrinth.com/mod/axshulkers) - 快捷潜影盒（双模式兼容）
 - [Fabric-Bedrock-Miner](https://github.com/bunnyi116/fabric-bedrock-miner) - 破基岩所需前置
 
@@ -60,7 +60,6 @@
 - 更流畅的打印体验
 - 数据包打印模式（速度更快，避免幽灵方块）
 - 延迟卡顿检测，防止因延迟导致的大量方块放置错误
-- 惰性扫描引擎，减少大范围无用空跑
 
 ### 新功能
 - 可视化工作进度条 - 一目明了范围内是否完工
@@ -89,7 +88,7 @@
 
 ## 使用方法
 
-1. 在世界中加载一个 Litematica 原理图（Schematic）
+1. 在世界中加载一个原理图
 2. 移动到可以接触到原理图方块的位置
 3. 按下 `Caps Lock` 键开启打印机
 4. 等待自动建造完成 🎉
