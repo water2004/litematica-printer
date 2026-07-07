@@ -85,8 +85,8 @@ public class PlacementGuide {
                 if (mc.gameMode == null) {
                     return null;
                 }
-                BlockPos downPos = ctx.blockPos.below();
-                if (!ctx.level.getBlockState(downPos).blocksMotion() && !ctx.level.getBlockState(downPos).liquid()) {
+                var downBlockState = ctx.level.getBlockState(ctx.blockPos.below()).getBlock();
+                if (downBlockState != Blocks.COBWEB && downBlockState != Blocks.BAMBOO_SAPLING && !(downBlockState instanceof LiquidBlock)) {
                     return null;
                 }
                 if (mc.gameMode.getPlayerMode().isCreative()) {
