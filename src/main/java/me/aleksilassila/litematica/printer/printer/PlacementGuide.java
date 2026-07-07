@@ -81,8 +81,12 @@ public class PlacementGuide {
         }
         if (Configs.Print.PRINT_ICE_FOR_WATER.getBooleanValue()
                 && BlockUtils.isNeedsWater(ctx.requiredState)) {
-            if (!BlockUtils.isPureWaterSource(ctx.currentState) && state != BlockMatchingType.ERROR_BLOCK_STATE) {
+            if (!BlockUtils.isPureWaterSource(ctx.currentState) && state == BlockMatchingType.MISSING_BLOCK) {
                 if (mc.gameMode == null) {
+                    return null;
+                }
+                BlockPos downPos = ctx.blockPos.below();
+                if (!ctx.level.getBlockState(downPos).blocksMotion() && !ctx.level.getBlockState(downPos).liquid()) {
                     return null;
                 }
                 if (mc.gameMode.getPlayerMode().isCreative()) {
