@@ -18,6 +18,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_USERNAME: ${{ secrets.GH_USERNAME }}
       IS_THIS_RELEASE: true
     steps:
       - name: Checkout repository
