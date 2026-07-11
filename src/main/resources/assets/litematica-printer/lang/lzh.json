@@ -76,6 +76,8 @@
   "litematica-printer.config.fill.desc": "於選區內，置§6填方列表§r所設之方。",
   "litematica-printer.config.fillBlockList": "方列表",
   "litematica-printer.config.fillBlockList.desc": "填模所用方列表，規同「基方列表」。",
+  "litematica-printer.config.fillHandheldBlacklist": "手持禁物",
+  "litematica-printer.config.fillHandheldBlacklist.desc": "手持模下，此列之物禁用，防誤用煙花之屬。\n可書物號或譯名，例：§bminecraft:firework_rocket§r §b煙花§r。\n前加§b#§r為標籤匹配，例：§l#minecraft:boats§r。\n並書文與濾法（英逗隔之），例：§l煙花,c§r。\n「c」者含匹配，先試拼音或直匹。",
   "litematica-printer.config.fillBlockMode": "填方模",
   "litematica-printer.config.fillBlockMode.desc": "選方之模。\n§d方列表§r：用表內方\n§d手持§r：用主手所持",
   "litematica-printer.config.fillBlockModeType.blocklist": "方列表",

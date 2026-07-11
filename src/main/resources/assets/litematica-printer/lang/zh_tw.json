@@ -75,6 +75,8 @@
   "litematica-printer.config.fillEnabled.desc": "控制填充模組的開關。",
   "litematica-printer.config.fillBlockList": "方塊清單",
   "litematica-printer.config.fillBlockList.desc": "填充模式使用的方塊清單，設定規則與「基礎方塊清單」一致。",
+  "litematica-printer.config.fillHandheldBlacklist": "手持物品黑名單",
+  "litematica-printer.config.fillHandheldBlacklist.desc": "手持物品模式下，禁止使用此清單中的物品進行填充，防止誤用煙花等道具。\n可輸入物品ID或目前語言的翻譯名稱，示例：§bminecraft:firework_rocket§r §b煙花§r。\n前綴添加§b#§r表示標籤匹配，示例：§l#minecraft:boats§r。\n同時輸入文字和過濾條件(英文逗號分隔)，示例：§l煙花,c§r。\n其中「c」表示包含匹配，優先嘗試拼音或直接匹配。",
   "litematica-printer.config.fillBlockMode": "填充方塊模式",
   "litematica-printer.config.fillBlockMode.desc": "填充方塊的選取模式。\n§d方塊清單§r：使用設定清單內的方塊\n§d手持物品§r：使用目前主手手持的方塊",
   "litematica-printer.config.fillBlockModeType.blocklist": "方塊清單",

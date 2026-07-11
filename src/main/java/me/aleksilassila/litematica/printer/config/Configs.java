@@ -41,6 +41,7 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
     private static final BooleanSupplier isExcavateWhitelist = () -> isExcavateCustom.getAsBoolean() && Mine.EXCAVATE_LIMIT.getOptionListValue().equals(UsageRestriction.ListType.WHITELIST);
     private static final BooleanSupplier isExcavateBlacklist = () -> isExcavateCustom.getAsBoolean() && Mine.EXCAVATE_LIMIT.getOptionListValue().equals(UsageRestriction.ListType.BLACKLIST);
     private static final BooleanSupplier isBlocklist = () -> Fill.FILL_BLOCK_MODE.getOptionListValue().equals(FillBlockModeType.BLOCKLIST);
+    private static final BooleanSupplier isHandheld = () -> Fill.FILL_BLOCK_MODE.getOptionListValue().equals(FillBlockModeType.HANDHELD);
     private static final BooleanSupplier isRemoteInventoryLoaded = ModUtils::isRemoteInventoryNextLoaded;
 
     public static final ImmutableList<IConfigBase> OPTIONS;
@@ -540,6 +541,11 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
                 .setVisible(isBlocklist)
                 .build();
 
+        // 手持物品黑名单
+        public static final ConfigStringList FILL_HANDHELD_BLACKLIST = stringListValue("fillHandheldBlacklist")
+                .setVisible(isHandheld)
+                .build();
+
         // 模式朝向
         public static final ConfigOptionList FILL_BLOCK_FACING = optionList("fillModeFacing")
                 .defaultValue(FillModeFacingType.NONE)
@@ -550,6 +556,7 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
                 FILL_SELECTION_TYPE,
                 FILL_BLOCK_MODE,
                 FILL_BLOCK_LIST,
+                FILL_HANDHELD_BLACKLIST,
                 FILL_BLOCK_FACING
         );
     }

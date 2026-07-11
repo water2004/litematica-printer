@@ -76,6 +76,8 @@
   "litematica-printer.config.fill.desc": "В пределах выделенной области размещает блоки из §6Списка блоков заполнения§r.",
   "litematica-printer.config.fillBlockList": "Список блоков",
   "litematica-printer.config.fillBlockList.desc": "Список блоков для режима заполнения. Правила настройки совпадают с «Основным списком блоков».",
+  "litematica-printer.config.fillHandheldBlacklist": "Чёрный список предметов в руке",
+  "litematica-printer.config.fillHandheldBlacklist.desc": "В режиме предмета в руке, предметы из этого списка запрещены для заполнения, предотвращая случайное использование фейерверков и т.д.\nМожно вводить ID предмета или переведённое название, пример: §bminecraft:firework_rocket§r §bфейерверк§r.\nПрефикс §b#§r для совпадения по тегу, пример: §l#minecraft:boats§r.\nТекст и условия фильтрации одновременно (через запятую), пример: §lфейерверк,c§r.\nГде «c» означает совпадение по вхождению, с приоритетом пиньинь или прямого совпадения.",
   "litematica-printer.config.fillBlockMode": "Режим выбора блока для заполнения",
   "litematica-printer.config.fillBlockMode.desc": "Режим выбора блока при заполнении.\n§dСписок блоков§r: Используются блоки из настроенного списка\n§dПредмет в руке§r: Используется блок, удерживаемый в основной руке",
   "litematica-printer.config.fillBlockModeType.blocklist": "Список блоков",

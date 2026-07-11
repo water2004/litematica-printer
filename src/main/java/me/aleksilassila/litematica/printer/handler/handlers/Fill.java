@@ -75,9 +75,15 @@ public class Fill extends Module {
                 break;
             case HANDHELD:  // 手持物品
                 if (Configs.Fill.FILL_BLOCK_MODE.getOptionListValue() == FillBlockModeType.HANDHELD) {
-                    ItemStack heldStack = player.getMainHandItem(); // 获取主手物品
+                    ItemStack heldStack = player.getMainHandItem();
                     if (!heldStack.isEmpty() && heldStack.getCount() > 0) {
-                        fillModeItemList = new Item[]{player.getMainHandItem().getItem()};
+                        Item heldItem = heldStack.getItem();
+                        List<String> blacklist = Configs.Fill.FILL_HANDHELD_BLACKLIST.getStrings();
+                        if (!blacklist.isEmpty() && blacklist.stream().anyMatch(s -> PinYinSearchUtils.matchName(s, heldStack))) {
+                            fillModeItemList = new Item[0];
+                        } else {
+                            fillModeItemList = new Item[]{heldItem};
+                        }
                     } else {
                         fillModeItemList = new Item[0];
                     }

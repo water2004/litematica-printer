@@ -76,6 +76,8 @@
   "litematica-printer.config.fill.desc": "Within the selection range, place blocks configured in §6Fill Block List§r.",
   "litematica-printer.config.fillBlockList": "Block List",
   "litematica-printer.config.fillBlockList.desc": "Block list used by filling mode, configuration rules consistent with \"Basic Block List\".",
+  "litematica-printer.config.fillHandheldBlacklist": "Held Item Blacklist",
+  "litematica-printer.config.fillHandheldBlacklist.desc": "In held item mode, items in this list are prohibited from being used for filling, preventing accidental use of fireworks etc.\nCan input item ID or translated name in current language, example: §bminecraft:firework_rocket§r §bfirework§r.\nPrefix §b#§r for tag matching, example: §l#minecraft:boats§r.\nInput text and filter conditions simultaneously (separated by English comma), example: §lfirework,c§r.\nWhere \"c\" represents contains matching, prioritizing pinyin or direct matching.",
   "litematica-printer.config.fillBlockMode": "Fill Block Mode",
   "litematica-printer.config.fillBlockMode.desc": "Block selection mode for filling.\n§dBlock List§r: Use blocks in configured list\n§dHeld Item§r: Use currently held block in main hand",
   "litematica-printer.config.fillBlockModeType.blocklist": "Block List",
