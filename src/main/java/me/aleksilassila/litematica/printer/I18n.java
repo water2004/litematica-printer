@@ -16,7 +16,7 @@ public class I18n {
 
     public static final I18n BEDROCK_CREATIVE_MODE = of("bedrock.creative_mode");
     public static final I18n BEDROCK_MOD_MISSING = of("bedrock.mod_missing");
-    public static final I18n BEDROCK_NOT_SUPPORT = of("litematica-printer.bedrock.not_support");
+    public static final I18n BEDROCK_NOT_SUPPORT = of("bedrock.not_support");
 
     public static final I18n ICE_CREATIVE_MODE = of("ice.creative_mode");
 
