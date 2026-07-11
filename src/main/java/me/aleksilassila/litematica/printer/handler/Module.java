@@ -144,11 +144,31 @@ public abstract class Module extends ConfigUtils {
         long cutoff = System.currentTimeMillis() - Configs.Highlight.HIGHLIGHT_FADE_DURATION.getIntegerValue() * 100L;
         pendingHighlights.removeIf(ph -> ph.time() < cutoff);
 
+        // 远离工作区时提前退出，避免空跑卡顿
+        if (needsAreaCheck() && !isPlayerRangeInWorkArea()) return;
+
         switch (scanState) {
             case COLLECT -> collectPhase(maxExecs);
             case PROCESS -> processPhase(maxExecs);
             case WAITING -> waitingPhase(maxExecs);
         }
+    }
+
+    /**
+     * 粗筛：玩家可达范围是否与工作区有交集。
+     * 投影模式 isSchematicBlock 已够快，无需提前退出；
+     * 选区模式用选区边界盒做 O(1) 排空判断。
+     */
+    private boolean isPlayerRangeInWorkArea() {
+        if (needSchematic) return true;
+        if (player == null) return false;
+        PrinterBox selBounds = LitematicaUtils.getSelectionBounds();
+        if (selBounds == null) return false;
+        double r = ConfigUtils.getEffectiveRange();
+        double px = player.getX(), py = player.getEyeY(), pz = player.getZ();
+        return Math.floor(px - r) <= selBounds.maxX && Math.ceil(px + r) >= selBounds.minX
+            && Math.floor(py - r) <= selBounds.maxY && Math.ceil(py + r) >= selBounds.minY
+            && Math.floor(pz - r) <= selBounds.maxZ && Math.ceil(pz + r) >= selBounds.minZ;
     }
 
     protected void enterWaiting(@Nullable BlockPos pos) {

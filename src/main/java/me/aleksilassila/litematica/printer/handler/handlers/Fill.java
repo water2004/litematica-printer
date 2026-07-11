@@ -14,12 +14,15 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class Fill extends Module {
@@ -28,6 +31,10 @@ public class Fill extends Module {
     private List<String> fillCacheBlocklist = new ArrayList<>();
     @Getter
     private Item[] fillModeItemList = new Item[0];
+
+    // 可替换列表缓存，避免每位置都做拼音转换
+    private List<String> replaceableCache = new ArrayList<>();
+    private final Map<Block, Boolean> replaceableMatchCache = new HashMap<>();
 
     public Fill() {
         super(NAME, Configs.Fill.ENABLED, Configs.Fill.FILL_SELECTION_TYPE, true);
@@ -79,6 +86,20 @@ public class Fill extends Module {
         }
     }
 
+    /**
+     * 缓存版可替换判断：同种方块只做一次拼音匹配
+     */
+    private boolean isReplaceable(BlockState state) {
+        List<String> current = Configs.Print.REPLACEABLE_LIST.getStrings();
+        if (!current.equals(replaceableCache)) {
+            replaceableCache = new ArrayList<>(current);
+            replaceableMatchCache.clear();
+        }
+        if (current.isEmpty()) return false;
+        return replaceableMatchCache.computeIfAbsent(state.getBlock(),
+                block -> current.stream().anyMatch(s -> PinYinSearchUtils.matchName(s, state)));
+    }
+
     @Override
     protected boolean canIterate() {
         return fillModeItemList.length > 0;
@@ -93,7 +114,7 @@ public class Fill extends Module {
         BlockState state = level.getBlockState(pos);
         if (state.isAir()) return true;
         if (state.getBlock() instanceof LiquidBlock) return true;
-        if (Configs.Print.REPLACEABLE_LIST.getStrings().stream().anyMatch(s -> PinYinSearchUtils.matchName(s, state))) return true;
+        if (isReplaceable(state)) return true;
         return false;
     }
 
@@ -102,7 +123,7 @@ public class Fill extends Module {
         BlockState state = level.getBlockState(pos);
         if (state.isAir()) return false;
         if (state.getBlock() instanceof LiquidBlock) return false;
-        if (Configs.Print.REPLACEABLE_LIST.getStrings().stream().anyMatch(s -> PinYinSearchUtils.matchName(s, state))) return false;
+        if (isReplaceable(state)) return false;
         return true;
     }
 
@@ -111,7 +132,7 @@ public class Fill extends Module {
         BlockState currentState = level.getBlockState(blockPos);
         if (currentState.isAir()
                 || (currentState.getBlock() instanceof LiquidBlock)
-                || Configs.Print.REPLACEABLE_LIST.getStrings().stream().anyMatch(s -> PinYinSearchUtils.matchName(s, currentState))
+                || isReplaceable(currentState)
         ) {
             if (!InventoryUtils.switchToItems(player, this.fillModeItemList)) {
                 if (this.fillModeItemList != null && this.fillModeItemList.length > 0 && this.fillModeItemList[0] != null) {

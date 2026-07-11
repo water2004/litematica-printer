@@ -70,6 +70,12 @@ public class PrinterBox implements Iterable<BlockPos> {
     }
 
 
+    public boolean intersects(PrinterBox other) {
+        return this.minX <= other.maxX && this.maxX >= other.minX
+            && this.minY <= other.maxY && this.maxY >= other.minY
+            && this.minZ <= other.maxZ && this.maxZ >= other.minZ;
+    }
+
     @Override
     public @NotNull Iterator<BlockPos> iterator() {
         return new BoxIterator();

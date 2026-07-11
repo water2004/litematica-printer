@@ -107,8 +107,13 @@ public class LitematicaUtils {
 
     private static boolean isPosInBox(Box box, BlockPos pos) {
         if (box == null || box.getPos1() == null || box.getPos2() == null || pos == null) return false;
-        PrinterBox printerBox = new PrinterBox(box.getPos1(), box.getPos2());
-        return printerBox.contains(pos);
+        int x = pos.getX(), y = pos.getY(), z = pos.getZ();
+        return x >= Math.min(box.getPos1().getX(), box.getPos2().getX())
+            && x <= Math.max(box.getPos1().getX(), box.getPos2().getX())
+            && y >= Math.min(box.getPos1().getY(), box.getPos2().getY())
+            && y <= Math.max(box.getPos1().getY(), box.getPos2().getY())
+            && z >= Math.min(box.getPos1().getZ(), box.getPos2().getZ())
+            && z <= Math.max(box.getPos1().getZ(), box.getPos2().getZ());
     }
 
     private static List<PrinterBox> getSelectionBoxes(AreaSelection selection) {

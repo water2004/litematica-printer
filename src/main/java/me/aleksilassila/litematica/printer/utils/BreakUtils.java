@@ -28,6 +28,7 @@ public class BreakUtils {
     public static final BreakUtils INSTANCE = new BreakUtils();
 
     private final Queue<BlockPos> breakQueue = new LinkedList<>();
+    private final Set<BlockPos> breakSet = new HashSet<>(); // O(1) 查询伴侣
     private BlockPos breakPos;
 
     private BreakUtils() {}
@@ -78,6 +79,7 @@ public class BreakUtils {
     public void add(BlockPos pos) {
         if (pos == null) return;
         breakQueue.add(pos);
+        breakSet.add(pos);
     }
 
     public void add(SchematicBlockContext ctx) {
@@ -86,7 +88,7 @@ public class BreakUtils {
     }
 
     public boolean inQueue(BlockPos pos) {
-        return breakQueue.contains(pos);
+        return breakSet.contains(pos);
     }
 
     public boolean inQueue(SchematicBlockContext ctx) {
@@ -97,6 +99,7 @@ public class BreakUtils {
         if (!ConfigUtils.isPrinterEnable()) {
             if (!breakQueue.isEmpty()) {
                 breakQueue.clear();
+                breakSet.clear();
             }
             if (breakPos != null) {
                 breakPos = null;
@@ -123,6 +126,7 @@ public class BreakUtils {
                 if (pos == null) {
                     continue;
                 }
+                breakSet.remove(pos);
                 if (!PlayerUtils.canInteracted(pos) || !canBreakBlock(pos) || !breakRestriction(level.getBlockState(pos))) {
                     continue;
                 }
