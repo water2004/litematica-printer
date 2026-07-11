@@ -274,5 +274,6 @@
   "litematica-printer.update.recommendation": "强烈建议升级至最新版本，以修复潜在的严重问题。",
   "litematica-printer.update.repository": "代码仓库：",
   "modmenu.descriptionTranslation.litematica-printer": "Litematica 的扩展模组，补全了缺失的打印机功能，可以自动按照原理图建造。",
-  "modmenu.nameTranslation.litematica-printer": "投影打印机"
+  "modmenu.nameTranslation.litematica-printer": "投影打印机",
+  "litematica-printer.bedrock.not_support": "暂不支持原版 Bedrock Miner，请使用 bunnyi 分支版"
 }

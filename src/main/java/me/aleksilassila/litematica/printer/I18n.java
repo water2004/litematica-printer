@@ -16,6 +16,7 @@ public class I18n {
 
     public static final I18n BEDROCK_CREATIVE_MODE = of("bedrock.creative_mode");
     public static final I18n BEDROCK_MOD_MISSING = of("bedrock.mod_missing");
+    public static final I18n BEDROCK_NOT_SUPPORT = of("litematica-printer.bedrock.not_support");
 
     public static final I18n ICE_CREATIVE_MODE = of("ice.creative_mode");
 
@@ -26,23 +27,6 @@ public class I18n {
 
     public static final I18n BLOCK_NO_SUPPORT = of("block.no_support");
     public static final I18n BLOCK_MISMATCH = of("block.mismatch");
-
-    public static final I18n UPDATE_AVAILABLE = of("update.available");
-    public static final I18n UPDATE_DOWNLOAD = of("update.download");
-    public static final I18n UPDATE_FAILED = of("update.failed");
-    public static final I18n UPDATE_PASSWORD = of("update.password");
-    public static final I18n UPDATE_RECOMMENDATION = of("update.recommendation");
-    public static final I18n UPDATE_REPOSITORY = of("update.repository");
-
-    public static final I18n HIGHLIGHT_ENABLED = of("highlightEnabled");
-    public static final I18n HIGHLIGHT_COLOR = of("highlightColor");
-    public static final I18n HIGHLIGHT_COLOR_PLACE = of("highlightColorPlace");
-    public static final I18n HIGHLIGHT_COLOR_ADJUST = of("highlightColorAdjust");
-    public static final I18n HIGHLIGHT_COLOR_BREAK = of("highlightColorBreak");
-    public static final I18n HIGHLIGHT_COLOR_FAILED = of("highlightColorFailed");
-    public static final I18n HIGHLIGHT_STYLE = of("highlightStyle");
-    public static final I18n HIGHLIGHT_FADE_DURATION = of("highlightFadeDuration");
-    public static final I18n HIGHLIGHT_THROUGH_WALLS = of("highlightThroughWalls");
 
     private static final String PREFIX_CONFIG = "config";
     private static final String PREFIX_COMMENT = "desc";

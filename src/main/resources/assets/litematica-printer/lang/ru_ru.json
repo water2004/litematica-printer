@@ -273,5 +273,6 @@
   "litematica-printer.update.recommendation": "Настоятельно рекомендуется обновиться до последней версии для устранения возможных серьёзных проблем.",
   "litematica-printer.update.repository": "Репозиторий кода:",
   "modmenu.descriptionTranslation.litematica-printer": "Расширение для Litematica, добавляющее недостающую функцию принтера, позволяющую автоматически строить по схемам.",
-  "modmenu.nameTranslation.litematica-printer": "Litematica Printer"
+  "modmenu.nameTranslation.litematica-printer": "Litematica Printer",
+  "litematica-printer.bedrock.not_support": "Не поддерживается в оригинальной версии Bedrock Miner, используйте версию bunnyi"
 }

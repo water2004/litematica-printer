@@ -274,5 +274,6 @@
   "litematica-printer.update.recommendation": "Strongly recommend upgrading to latest version to fix potential serious issues.",
   "litematica-printer.update.repository": "Code repository:",
   "modmenu.descriptionTranslation.litematica-printer": "An extension for Litematica that adds the missing printer functionality, allowing you to automatically build schematics.",
-  "modmenu.nameTranslation.litematica-printer": "Litematica Printer"
+  "modmenu.nameTranslation.litematica-printer": "Litematica Printer",
+  "litematica-printer.bedrock.not_support": "Not supported in original Bedrock Miner, please use bunnyi port version"
 }

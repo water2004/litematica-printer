@@ -36,6 +36,8 @@ public class Bedrock extends Module {
             return false;
         }
         if (!ModUtils.isBedrockMinerLoaded() && !ModUtils.isBlockMinerLoaded()) {
+            if (ModUtils.isLoadMod("bedrock-miner"))
+                MessageUtils.setOverlayMessage(I18n.BEDROCK_NOT_SUPPORT.getName());
             MessageUtils.setOverlayMessage(I18n.BEDROCK_MOD_MISSING.getName());
             return false;
         }
