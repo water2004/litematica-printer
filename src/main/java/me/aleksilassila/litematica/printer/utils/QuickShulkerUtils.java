@@ -72,23 +72,21 @@ public class QuickShulkerUtils {
         if (!Configs.Print.USE_QUICK_SHULKER.getBooleanValue()) return false;
 
         ShulkerSource source = (ShulkerSource) Configs.Print.SHULKER_SOURCE.getOptionListValue();
-        switch (source) {
+        return switch (source) {
             //#if MC >= 260102
-            case TAKE_IT_OUT:
-                return TakeItOutCompat.tryExtract(player, items);
+            case TAKE_IT_OUT -> TakeItOutCompat.tryExtract(player, items);
             //#endif
-            case MOD:
-                if (!QUICK_SHULKER_LOADED) return false;
-                // fall through: MOD 和 PLUGIN 共用开箱取物流程
-            case PLUGIN:
-                return requestViaOpenShulker(player, items);
-            default:
-                return false;
-        }
+            case MOD -> {
+                if (!QUICK_SHULKER_LOADED) yield false;
+                yield requestViaOpenShulker(player, items, source);
+            }
+            case PLUGIN -> requestViaOpenShulker(player, items, source);
+            default -> false;
+        };
     }
 
     /** MOD/PLUGIN 模式：找到含目标物品的潜影盒并打开 */
-    private static boolean requestViaOpenShulker(LocalPlayer player, Item[] items) {
+    private static boolean requestViaOpenShulker(LocalPlayer player, Item[] items, ShulkerSource source) {
         if (isOpenHandler || shulkerCooldown > 0) return false;
 
         Inventory inventory = player.getInventory();
@@ -102,7 +100,7 @@ public class QuickShulkerUtils {
                 ModUtils.closeScreen++;
                 setOpenHandler(true);
                 setShulkerCooldown(Configs.Print.SHULKER_COOLDOWN.getIntegerValue());
-                openShulker(shulkerStack, shulkerSlot);
+                openShulker(shulkerStack, shulkerSlot, source);
                 return true;
             }
         }
@@ -111,23 +109,14 @@ public class QuickShulkerUtils {
 
     // ========== Open Shulker ==========
 
-    /** 根据 SHULKER_SOURCE 配置选择打开方式：MOD 走 QuickShulker API，PLUGIN 走右键模拟 */
-    public static void openShulker(ItemStack stack, int inventorySlot) {
-        ShulkerSource source = (ShulkerSource) Configs.Print.SHULKER_SOURCE.getOptionListValue();
-        switch (source) {
-            case PLUGIN:
-                openShulkerByRightClick(inventorySlot);
-                break;
-            case MOD:
-            default:
-                if (!QUICK_SHULKER_LOADED) {
-                    isOpenHandler = false;
-                    shulkerBoxSlot = -1;
-                    return;
-                }
-                openShulkerViaMod(stack, inventorySlot);
-                break;
+    /** 按已选择的来源打开潜影盒：MOD 走 QuickShulker API，PLUGIN 走右键模拟 */
+    private static void openShulker(ItemStack stack, int inventorySlot, ShulkerSource source) {
+        if (source == ShulkerSource.PLUGIN) {
+            openShulkerByRightClick(inventorySlot);
+            return;
         }
+
+        openShulkerViaMod(stack, inventorySlot);
     }
 
     private static void openShulkerViaMod(ItemStack stack, int inventorySlot) {
