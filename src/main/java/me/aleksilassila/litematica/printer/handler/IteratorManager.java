@@ -9,7 +9,6 @@ import me.aleksilassila.litematica.printer.enums.RadiusShapeType;
 import me.aleksilassila.litematica.printer.enums.SelectionType;
 import me.aleksilassila.litematica.printer.printer.PrinterBox;
 import me.aleksilassila.litematica.printer.utils.ConfigUtils;
-import me.aleksilassila.litematica.printer.utils.LitematicaUtils;
 import me.aleksilassila.litematica.printer.utils.PlayerUtils;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -43,6 +42,8 @@ public class IteratorManager {
     @Nullable
     private LayerMode lastLayerMode = null;
     @Nullable
+    private SelectionType lastSelectionType = null;
+    @Nullable
     private PrinterBox lastBox;
 
     private boolean needsRebuild;
@@ -74,6 +75,8 @@ public class IteratorManager {
         int layerAbove = layerRange.getLayerAbove();
         int layerBelow = layerRange.getLayerBelow();
 
+        SelectionType selectionType = selectionTypeObj instanceof SelectionType s ? s : null;
+
         boolean needRebuild = this.box == null
                 || !this.box.equals(lastBox)
                 || lastEyePos == null
@@ -85,7 +88,8 @@ public class IteratorManager {
                 || layerAbove != lastLayerAbove
                 || layerBelow != lastLayerBelow
                 || layerAxis != lastLayerAxis
-                || layerMode != lastLayerMode;
+                || layerMode != lastLayerMode
+                || selectionType != lastSelectionType;
 
         if (needRebuild) {
             lastEyePos = eyeBP;
@@ -97,6 +101,7 @@ public class IteratorManager {
             lastLayerBelow = layerBelow;
             lastLayerAxis = layerAxis;
             lastLayerMode = layerMode;
+            lastSelectionType = selectionType;
 
             int minX = (int) Math.floor(player.getX() - effectiveRange);
             int maxX = (int) Math.ceil(player.getX() + effectiveRange);
@@ -105,10 +110,8 @@ public class IteratorManager {
             int minZ = (int) Math.floor(player.getZ() - effectiveRange);
             int maxZ = (int) Math.ceil(player.getZ() + effectiveRange);
 
-            SelectionType selectionType = selectionTypeObj instanceof SelectionType s ? s : null;
-
-            if (selectionType != null && selectionType == SelectionType.LITEMATICA_RENDER_LAYER
-                    && layerMode != LayerMode.ALL) {
+            // 层范围裁剪应对所有选区模式生效，而非仅限"可见层"模式
+            if (layerMode != LayerMode.ALL) {
                 switch (layerMode) {
                     case SINGLE_LAYER -> {
                         switch (layerAxis) {
@@ -142,19 +145,6 @@ public class IteratorManager {
             }
 
             if (selectionType != null) {
-                if (selectionType == SelectionType.LITEMATICA_SELECTION
-                        || selectionType == SelectionType.LITEMATICA_SELECTION_BELOW_PLAYER
-                        || selectionType == SelectionType.LITEMATICA_SELECTION_ABOVE_PLAYER) {
-                    PrinterBox selBounds = LitematicaUtils.getSelectionBounds();
-                    if (selBounds != null) {
-                        minX = Math.max(minX, selBounds.minX);
-                        maxX = Math.min(maxX, selBounds.maxX);
-                        minY = Math.max(minY, selBounds.minY);
-                        maxY = Math.min(maxY, selBounds.maxY);
-                        minZ = Math.max(minZ, selBounds.minZ);
-                        maxZ = Math.min(maxZ, selBounds.maxZ);
-                    }
-                }
                 if (selectionType == SelectionType.LITEMATICA_SELECTION_BELOW_PLAYER) {
                     maxY = Math.min(maxY, (int) Math.floor(player.getY()));
                 } else if (selectionType == SelectionType.LITEMATICA_SELECTION_ABOVE_PLAYER) {

@@ -402,9 +402,7 @@ public class InventoryUtils {
                 return InventoryUtils.setPickedItemToHand(slot, itemStack, client);
             }
         }
-        if (QuickShulkerUtils.requestShulkerItem(player, items)) {
-            return false;
-        }
+        QuickShulkerUtils.requestShulkerItem(player, items);
         return false;
     }
 
