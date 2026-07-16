@@ -43,14 +43,31 @@ public class QuickShulkerUtils {
     private static int shulkerBoxSlot = -1;
     @Getter
     private static final Set<Item> lastNeedItemList = new HashSet<>();
-    /** 之前从潜影盒取出、背包满时需要归还的物品 */
-    private static final LinkedList<Item> itemsToReturn = new LinkedList<>();
+    private static final LinkedList<ReturnRequest> itemsToReturn = new LinkedList<>();
+    private static final List<TrackedShulker> trackedShulkers = new ArrayList<>();
+    private static ReturnRequest activeReturnRequest;
+    private static TrackedShulker activeShulker;
+    private static int deferredCloseTicks;
+    private static int deferredCloseRetries;
+    private static final int MAX_DEFERRED_CLOSE_RETRIES = 10;
 
     private QuickShulkerUtils() {}
 
     public static void tick() {
         if (shulkerCooldown > 0) {
             shulkerCooldown--;
+        }
+        if (deferredCloseTicks > 0 && --deferredCloseTicks == 0) {
+            LocalPlayer player = mc.player;
+            if (player == null || player.containerMenu.equals(player.inventoryMenu)) {
+                deferredCloseRetries = 0;
+            } else if (player.containerMenu.getCarried().isEmpty()
+                    || ++deferredCloseRetries >= MAX_DEFERRED_CLOSE_RETRIES) {
+                player.closeContainer();
+                deferredCloseRetries = 0;
+            } else {
+                deferredCloseTicks = 1;
+            }
         }
     }
 
@@ -72,55 +89,81 @@ public class QuickShulkerUtils {
         if (!Configs.Print.USE_QUICK_SHULKER.getBooleanValue()) return false;
 
         ShulkerSource source = (ShulkerSource) Configs.Print.SHULKER_SOURCE.getOptionListValue();
-        return switch (source) {
-            //#if MC >= 260102
-            case TAKE_IT_OUT -> TakeItOutCompat.tryExtract(player, items);
-            //#endif
-            case MOD -> {
-                if (!QUICK_SHULKER_LOADED) yield false;
-                yield requestViaOpenShulker(player, items, source);
-            }
-            case PLUGIN -> requestViaOpenShulker(player, items, source);
-            default -> false;
-        };
-    }
 
-    /** MOD/PLUGIN 模式：找到含目标物品的潜影盒并打开 */
-    private static boolean requestViaOpenShulker(LocalPlayer player, Item[] items, ShulkerSource source) {
+        //#if MC >= 260102
+        if (source == ShulkerSource.TAKE_IT_OUT) {
+            return TakeItOutCompat.tryExtract(player, items);
+        }
+        //#endif
+
+        if (source == ShulkerSource.MOD && !QUICK_SHULKER_LOADED) {
+            return false;
+        }
+
         if (isOpenHandler || shulkerCooldown > 0) return false;
 
         Inventory inventory = player.getInventory();
+
+        if (Configs.Print.RETURN_TO_SHULKER_WHEN_FULL.getBooleanValue()
+                && isInventoryFull(inventory)) {
+            ReturnRequest returnRequest = itemsToReturn.peekFirst();
+            if (returnRequest == null) return false;
+
+            int shulkerSlot = findReturnShulker(inventory, returnRequest);
+            if (shulkerSlot == -1) return false;
+
+            activeReturnRequest = returnRequest;
+            activeShulker = returnRequest.shulker();
+            return openSelectedShulker(inventory, shulkerSlot, source);
+        }
+
+        // 不开启精确回塞时，只要有 itemsToReturn 就尝试回塞到任意有空位的潜影盒
+        if (!Configs.Print.RETURN_TO_SHULKER_WHEN_FULL.getBooleanValue()
+                && isInventoryFull(inventory)) {
+            ReturnRequest returnRequest = itemsToReturn.peekFirst();
+            if (returnRequest == null) return false;
+
+            int shulkerSlot = findAnyShulker(player);
+            if (shulkerSlot == -1) return false;
+
+            activeReturnRequest = returnRequest;
+            activeShulker = null;
+            return openSelectedShulker(inventory, shulkerSlot, source);
+        }
+
         for (Item item : items) {
             int shulkerSlot = findShulkerWithItem(player, item);
             if (shulkerSlot != -1) {
                 ItemStack shulkerStack = inventory.getItem(shulkerSlot);
-                setShulkerBoxSlot(shulkerSlot);
+                activeReturnRequest = null;
+                activeShulker = findTrackedShulker(shulkerStack);
+                if (activeShulker == null) {
+                    activeShulker = new TrackedShulker(shulkerStack.getItem(), getShulkerContents(shulkerStack));
+                    trackedShulkers.add(activeShulker);
+                }
+                activeShulker.setLastKnownSlot(shulkerSlot);
                 clearLastNeedItems();
                 addLastNeedItem(item);
-                ModUtils.closeScreen++;
-                setOpenHandler(true);
-                setShulkerCooldown(Configs.Print.SHULKER_COOLDOWN.getIntegerValue());
-                openShulker(shulkerStack, shulkerSlot, source);
-                return true;
+                return openSelectedShulker(inventory, shulkerSlot, source);
             }
         }
         return false;
     }
 
-    // ========== Open Shulker ==========
+    private static boolean openSelectedShulker(Inventory inventory, int shulkerSlot, ShulkerSource source) {
+        ItemStack shulkerStack = inventory.getItem(shulkerSlot);
+        setShulkerBoxSlot(shulkerSlot);
+        ModUtils.closeScreen++;
+        setOpenHandler(true);
+        setShulkerCooldown(Configs.Print.SHULKER_COOLDOWN.getIntegerValue());
 
-    /** 按已选择的来源打开潜影盒：MOD 走 QuickShulker API，PLUGIN 走右键模拟 */
-    private static void openShulker(ItemStack stack, int inventorySlot, ShulkerSource source) {
+        // 按来源打开潜影盒：PLUGIN 走右键模拟，MOD 走 QuickShulker API
         if (source == ShulkerSource.PLUGIN) {
-            openShulkerByRightClick(inventorySlot);
-            return;
+            openShulkerByRightClick(shulkerSlot);
+        } else {
+            QuickShulkerCompat.openShulker(shulkerStack, shulkerSlot);
         }
-
-        openShulkerViaMod(stack, inventorySlot);
-    }
-
-    private static void openShulkerViaMod(ItemStack stack, int inventorySlot) {
-        QuickShulkerCompat.openShulker(stack, inventorySlot);
+        return true;
     }
 
     // ========== 容器槽位点击 ==========
@@ -202,13 +245,9 @@ public class QuickShulkerUtils {
     }
 
     // ========== 潜影盒取物逻辑 ==========
-    // 阶段1（背包满时）：把之前取出的物品放回潜影盒
-    // 阶段2：单向取出所需物品
-
     /**
      * 收到 ContainerSetContent 包时调用。
-     * 背包满且开启归还配置时，先把 itemsToReturn 里的东西放回潜影盒；
-     * 然后从潜影盒中找到所需物品，交换到背包空位（单向取出）。
+     * 背包满时只执行归还；背包未满时执行正常取物。
      */
     public static void switchFromShulker() {
         LocalPlayer player = mc.player;
@@ -220,45 +259,22 @@ public class QuickShulkerUtils {
         AbstractContainerMenu container = player.containerMenu;
         Inventory inventory = player.getInventory();
 
-        // ── 阶段1：背包满时归还物品 ──
-        if (Configs.Print.RETURN_TO_SHULKER_WHEN_FULL.getBooleanValue()
-                && !hasEmptySlot(inventory)) {
-            Iterator<Item> it = itemsToReturn.iterator();
-            while (it.hasNext()) {
-                Item returnItem = it.next();
-                for (int i = 0; i < Math.min(inventory.getContainerSize(), 36); i++) {
-                    if (inventory.getItem(i).is(returnItem)) {
-                        // 找潜影盒空槽放回去
-                        for (Slot s : container.slots) {
-                            if (!s.hasItem()) {
-                                int ownSlots = container.slots.size() - 36;
-                                int containerSource;
-                                if (i < 9) {
-                                    containerSource = ownSlots + 27 + i;
-                                } else {
-                                    containerSource = ownSlots + (i - 9);
-                                }
-                                mc.gameMode.handleInventoryMouseClick(container.containerId, containerSource, 0, ClickType.PICKUP, player);
-                                mc.gameMode.handleInventoryMouseClick(container.containerId, s.index, 0, ClickType.PICKUP, player);
-                                it.remove();
-                                break;
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
+        if (activeReturnRequest != null) {
+            returnItemToShulker(player, container, inventory, activeReturnRequest);
+            finishShulkerOperation(player);
+            return;
         }
 
-        // ── 阶段2：从潜影盒取出所需物品 ──
-        for (Slot slot : container.slots) {
+        int ownSlots = container.slots.size() - 36;
+        for (int slotIndex = 0; slotIndex < ownSlots; slotIndex++) {
+            Slot slot = container.slots.get(slotIndex);
             if (!slot.hasItem()) continue;
             for (Item item : lastNeedItemList) {
                 if (slot.getItem().getItem().equals(item)) {
-                    itemsToReturn.addLast(slot.getItem().getItem());
+                    Item returnItem = slot.getItem().getItem();
                     // 找背包空位（优先快捷栏，再主背包）
                     int emptyInvSlot = -1;
-                    for (int i = 0; i < inventory.getContainerSize(); i++) {
+                    for (int i = 0; i < Math.min(inventory.getContainerSize(), 36); i++) {
                         if (inventory.getItem(i).isEmpty()) {
                             emptyInvSlot = i;
                             break;
@@ -266,7 +282,6 @@ public class QuickShulkerUtils {
                     }
                     if (emptyInvSlot != -1 && mc.gameMode != null) {
                         // 背包索引 → 容器槽位索引的转换
-                        int ownSlots = container.slots.size() - 36; // 容器自身槽数
                         int containerTarget;
                         if (emptyInvSlot < 9) {
                             // 快捷栏在容器末尾
@@ -278,19 +293,71 @@ public class QuickShulkerUtils {
                         // 先拾取潜影盒槽位，再放到目标槽位
                         mc.gameMode.handleInventoryMouseClick(container.containerId, slot.index, 0, ClickType.PICKUP, player);
                         mc.gameMode.handleInventoryMouseClick(container.containerId, containerTarget, 0, ClickType.PICKUP, player);
+                        if (activeShulker != null) {
+                            activeShulker.updateContents(getContainerContents(container, ownSlots));
+                            itemsToReturn.addLast(new ReturnRequest(returnItem, activeShulker));
+                        }
+                        finishShulkerOperation(null);
+                    } else {
+                        finishShulkerOperation(player);
                     }
-                    player.closeContainer();
-                    shulkerBoxSlot = -1;
-                    isOpenHandler = false;
-                    lastNeedItemList.clear();
                     return;
                 }
             }
         }
 
-        player.closeContainer();
+        finishShulkerOperation(player);
+    }
+
+    private static void returnItemToShulker(LocalPlayer player, AbstractContainerMenu container,
+                                            Inventory inventory, ReturnRequest returnRequest) {
+        if (mc.gameMode == null) {
+            itemsToReturn.removeFirstOccurrence(returnRequest);
+            return;
+        }
+
+        int ownSlots = container.slots.size() - 36;
+        for (int i = 0; i < Math.min(inventory.getContainerSize(), 36); i++) {
+            if (!inventory.getItem(i).is(returnRequest.item())) continue;
+
+            for (int shulkerSlot = 0; shulkerSlot < ownSlots; shulkerSlot++) {
+                if (container.slots.get(shulkerSlot).hasItem()) continue;
+
+                int containerSource = i < 9 ? ownSlots + 27 + i : ownSlots + i - 9;
+                mc.gameMode.handleInventoryMouseClick(container.containerId, containerSource, 0, ClickType.PICKUP, player);
+                mc.gameMode.handleInventoryMouseClick(container.containerId, shulkerSlot, 0, ClickType.PICKUP, player);
+                itemsToReturn.removeFirstOccurrence(returnRequest);
+                if (returnRequest.shulker() != null) {
+                    returnRequest.shulker().updateContents(getContainerContents(container, ownSlots));
+                }
+                return;
+            }
+            // 潜影盒无空位 → 移除失效请求，避免死循环
+            itemsToReturn.removeFirstOccurrence(returnRequest);
+            return;
+        }
+        // 物品已不在背包（已被使用）→ 移除失效请求，避免死循环
+        itemsToReturn.removeFirstOccurrence(returnRequest);
+    }
+
+    private static void finishShulkerOperation(LocalPlayer player) {
+        boolean wasReturn = activeReturnRequest != null;
+        if (player == null) {
+            deferredCloseTicks = 2;
+            deferredCloseRetries = 0;
+        } else {
+            player.closeContainer();
+            deferredCloseTicks = 0;
+            deferredCloseRetries = 0;
+        }
+        shulkerBoxSlot = -1;
         isOpenHandler = false;
+        activeReturnRequest = null;
+        activeShulker = null;
         lastNeedItemList.clear();
+        if (itemsToReturn.isEmpty()) trackedShulkers.clear();
+        // 回塞完成后立即允许下一次潜影盒操作，避免当前打印位置因冷却被跳过
+        if (wasReturn) shulkerCooldown = 0;
     }
 
     /** 在玩家背包（跳过快捷栏）中找到包含目标物品的潜影盒，返回背包槽位索引，未找到返回 -1 */
@@ -310,12 +377,157 @@ public class QuickShulkerUtils {
         return -1;
     }
 
-    private static boolean hasEmptySlot(Inventory inventory) {
-        for (int i = 0; i < inventory.getContainerSize(); i++) {
-            if (!Inventory.isHotbarSlot(i) && inventory.getItem(i).isEmpty()) {
-                return true;
+    private static int findTrackedShulker(Inventory inventory, TrackedShulker trackedShulker) {
+        for (int i = 9; i < inventory.getContainerSize(); i++) {
+            ItemStack stack = inventory.getItem(i);
+            if (stack.getItem().equals(trackedShulker.boxItem())
+                    && sameContents(getShulkerContents(stack), trackedShulker.contents())) {
+                return i;
             }
         }
-        return false;
+        return -1;
+    }
+
+    /**
+     * 三级查找回塞目标潜影盒：
+     * 1. 精确内容匹配（最准）
+     * 2. 检查记录的 lastKnownSlot 是否还是同类型潜影盒（防NBT漂移）
+     * 3. 查找背包里装有同种物品的其他潜影盒（兜底）
+     * 关闭精确回塞时退化为"只要有空位就塞"
+     */
+    private static int findReturnShulker(Inventory inventory, ReturnRequest request) {
+        TrackedShulker tracked = request.shulker();
+
+        // L1: 精确匹配
+        int slot = findTrackedShulker(inventory, tracked);
+        if (slot != -1) return slot;
+
+        // L2: 检查记录的槽位
+        int lastSlot = tracked.lastKnownSlot();
+        if (lastSlot >= 9 && lastSlot < inventory.getContainerSize()) {
+            ItemStack stack = inventory.getItem(lastSlot);
+            if (stack.getItem().equals(tracked.boxItem())) {
+                return lastSlot;
+            }
+        }
+
+        // L3: 查找装有同种物品且有空位的潜影盒
+        for (int i = 9; i < inventory.getContainerSize(); i++) {
+            ItemStack stack = inventory.getItem(i);
+            String id = net.minecraft.core.registries.BuiltInRegistries.ITEM
+                    .getKey(stack.getItem()).toString();
+            if (!id.contains("shulker_box") || stack.getCount() != 1) continue;
+            List<ItemStack> contents = getShulkerContents(stack);
+            if (contents.size() >= 27) continue;
+            if (contents.stream().anyMatch(s -> s.getItem().equals(request.item()))) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private static int findAnyShulker(LocalPlayer player) {
+        Inventory inventory = player.getInventory();
+        for (int i = 9; i < inventory.getContainerSize(); i++) {
+            ItemStack stack = inventory.getItem(i);
+            String id = net.minecraft.core.registries.BuiltInRegistries.ITEM
+                    .getKey(stack.getItem()).toString();
+            if (id.contains("shulker_box") && stack.getCount() == 1) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static TrackedShulker findTrackedShulker(ItemStack stack) {
+        List<ItemStack> contents = getShulkerContents(stack);
+        for (TrackedShulker trackedShulker : trackedShulkers) {
+            if (stack.getItem().equals(trackedShulker.boxItem())
+                    && sameContents(contents, trackedShulker.contents())) {
+                return trackedShulker;
+            }
+        }
+        return null;
+    }
+
+    private static List<ItemStack> getShulkerContents(ItemStack stack) {
+        return copyNonEmptyStacks(fi.dy.masa.malilib.util.InventoryUtils.getStoredItems(stack, -1));
+    }
+
+    private static List<ItemStack> getContainerContents(AbstractContainerMenu container, int ownSlots) {
+        List<ItemStack> contents = new ArrayList<>();
+        for (int i = 0; i < ownSlots; i++) {
+            ItemStack stack = container.slots.get(i).getItem();
+            if (!stack.isEmpty()) contents.add(stack.copy());
+        }
+        return contents;
+    }
+
+    private static List<ItemStack> copyNonEmptyStacks(List<ItemStack> stacks) {
+        List<ItemStack> copies = new ArrayList<>();
+        for (ItemStack stack : stacks) {
+            if (!stack.isEmpty()) copies.add(stack.copy());
+        }
+        return copies;
+    }
+
+    private static boolean sameContents(List<ItemStack> first, List<ItemStack> second) {
+        if (first.size() != second.size()) return false;
+
+        boolean[] matched = new boolean[second.size()];
+        for (ItemStack firstStack : first) {
+            boolean found = false;
+            for (int i = 0; i < second.size(); i++) {
+                if (!matched[i] && fi.dy.masa.malilib.util.InventoryUtils
+                        .areStacksEqual(firstStack, second.get(i))) {
+                    matched[i] = true;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) return false;
+        }
+        return true;
+    }
+
+    private static boolean isInventoryFull(Inventory inventory) {
+        for (int i = 0; i < Math.min(inventory.getContainerSize(), 36); i++) {
+            if (inventory.getItem(i).isEmpty()) return false;
+        }
+        return true;
+    }
+
+    private record ReturnRequest(Item item, TrackedShulker shulker) {}
+
+    private static final class TrackedShulker {
+        private final Item boxItem;
+        private List<ItemStack> contents;
+        private int lastKnownSlot = -1;
+
+        private TrackedShulker(Item boxItem, List<ItemStack> contents) {
+            this.boxItem = boxItem;
+            this.contents = contents;
+        }
+
+        private Item boxItem() {
+            return boxItem;
+        }
+
+        private List<ItemStack> contents() {
+            return contents;
+        }
+
+        private int lastKnownSlot() {
+            return lastKnownSlot;
+        }
+
+        private void setLastKnownSlot(int slot) {
+            this.lastKnownSlot = slot;
+        }
+
+        private void updateContents(List<ItemStack> contents) {
+            this.contents = contents;
+        }
     }
 }

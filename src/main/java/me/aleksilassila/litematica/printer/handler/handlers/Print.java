@@ -156,6 +156,7 @@ public class Print extends Module {
                 return;
             }
         }
+        // 下落检查
         if (Configs.Placement.FALLING_CHECK.getBooleanValue()
                 && ctx.requiredState.getBlock() instanceof FallingBlock) {
             BlockPos downPos = blockPos.below();
@@ -173,6 +174,7 @@ public class Print extends Module {
             }
         }
         Item[] reqItems = action.getRequiredItems(ctx.requiredState.getBlock());
+        // 检查是否有待交换的物品
         if (RemoteContainerUtils.hasPendingExchange()) {
             enterWaiting(blockPos);
             skipIteration.set(true);

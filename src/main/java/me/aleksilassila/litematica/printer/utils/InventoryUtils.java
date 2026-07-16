@@ -394,14 +394,18 @@ public class InventoryUtils {
             ItemStack stack = new ItemStack(items[0]);
             return InventoryUtils.setPickedItemToHand(stack, client);
         }
+        // 查找物品在背包中的槽位
         for (Item item : items) {
             int slot = findItemInInventory(inventory, item);
             if (slot != -1) {
                 ItemStack itemStack = inventory.getItem(slot);
                 orderlyStoreItem = itemStack.copy();
+                // 找到，切换到主手
                 return InventoryUtils.setPickedItemToHand(slot, itemStack, client);
             }
         }
+        // 没找到，尝试使用快捷潜影盒
+        //
         QuickShulkerUtils.requestShulkerItem(player, items);
         return false;
     }

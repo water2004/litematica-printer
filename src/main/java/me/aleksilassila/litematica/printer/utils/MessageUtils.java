@@ -1,11 +1,11 @@
 package me.aleksilassila.litematica.printer.utils;
 
+import me.aleksilassila.litematica.printer.Reference;
+import me.aleksilassila.litematica.printer.config.Configs;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.StringJoiner;
 
 public class MessageUtils {
 
@@ -67,13 +67,15 @@ public class MessageUtils {
         return string != null ? literal(string) : EMPTY;
     }
 
-    public static String mergeComments(String delimiter, Component... customComments) {
-        StringJoiner joiner = new StringJoiner(delimiter);
-        for (Component comment : customComments) {
-            if (comment != null) {
-                joiner.add(comment.getString());
-            }
+    public static void debugMessage(String message) {
+        if (Configs.Core.DEBUG_OUTPUT.getBooleanValue()) {
+            addMessage(literal(message));
         }
-        return joiner.toString();
+    }
+
+    public static void debugLog(String message) {
+        if (Configs.Core.DEBUG_OUTPUT.getBooleanValue()) {
+            Reference.LOGGER.info(message);
+        }
     }
 }

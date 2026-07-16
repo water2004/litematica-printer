@@ -35,18 +35,15 @@ public abstract class MixinClientPacketListener {
 
     @Inject(method = "handleContainerContent", at = @At("RETURN"))
     private void onContainerContent(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
-        if (QuickShulkerUtils.isOpenHandler()) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (QuickShulkerUtils.isOpenHandler() && player != null
+                //#if MC > 12104
+                && packet.containerId() == player.containerMenu.containerId
+                //#else
+                //$$ && packet.getContainerId() == player.containerMenu.containerId
+                //#endif
+        ) {
             QuickShulkerUtils.switchFromShulker();
         }
     }
-
-//    @Inject(method = "handleBlockUpdate", at = @At("RETURN"))
-//    private void onBlockUpdate(ClientboundBlockUpdatePacket packet, CallbackInfo ci) {
-//        BreakUtils.INSTANCE.confirmServerBlockUpdate(packet.getPos());
-//    }
-//
-//    @Inject(method = "handleChunkBlocksUpdate", at = @At("RETURN"))
-//    private void onChunkBlocksUpdate(ClientboundSectionBlocksUpdatePacket packet, CallbackInfo ci) {
-//        packet.runUpdates((pos, state) -> BreakUtils.INSTANCE.confirmServerBlockUpdate(pos));
-//    }
 }
