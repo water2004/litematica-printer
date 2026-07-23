@@ -47,6 +47,7 @@ public abstract class Module extends ConfigUtils {
     public final AtomicReference<PrinterBox> box;
     protected final IteratorManager iteratorManager = new IteratorManager();
     protected final ScanPlan scanPlan = new ScanPlan();
+    protected final BlockJobQueue jobQueue = new BlockJobQueue();
     @Getter
     private final String id;
     @Getter
@@ -71,6 +72,8 @@ public abstract class Module extends ConfigUtils {
     protected BlockHitResult blockHitResult;
     protected boolean needSchematic = false;
     private long lastTickTime = -1L;
+    @Nullable
+    private ClientLevel queuedSchedulerLevel = null;
     @Getter
     private ScanState scanState = ScanState.COLLECT;
 
@@ -80,6 +83,8 @@ public abstract class Module extends ConfigUtils {
     private BlockPos waitingPos = null;
 
     private volatile GuiBlockInfo currentGuiInfo = null;
+    private volatile GuiBlockInfo currentJobGuiInfo = null;
+    private volatile int queuedJobCount = 0;
 
     protected Module(String id, @Nullable ConfigBoolean enableConfig, @Nullable ConfigOptionList selectionType, boolean useBox) {
         this.id = id;
@@ -113,6 +118,8 @@ public abstract class Module extends ConfigUtils {
 
         if (!isConfigAllowed()) {
             pendingHighlights.clear();
+            // 开关关闭只暂停调度。保留生产者游标、消费者队列和等待作业，
+            // 重新开启后从原状态继续；跨维度时仍会在下方单独重置。
             return;
         }
 
@@ -121,13 +128,24 @@ public abstract class Module extends ConfigUtils {
             return;
         }
 
+        if (usesJobQueue() && queuedSchedulerLevel != level) {
+            queuedSchedulerLevel = level;
+            resetQueuedScheduler();
+            iteratorManager.markNeedsRebuild();
+        }
+
         if (box == null) return;
         if (iteratorManager.tryBuildBox(player, selectionType != null ? selectionType.getOptionListValue() : null)) {
             box.set(iteratorManager.getBox());
-            scanState = ScanState.COLLECT;
-            scanPlan.reset();
-            processIter = null;
-            waitingPos = null;
+            if (usesJobQueue()) {
+                // 玩家移动只重置生产者游标；既有作业由消费者按当前范围惰性丢弃。
+                if (scanState != ScanState.WAITING) scanState = ScanState.COLLECT;
+            } else {
+                scanState = ScanState.COLLECT;
+                scanPlan.reset();
+                processIter = null;
+                waitingPos = null;
+            }
             iteratorManager.reset();
         }
 
@@ -146,6 +164,11 @@ public abstract class Module extends ConfigUtils {
 
         // 远离工作区时提前退出，避免空跑卡顿
         if (needsAreaCheck() && !isPlayerRangeInWorkArea()) return;
+
+        if (usesJobQueue()) {
+            executeQueuedPhase(maxExecs);
+            return;
+        }
 
         switch (scanState) {
             case COLLECT -> collectPhase(maxExecs);
@@ -189,8 +212,135 @@ public abstract class Module extends ConfigUtils {
         return true;
     }
 
+    /**
+     * 持续作业调度：先消费已有作业，再用剩余时间继续扫描生产。
+     * 消费者在判断前已经将坐标移出队列，因此无法处理的坐标不会锁住队首。
+     */
+    private void executeQueuedPhase(int maxExecs) {
+        int timeLimitMs = getIterationTimeLimit();
+
+        skipIteration.set(false);
+        timeLimitExceeded.set(false);
+
+        ScheduledFuture<?> timeoutTask = null;
+        if (timeLimitMs > 0) {
+            timeoutTask = TIMEOUT_SCHEDULER.schedule(
+                    () -> timeLimitExceeded.set(true),
+                    timeLimitMs, TimeUnit.MILLISECONDS);
+        }
+
+        try {
+            if (scanState == ScanState.WAITING) {
+                BlockPos pos = waitingPos;
+                waitingPos = null;
+                scanState = ScanState.PROCESS;
+
+                boolean executed = false;
+                if (isQueuedPositionValid(pos) && needsQueuedWork(pos)) {
+                    executeAndReturn(pos);
+                    executed = true;
+                }
+                updateCurrentJobInfo(pos, executed);
+
+                // 保持旧 waitingPhase 语义：等待位置恢复独占当前 tick，避免突破每 tick 动作上限。
+                return;
+            }
+
+            scanState = ScanState.PROCESS;
+            consumeQueuedJobs(maxExecs);
+
+            if (scanState == ScanState.WAITING
+                    || skipIteration.get()
+                    || ActionManager.INSTANCE.needWaitModifyLook
+                    || timeLimitExceeded.get()) {
+                return;
+            }
+
+            scanState = ScanState.COLLECT;
+            produceQueuedJobs();
+        } finally {
+            if (timeoutTask != null) timeoutTask.cancel(false);
+            timeLimitExceeded.set(false);
+        }
+    }
+
+    private void consumeQueuedJobs(int maxExecs) {
+        int execCount = 0;
+
+        while (!timeLimitExceeded.get()
+                && !skipIteration.get()
+                && !ActionManager.INSTANCE.needWaitModifyLook) {
+            BlockPos pos = jobQueue.poll();
+            queuedJobCount = jobQueue.size();
+            if (pos == null) {
+                currentJobGuiInfo = null;
+                return;
+            }
+
+            boolean executed = false;
+            if (isQueuedPositionValid(pos) && needsQueuedWork(pos)) {
+                executeAndReturn(pos);
+                executed = true;
+            }
+
+            updateCurrentJobInfo(pos, executed);
+
+            if (executed && maxExecs > 0 && ++execCount >= maxExecs) return;
+            if (scanState == ScanState.WAITING) return;
+        }
+    }
+
+    private void produceQueuedJobs() {
+        try {
+            while (!jobQueue.isFull() && !timeLimitExceeded.get()) {
+                BlockPos pos = iteratorManager.next();
+                if (pos == null) {
+                    // 扫描持续循环，但每 tick 最多跨越一次循环边界，避免空区域高速空转。
+                    iteratorManager.reset();
+                    return;
+                }
+
+                if (needsAreaCheck() && !isPosInWorkspace(pos)) continue;
+
+                if (!isOnCooldown(pos) && !isCorrectBlock(pos)) {
+                    jobQueue.offer(pos);
+                }
+
+                updateGuiInfo(pos, false);
+            }
+        } finally {
+            queuedJobCount = jobQueue.size();
+        }
+    }
+
+    private boolean isQueuedPositionValid(@Nullable BlockPos pos) {
+        if (pos == null) return false;
+        if (!PlayerUtils.canInteracted(pos)) return false;
+        return !needsAreaCheck() || isPosInWorkspace(pos);
+    }
+
+    private void updateGuiInfo(BlockPos pos, boolean executed) {
+        currentGuiInfo = createGuiInfo(pos, executed);
+    }
+
+    private void updateCurrentJobInfo(@Nullable BlockPos pos, boolean executed) {
+        currentJobGuiInfo = pos == null ? null : createGuiInfo(pos, executed);
+    }
+
+    private GuiBlockInfo createGuiInfo(BlockPos pos, boolean executed) {
+        boolean interacted = PlayerUtils.canInteracted(pos);
+        return new GuiBlockInfo(pos,
+                level.getBlockState(pos), LitematicaUtils.getBlockState(pos),
+                interacted, executed,
+                isPosInWorkspace(pos) && interacted);
+    }
+
     private boolean needsWork(BlockPos pos) {
         return !isOnCooldown(pos) && canProcessPos(pos) && !isCorrectBlock(pos);
+    }
+
+    private boolean needsQueuedWork(BlockPos pos) {
+        return !isCorrectBlock(pos) && !isOnCooldown(pos) && canProcessPos(pos);
     }
 
     private boolean collectPhase(int maxExecs) {
@@ -257,10 +407,7 @@ public abstract class Module extends ConfigUtils {
                     if (maxExecs > 0 && ++execCount >= maxExecs) return true;
                 }
 
-                currentGuiInfo = new GuiBlockInfo(pos,
-                        level.getBlockState(pos), LitematicaUtils.getBlockState(pos),
-                        PlayerUtils.canInteracted(pos), executed,
-                        isPosInWorkspace(pos) && PlayerUtils.canInteracted(pos));
+                updateGuiInfo(pos, executed);
             }
         } finally {
             if (timeoutTask != null) timeoutTask.cancel(false);
@@ -284,12 +431,49 @@ public abstract class Module extends ConfigUtils {
         scanPlan.reset();
         processIter = null;
         waitingPos = null;
+        jobQueue.clear();
+        queuedJobCount = 0;
+        currentJobGuiInfo = null;
+        iteratorManager.reset();
+    }
+
+    private void resetQueuedScheduler() {
+        scanState = ScanState.COLLECT;
+        waitingPos = null;
+        jobQueue.clear();
+        queuedJobCount = 0;
+        currentJobGuiInfo = null;
         iteratorManager.reset();
     }
 
     @Nullable
     public GuiBlockInfo getGuiInfo() {
         return currentGuiInfo;
+    }
+
+    public boolean hasQueuedScheduler() {
+        return usesJobQueue();
+    }
+
+    public int getQueuedJobCount() {
+        return queuedJobCount;
+    }
+
+    public int getJobQueueCapacity() {
+        return BlockJobQueue.CAPACITY;
+    }
+
+    public long getProducerScannedPositions() {
+        return iteratorManager.getScannedPositions();
+    }
+
+    public long getProducerTotalPositions() {
+        return iteratorManager.getTotalPositions();
+    }
+
+    @Nullable
+    public GuiBlockInfo getCurrentJobGuiInfo() {
+        return currentJobGuiInfo;
     }
 
     private boolean isConfigAllowed() {
@@ -318,6 +502,10 @@ public abstract class Module extends ConfigUtils {
 
     protected boolean canIterate() {
         return true;
+    }
+
+    protected boolean usesJobQueue() {
+        return false;
     }
 
     public abstract boolean canProcessPos(BlockPos pos);

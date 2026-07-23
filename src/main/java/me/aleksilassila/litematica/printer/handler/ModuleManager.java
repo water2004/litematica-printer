@@ -46,12 +46,16 @@ public class ModuleManager {
         if (ModUtils.isRemoteInventoryNextLoaded()) {
             RemoteContainerUtils.tick();
         }
+
+        // 任意容器界面尚未真正关闭时，暂停整个调度器。否则换手会用玩家背包
+        // containerId=0 操作仍处于打开状态的容器，客户端会忽略点击并在随后同步时回滚库存。
+        if (mc.player == null || mc.player.containerMenu != mc.player.inventoryMenu) {
+            return;
+        }
+
         boolean printerEnabled = ConfigUtils.isPrinterEnable();
         if (printerEnabled && !lastPrinterEnabled) {
             MissingMaterialTracker.getInstance().reset();
-            for (Module module : VALUES) {
-                module.resetScanState();
-            }
         }
         lastPrinterEnabled = printerEnabled;
 

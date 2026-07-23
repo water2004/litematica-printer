@@ -72,6 +72,11 @@ public class Print extends Module {
     }
 
     @Override
+    protected boolean usesJobQueue() {
+        return true;
+    }
+
+    @Override
     public boolean canProcessPos(BlockPos blockPos) {
         WorldSchematic schematic = SchematicWorldHandler.getSchematicWorld();
         if (schematic == null) return false;

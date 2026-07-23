@@ -48,6 +48,8 @@ public class IteratorManager {
 
     private boolean needsRebuild;
     private boolean dirtyIterator;
+    private volatile long scannedPositions;
+    private volatile long totalPositions;
 
     public IteratorManager() {
         this.needsRebuild = true;
@@ -77,7 +79,8 @@ public class IteratorManager {
 
         SelectionType selectionType = selectionTypeObj instanceof SelectionType s ? s : null;
 
-        boolean needRebuild = this.box == null
+        boolean needRebuild = this.needsRebuild
+                || this.box == null
                 || !this.box.equals(lastBox)
                 || lastEyePos == null
                 || !lastEyePos.closerThan(eyeBP, effectiveRange * 0.4)
@@ -154,6 +157,8 @@ public class IteratorManager {
 
             box = new PrinterBox(minX, minY, minZ, maxX, maxY, maxZ);
             lastBox = box;
+            scannedPositions = 0L;
+            totalPositions = getBoxVolume(box);
 
             box.iterationMode = (IterationOrderType) Configs.Core.ITERATION_ORDER.getOptionListValue();
             box.xIncrement = !Configs.Core.X_REVERSE.getBooleanValue();
@@ -198,10 +203,13 @@ public class IteratorManager {
         if (cachedIterator == null) {
             cachedIterator = box.iterator();
             dirtyIterator = false;
+            scannedPositions = 0L;
+            totalPositions = getBoxVolume(box);
         }
 
         while (cachedIterator.hasNext()) {
             BlockPos pos = cachedIterator.next();
+            scannedPositions++;
             if (pos == null) continue;
 
             if (shapeType != null) {
@@ -244,5 +252,22 @@ public class IteratorManager {
     public void setDirtyRegionIterator(Iterator<BlockPos> dirtyIter) {
         this.cachedIterator = dirtyIter;
         this.dirtyIterator = false;
+        this.scannedPositions = 0L;
+        this.totalPositions = 0L;
+    }
+
+    public long getScannedPositions() {
+        return scannedPositions;
+    }
+
+    public long getTotalPositions() {
+        return totalPositions;
+    }
+
+    private static long getBoxVolume(PrinterBox box) {
+        long sizeX = (long) box.maxX - box.minX + 1L;
+        long sizeY = (long) box.maxY - box.minY + 1L;
+        long sizeZ = (long) box.maxZ - box.minZ + 1L;
+        return sizeX * sizeY * sizeZ;
     }
 }
