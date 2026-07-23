@@ -156,29 +156,40 @@ public class RemoteContainerUtils {
         ItemFetchState state = fetchStates.computeIfAbsent(itemId, ItemFetchState::new);
         if (state.requestPending || pendingExchange != null) return true;
 
+        String dim = getCurrentDimension();
+        // 每个异步扫描响应都会先写缓存、再清除 requestPending。因而消费者下一次重试时
+        // 必须先重新查缓存；目标物品可能出现在本轮任意一个（包括最后一个）容器中。
+        if (tryStartCachedExchange(state, dim)) return true;
+
         if (!state.triedCache) {
             state.triedCache = true;
-            String dim = getCurrentDimension();
-            ContainerItemCache.SlotRef ref = ContainerItemCache.INSTANCE.findItem(itemId, dim);
-            if (ref != null) {
-                sendExchange(ref.pos(), itemId, ref.slot());
-                state.requestPending = true;
-                return true;
-            }
             ContainerItemCache.INSTANCE.invalidateOldest(dim);
         }
 
         while (state.scanIndex < containerList.size()) {
             BlockPos pos = containerList.get(state.scanIndex++);
-            if (!ContainerItemCache.INSTANCE.isCached(getCurrentDimension(), pos)) {
+            if (!ContainerItemCache.INSTANCE.isCached(dim, pos)) {
                 state.requestPending = true;
                 RemoteInventoryClient.sendScanContainerRequest(pos);
                 return true;
             }
         }
 
+        // 本轮渐进扫描可能刚刚把目标物品加入缓存；结束前再查一次，
+        // 避免调用方把“扫描完成、即将命中缓存”误判为彻底无材料。
+        if (tryStartCachedExchange(state, dim)) return true;
+
         state.reset();
         return false;
+    }
+
+    private static boolean tryStartCachedExchange(ItemFetchState state, String dimension) {
+        ContainerItemCache.SlotRef ref = ContainerItemCache.INSTANCE.findItem(state.itemId, dimension);
+        if (ref == null) return false;
+
+        sendExchange(ref.pos(), state.itemId, ref.slot());
+        state.requestPending = true;
+        return true;
     }
 
     private static void sendExchange(BlockPos takePos, String takeItemId, int takeSlot) {

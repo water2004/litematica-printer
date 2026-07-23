@@ -197,13 +197,21 @@ public class Print extends Module {
                 skipIteration.set(true);
                 return;
             }
+
+            boolean remoteRequestStarted = false;
+            if (reqItems != null && reqItems.length > 0 && reqItems[0] != null
+                    && Configs.Print.USE_REMOTE_CONTAINER.getBooleanValue()) {
+                remoteRequestStarted = RemoteContainerUtils.tryGetItemFromContainers(reqItems[0]);
+            }
+            if (remoteRequestStarted) {
+                enterWaiting(blockPos);
+                skipIteration.set(true);
+                return;
+            }
+
+            // 所有材料来源都确认无法提供物品：丢弃当前作业，等待持续扫描以后再发现。
             setCooldown(blockPos, ConfigUtils.getPlaceCooldown());
             recordMissingMaterial(reqItems);
-            if (reqItems != null && reqItems.length > 0 && reqItems[0] != null
-                    && !QuickShulkerUtils.isOpenHandler()
-                    && Configs.Print.USE_REMOTE_CONTAINER.getBooleanValue()) {
-                RemoteContainerUtils.tryGetItemFromContainers(reqItems[0]);
-            }
             addHighlight(blockPos, HighlightType.FAILED);
             return;
         }
