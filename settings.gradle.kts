@@ -16,14 +16,7 @@ pluginManagement {
 }
 
 
-val versions = listOf(
-    "1.18.2",
-    "1.19.4",
-    "1.20.1", "1.20.2", "1.20.4", "1.20.6",
-    "1.21.1", "1.21.3", "1.21.4", "1.21.5", "1.21.8", "1.21.10", "1.21.11",
-    "26.1.2",
-    "26.2"
-)
+val versions = listOf("26.1.2", "26.2")
 
 for (version in versions) {
     include(":$version")

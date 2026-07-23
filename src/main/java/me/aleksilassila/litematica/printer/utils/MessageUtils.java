@@ -17,9 +17,9 @@ public class MessageUtils {
 
     public static void addMessage(Component message) {
         //#if MC >= 260100
-        //$$ client.gui.getChat().addClientSystemMessage(message);
+        client.gui.getChat().addClientSystemMessage(message);
         //#else
-        client.gui.getChat().addMessage(message);
+        //$$ client.gui.getChat().addMessage(message);
         //#endif
     }
 

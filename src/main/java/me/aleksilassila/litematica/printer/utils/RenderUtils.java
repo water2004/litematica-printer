@@ -2,7 +2,7 @@ package me.aleksilassila.litematica.printer.utils;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import java.awt.*;
 
@@ -10,13 +10,13 @@ import java.awt.*;
 public class RenderUtils {
     public static final Minecraft client = Minecraft.getInstance();
     private static PoseStack poseStack;
-    private static GuiGraphics guiGraphics;
+    private static GuiGraphicsExtractor guiGraphics;
 
     public static void initMatrix(PoseStack poseStack) {
         RenderUtils.poseStack = poseStack;
     }
 
-    public static void initGuiGraphics(GuiGraphics guiGraphics) {
+    public static void initGuiGraphics(GuiGraphicsExtractor guiGraphics) {
         RenderUtils.guiGraphics = guiGraphics;
     }
 
@@ -42,7 +42,7 @@ public class RenderUtils {
         }
         ensureInitialized();
         //#if MC > 11904
-        guiGraphics.drawString(client.font, text, x, y, color.getRGB(), withShadow);
+        guiGraphics.text(client.font, text, x, y, color.getRGB(), withShadow);
         //#else
         //$$ if (withShadow) {
         //$$    client.font.drawShadow(poseStack, text, x, y, color.getRGB());

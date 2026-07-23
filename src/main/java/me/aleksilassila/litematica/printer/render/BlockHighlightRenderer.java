@@ -48,10 +48,10 @@ import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.util.profiling.ProfilerFiller;
 //#endif
 //#if MC >= 260100
-//$$ import com.mojang.blaze3d.buffers.GpuBufferSlice;
-//$$ import net.minecraft.client.renderer.state.level.CameraRenderState;
-//$$ import org.joml.Matrix4fc;
-//$$ import org.joml.Vector4f;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
+import org.joml.Matrix4fc;
+import org.joml.Vector4f;
 //#endif
 //#if MC < 12006
 //$$ import com.mojang.blaze3d.vertex.PoseStack;
@@ -62,32 +62,32 @@ public class BlockHighlightRenderer implements IRenderer {
     // ===== Render Entry Points =====
 
     //#if MC >= 260100
-    //$$ @Override
-    //$$ public void onRenderWorldLast(
-    //$$         RenderTarget renderTarget,
-    //$$         Matrix4fc projMatrix,
-    //$$         CameraRenderState cameraRenderState,
-    //$$         Frustum frustum,
-    //$$         RenderBuffers renderBuffers,
-    //$$         GpuBufferSlice gpuBufferSlice,
-    //$$         Vector4f vector4f,
-    //$$         ProfilerFiller profiler
-    //$$ ) {
-    //$$     renderInternal(cameraRenderState.pos);
-    //$$ }
-    //#elseif MC >= 12108
     @Override
-    public void onRenderWorldLastAdvanced(
+    public void onRenderWorldLast(
             RenderTarget renderTarget,
-            Matrix4f posMatrix,
-            Matrix4f projMatrix,
+            Matrix4fc projMatrix,
+            CameraRenderState cameraRenderState,
             Frustum frustum,
-            Camera camera,
-            RenderBuffers buffers,
+            RenderBuffers renderBuffers,
+            GpuBufferSlice gpuBufferSlice,
+            Vector4f vector4f,
             ProfilerFiller profiler
     ) {
-        renderInternal(camera.position());
+        renderInternal(cameraRenderState.pos);
     }
+    //#elseif MC >= 12108
+    //$$ @Override
+    //$$ public void onRenderWorldLastAdvanced(
+    //$$         RenderTarget renderTarget,
+    //$$         Matrix4f posMatrix,
+    //$$         Matrix4f projMatrix,
+    //$$         Frustum frustum,
+    //$$         Camera camera,
+    //$$         RenderBuffers buffers,
+    //$$         ProfilerFiller profiler
+    //$$ ) {
+    //$$     renderInternal(camera.position());
+    //$$ }
     //#elseif MC >= 12006
     //$$ @Override
     //$$ public void onRenderWorldLast(Matrix4f posMatrix, Matrix4f projMatrix) {

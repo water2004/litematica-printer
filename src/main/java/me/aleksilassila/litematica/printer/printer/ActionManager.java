@@ -101,7 +101,8 @@ public class ActionManager {
         if (gameModeExtension != null) {
             boolean localPrediction = !Configs.Placement.PRINT_USE_PACKET.getBooleanValue();
             BlockHitResult blockHitResult = new BlockHitResult(hitVec, side, target, false);
-            gameModeExtension.litematica_printer$useItemOn(localPrediction, InteractionHand.MAIN_HAND, blockHitResult);
+            gameModeExtension.litematica_printer$useItemOn(
+                    localPrediction, InteractionHand.MAIN_HAND, blockHitResult);
         }
         if (useShift && !wasSneak) {
             setShift(player, false);

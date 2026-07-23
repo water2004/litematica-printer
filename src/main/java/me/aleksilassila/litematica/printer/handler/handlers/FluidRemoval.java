@@ -97,9 +97,9 @@ public class FluidRemoval extends Module {
                 if (!fillItems.isEmpty() && fillItems.get(0) != null) {
                     MissingMaterialTracker.getInstance().recordMissing(fillItems.get(0),
                             //#if MC >= 260100
-                            //$$ fillItems.get(0).getName(fillItems.get(0).getDefaultInstance())
+                            fillItems.get(0).getName(fillItems.get(0).getDefaultInstance())
                             //#elseif MC > 12101
-                            fillItems.get(0).getName()
+                            //$$ fillItems.get(0).getName()
                             //#else
                             //$$ fillItems.get(0).getDescription()
                             //#endif

@@ -4,7 +4,7 @@ import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 //#if MC >= 12000
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 //#else
 //$$ import net.minecraft.client.gui.GuiComponent;
 //$$ import com.mojang.blaze3d.vertex.PoseStack;
@@ -54,7 +54,7 @@ public class MissingMaterialHudRenderer implements IInfoHudRenderer
     }
 
     //#if MC >= 12106
-    public int render(GuiGraphics drawContext, int xOffset, int yOffset, HudAlignment alignment)
+    public int render(GuiGraphicsExtractor drawContext, int xOffset, int yOffset, HudAlignment alignment)
     //#elseif MC >= 12000
     //$$ public int render(int xOffset, int yOffset, HudAlignment alignment, GuiGraphics drawContext)
     //#else
@@ -116,7 +116,7 @@ public class MissingMaterialHudRenderer implements IInfoHudRenderer
         //#if MC >= 12000
         drawContext.fill(x1, y1, x2, y2, BG_COLOR);
 
-        drawContext.drawString(font, title,
+        drawContext.text(font, title,
                 posX + 2, posY + 2, TEXT_COLOR, true);
 
         int itemIconX = posX;
@@ -127,11 +127,11 @@ public class MissingMaterialHudRenderer implements IInfoHudRenderer
             ItemStack stack = entry.item.getDefaultInstance();
 
             //#if MC >= 260100
-            //$$ drawContext.item(stack, itemIconX, itemY);
-            //$$ drawContext.itemDecorations(font, stack, itemIconX, itemY);
+            drawContext.item(stack, itemIconX, itemY);
+            drawContext.itemDecorations(font, stack, itemIconX, itemY);
             //#else
-            drawContext.renderItem(stack, itemIconX, itemY);
-            drawContext.renderItemDecorations(font, stack, itemIconX, itemY);
+            //$$ drawContext.renderItem(stack, itemIconX, itemY);
+            //$$ drawContext.renderItemDecorations(font, stack, itemIconX, itemY);
             //#endif
 
             String name = getItemName(entry);
@@ -139,14 +139,14 @@ public class MissingMaterialHudRenderer implements IInfoHudRenderer
             if (font.width(name) > availableWidth) {
                 name = font.plainSubstrByWidth(name, availableWidth - font.width("...")) + "...";
             }
-            drawContext.drawString(font, name, itemTextX, itemY + 4, TEXT_COLOR, true);
+            drawContext.text(font, name, itemTextX, itemY + 4, TEXT_COLOR, true);
 
             itemY += LINE_HEIGHT;
         }
 
         if (showOverflow) {
             String overflow = String.format(Language.getInstance().getOrDefault("litematica-printer.hud.missing.overflow"), missing.size() - MAX_DISPLAY_ITEMS);
-            drawContext.drawString(font, overflow,
+            drawContext.text(font, overflow,
                     posX + 2, itemY + 4, TEXT_COLOR_GRAY, true);
         }
 

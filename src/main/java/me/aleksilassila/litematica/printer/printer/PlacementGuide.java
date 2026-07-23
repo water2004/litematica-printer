@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @SuppressWarnings("IfCanBeSwitch")
 public class PlacementGuide {
     @SuppressWarnings("all")
-    protected static final Map<Block, Block> STRIPPED_LOGS = AxeItemAccessor.getStrippedBlocks();
+    protected static final Map<Block, Block> STRIPPED_LOGS = AxeItemAccessor.getStrippables();
     protected static List<String> compostWhitelistCache = new ArrayList<>();      // 缓存堆肥桶白名单的字符串列表（用于判断是否修改）
     protected static Item[] whitelistItemsCache = new Item[0];    // 缓存过滤后的可堆肥物品列表（避免重复计算）
     protected final @NotNull Minecraft mc;
@@ -1124,10 +1124,10 @@ public class PlacementGuide {
         COMPOSTER(ComposterBlock.class),                // 堆肥桶
 
         // 其他
-        FARMLAND(FarmBlock.class),              // 耕地
+        FARMLAND(FarmlandBlock.class),              // 耕地
         DIRT_PATH(DirtPathBlock.class),         // 土径
         NETHER_PORTAL(NetherPortalBlock.class), // 下界传送门
-        SKIP(SkullBlock.class, LiquidBlock.class, BubbleColumnBlock.class, WaterlilyBlock.class), // 跳过
+        SKIP(SkullBlock.class, LiquidBlock.class, BubbleColumnBlock.class, LilyPadBlock.class), // 跳过
         DEFAULT; // 默认
 
         private final Class<?>[] classes;
@@ -1140,9 +1140,9 @@ public class PlacementGuide {
     // 辅助方法：获取物品名称（版本适配）
     private static Component getNameFromItem(Item item) {
         //#if MC >= 260100
-        //$$ return item.getName(item.getDefaultInstance());
+        return item.getName(item.getDefaultInstance());
         //#elseif MC > 12101
-        return item.getName();
+        //$$ return item.getName();
         //#else
         //$$ return item.getDescription();
         //#endif
