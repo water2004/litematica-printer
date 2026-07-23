@@ -19,7 +19,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -52,6 +52,14 @@ public class QuickShulkerUtils {
     private static final int MAX_DEFERRED_CLOSE_RETRIES = 10;
 
     private QuickShulkerUtils() {}
+
+    /**
+     * 打开、处理或等待延迟关闭都属于忙碌状态。isOpenHandler 仍只表示可以处理容器内容包，
+     * 避免延迟关闭期间重复消费同一个 ContainerSetContent 包。
+     */
+    public static boolean isBusy() {
+        return isOpenHandler || deferredCloseTicks > 0;
+    }
 
     public static void tick() {
         if (shulkerCooldown > 0) {
@@ -100,7 +108,7 @@ public class QuickShulkerUtils {
             return false;
         }
 
-        if (isOpenHandler || shulkerCooldown > 0) return false;
+        if (isBusy() || shulkerCooldown > 0) return false;
 
         Inventory inventory = player.getInventory();
 
@@ -168,7 +176,7 @@ public class QuickShulkerUtils {
 
     // ========== 容器槽位点击 ==========
 
-    public static void clickSlot(AbstractContainerMenu container, int slotIndex, int button, ClickType type) {
+    public static void clickSlot(AbstractContainerMenu container, int slotIndex, int button, ContainerInput type) {
         ClientPacketListener connection = mc.getConnection();
         if (connection == null || mc.player == null) return;
 
@@ -224,23 +232,23 @@ public class QuickShulkerUtils {
     }
 
     public static void pickupSlot(AbstractContainerMenu container, int slotIndex) {
-        clickSlot(container, slotIndex, 0, ClickType.PICKUP);
+        clickSlot(container, slotIndex, 0, ContainerInput.PICKUP);
     }
 
     /** button 即目标快捷栏槽位 0-8 */
     public static void swapWithHotbar(AbstractContainerMenu container, int slotIndex, int hotbarSlot) {
-        clickSlot(container, slotIndex, hotbarSlot, ClickType.SWAP);
+        clickSlot(container, slotIndex, hotbarSlot, ContainerInput.SWAP);
     }
 
     // ========== 插件服右键开箱 ==========
 
     public static void openShulkerByRightClick(int inventorySlot) {
         if (mc.player == null || mc.gameMode == null) return;
-        mc.gameMode.handleInventoryMouseClick(
+        mc.gameMode.handleContainerInput(
                 mc.player.containerMenu.containerId,
                 inventorySlot,
                 1, // 右键
-                ClickType.PICKUP,
+                ContainerInput.PICKUP,
                 mc.player);
     }
 
@@ -291,8 +299,8 @@ public class QuickShulkerUtils {
                             containerTarget = ownSlots + (emptyInvSlot - 9);
                         }
                         // 先拾取潜影盒槽位，再放到目标槽位
-                        mc.gameMode.handleInventoryMouseClick(container.containerId, slot.index, 0, ClickType.PICKUP, player);
-                        mc.gameMode.handleInventoryMouseClick(container.containerId, containerTarget, 0, ClickType.PICKUP, player);
+                        mc.gameMode.handleContainerInput(container.containerId, slot.index, 0, ContainerInput.PICKUP, player);
+                        mc.gameMode.handleContainerInput(container.containerId, containerTarget, 0, ContainerInput.PICKUP, player);
                         if (activeShulker != null) {
                             activeShulker.updateContents(getContainerContents(container, ownSlots));
                             itemsToReturn.addLast(new ReturnRequest(returnItem, activeShulker));
@@ -324,8 +332,8 @@ public class QuickShulkerUtils {
                 if (container.slots.get(shulkerSlot).hasItem()) continue;
 
                 int containerSource = i < 9 ? ownSlots + 27 + i : ownSlots + i - 9;
-                mc.gameMode.handleInventoryMouseClick(container.containerId, containerSource, 0, ClickType.PICKUP, player);
-                mc.gameMode.handleInventoryMouseClick(container.containerId, shulkerSlot, 0, ClickType.PICKUP, player);
+                mc.gameMode.handleContainerInput(container.containerId, containerSource, 0, ContainerInput.PICKUP, player);
+                mc.gameMode.handleContainerInput(container.containerId, shulkerSlot, 0, ContainerInput.PICKUP, player);
                 itemsToReturn.removeFirstOccurrence(returnRequest);
                 if (returnRequest.shulker() != null) {
                     returnRequest.shulker().updateContents(getContainerContents(container, ownSlots));

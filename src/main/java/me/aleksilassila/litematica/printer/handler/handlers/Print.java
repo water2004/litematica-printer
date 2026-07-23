@@ -190,8 +190,9 @@ public class Print extends Module {
             addHighlight(blockPos, HighlightType.FAILED);
             return;
         }
-        if (!InventoryUtils.switchToItems(player, reqItems)) {
-            if (QuickShulkerUtils.isOpenHandler()) {
+        InventoryUtils.ItemSwitchResult switchResult = InventoryUtils.switchToItemsResult(player, reqItems);
+        if (switchResult != InventoryUtils.ItemSwitchResult.READY) {
+            if (switchResult == InventoryUtils.ItemSwitchResult.WAITING) {
                 enterWaiting(blockPos);
                 skipIteration.set(true);
                 return;

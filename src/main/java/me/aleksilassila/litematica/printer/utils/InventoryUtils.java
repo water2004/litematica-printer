@@ -21,7 +21,7 @@ import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -43,6 +43,17 @@ public class InventoryUtils {
     @Getter
     @Setter
     private static ItemStack orderlyStoreItem;
+
+    /**
+     * Result of preparing the main hand for a print action.
+     * WAITING means either a hand switch was issued or an asynchronous item request
+     * is in progress; callers that own a block job must retain it and retry later.
+     */
+    public enum ItemSwitchResult {
+        READY,
+        WAITING,
+        UNAVAILABLE
+    }
 
 
 
@@ -136,6 +147,7 @@ public class InventoryUtils {
     public static boolean setPickedItemToHand(int sourceSlot, ItemStack stack, Minecraft mc) {
         if (mc.player == null) return false;
         Player player = mc.player;
+        if (player.containerMenu != player.inventoryMenu) return false;
         Inventory inventory = player.getInventory();
         // 目标物品在热键栏中
         if (Inventory.isHotbarSlot(sourceSlot)) {
@@ -173,6 +185,7 @@ public class InventoryUtils {
     public static boolean swapItemToMainHand(ItemStack stackReference, Minecraft mc) {
         Player player = mc.player;
         if (player == null) return false;
+        if (player.containerMenu != player.inventoryMenu) return false;
 
         //#if MC > 12004
         boolean b = fi.dy.masa.malilib.util.InventoryUtils.areStacksEqualIgnoreNbt(stackReference, player.getMainHandItem());
@@ -223,7 +236,7 @@ public class InventoryUtils {
                         player.inventoryMenu.getStateId(),
                         Shorts.checkedCast(slot),
                         SignedBytes.checkedCast(currentHotbarSlot),
-                        ClickType.SWAP,
+                        ContainerInput.SWAP,
                         snapshot,
                         hashedStack
                 ));
@@ -239,10 +252,10 @@ public class InventoryUtils {
                 //$$   ));
                 //#endif
 
-                player.inventoryMenu.clicked(slot, currentHotbarSlot, ClickType.SWAP, player);
+                player.inventoryMenu.clicked(slot, currentHotbarSlot, ContainerInput.SWAP, player);
             } else {
                 if (client.gameMode != null) {
-                    client.gameMode.handleInventoryMouseClick(player.inventoryMenu.containerId, slot, currentHotbarSlot, ClickType.SWAP, player);
+                    client.gameMode.handleContainerInput(player.inventoryMenu.containerId, slot, currentHotbarSlot, ContainerInput.SWAP, player);
                 }
             }
             return true;
@@ -271,6 +284,7 @@ public class InventoryUtils {
     public static boolean setItemToOffhand(ItemStack stack, Minecraft mc) {
         if (mc.player == null) return false;
         Player player = mc.player;
+        if (player.containerMenu != player.inventoryMenu) return false;
 
         // 1. 检查副手已有该物品，直接返回成功（避免重复操作）
         boolean isAlreadyInOffhand = fi.dy.masa.malilib.util.InventoryUtils.areStacksEqual(stack, getOffhandStack(player));
@@ -332,7 +346,7 @@ public class InventoryUtils {
                     player.inventoryMenu.getStateId(),
                     Shorts.checkedCast(sourceSlot),
                     SignedBytes.checkedCast(OFFHAND_SLOT_INDEX), // 目标：副手槽位40
-                    ClickType.SWAP,
+                    ContainerInput.SWAP,
                     snapshot,
                     hashedStack
             ));
@@ -349,15 +363,15 @@ public class InventoryUtils {
             //#endif
 
             // 本地同步交换操作
-            player.inventoryMenu.clicked(sourceSlot, OFFHAND_SLOT_INDEX, ClickType.SWAP, player);
+            player.inventoryMenu.clicked(sourceSlot, OFFHAND_SLOT_INDEX, ContainerInput.SWAP, player);
         } else {
             // 不使用数据包：本地直接交换到副手
             if (client.gameMode != null) {
-                client.gameMode.handleInventoryMouseClick(
+                client.gameMode.handleContainerInput(
                         player.inventoryMenu.containerId,
                         sourceSlot,
                         OFFHAND_SLOT_INDEX, // 目标：副手槽位40
-                        ClickType.SWAP,
+                        ContainerInput.SWAP,
                         player
                 );
             }
@@ -384,15 +398,31 @@ public class InventoryUtils {
         LAST_MESSAGE_SEND_TIME.put(messageKey, currentTime);
     }
 
-    public static boolean switchToItems(LocalPlayer player, Item[] items) {
-        if (items == null || items.length == 0) {
-            return true;
+    public static ItemSwitchResult switchToItemsResult(LocalPlayer player, Item[] items) {
+        // 包含潜影盒延迟关闭窗口在内，只要当前仍是非玩家背包容器，就必须保留作业等待。
+        if (player.containerMenu != player.inventoryMenu) {
+            return ItemSwitchResult.WAITING;
         }
+        if (items == null || items.length == 0) {
+            return ItemSwitchResult.READY;
+        }
+
+        // 已经手持任一允许物品时无需制造额外的等待 tick。
+        ItemStack currentMainHand = player.getMainHandItem();
+        for (Item item : items) {
+            if (currentMainHand.is(item)) {
+                return ItemSwitchResult.READY;
+            }
+        }
+
         Inventory inventory = player.getInventory();
         boolean isCreativeMode = PlayerUtils.getAbilities(player).instabuild;
         if (isCreativeMode) {
             ItemStack stack = new ItemStack(items[0]);
-            return InventoryUtils.setPickedItemToHand(stack, client);
+            boolean switched = InventoryUtils.setPickedItemToHand(stack, client);
+            return switched || player.getMainHandItem().is(items[0])
+                    ? ItemSwitchResult.WAITING
+                    : ItemSwitchResult.UNAVAILABLE;
         }
         // 查找物品在背包中的槽位
         for (Item item : items) {
@@ -400,14 +430,26 @@ public class InventoryUtils {
             if (slot != -1) {
                 ItemStack itemStack = inventory.getItem(slot);
                 orderlyStoreItem = itemStack.copy();
-                // 找到，切换到主手
-                return InventoryUtils.setPickedItemToHand(slot, itemStack, client);
+                // 找到后只执行切换；实际打印留到下一 tick 重新验证主手后执行。
+                boolean switched = InventoryUtils.setPickedItemToHand(slot, itemStack, client);
+                return switched || player.getMainHandItem().is(item)
+                        ? ItemSwitchResult.WAITING
+                        : ItemSwitchResult.UNAVAILABLE;
             }
         }
         // 没找到，尝试使用快捷潜影盒
-        //
-        QuickShulkerUtils.requestShulkerItem(player, items);
-        return false;
+        boolean requestStarted = QuickShulkerUtils.requestShulkerItem(player, items);
+        if (requestStarted
+                || QuickShulkerUtils.isBusy()
+                || (Configs.Print.USE_QUICK_SHULKER.getBooleanValue()
+                    && QuickShulkerUtils.getShulkerCooldown() > 0)) {
+            return ItemSwitchResult.WAITING;
+        }
+        return ItemSwitchResult.UNAVAILABLE;
+    }
+
+    public static boolean switchToItems(LocalPlayer player, Item[] items) {
+        return switchToItemsResult(player, items) == ItemSwitchResult.READY;
     }
 
     private static int findItemInInventory(Inventory inventory, Item item) {
