@@ -11,7 +11,7 @@ import me.aleksilassila.litematica.printer.utils.ConfigUtils;
 import me.aleksilassila.litematica.printer.utils.MessageUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 //#if MC <= 11904
@@ -59,6 +60,18 @@ public abstract class MixinGui {
     @Unique
     private static final String KEY_SCAN_MODE = "litematica-printer.hud.debug.scanMode";
     @Unique
+    private static final String KEY_PRODUCER_PROGRESS = "litematica-printer.hud.debug.producerProgress";
+    @Unique
+    private static final String KEY_QUEUE_TITLE = "litematica-printer.hud.debug.queueTitle";
+    @Unique
+    private static final String KEY_QUEUE_LENGTH = "litematica-printer.hud.debug.queueLength";
+    @Unique
+    private static final String KEY_QUEUE_STATE = "litematica-printer.hud.debug.queueState";
+    @Unique
+    private static final String KEY_CURRENT_JOB = "litematica-printer.hud.debug.currentJob";
+    @Unique
+    private static final String KEY_NO_CURRENT_JOB = "litematica-printer.hud.debug.noCurrentJob";
+    @Unique
     private static final String KEY_LAG_PAUSED = "litematica-printer.hud.lagPaused";
 
     @Unique
@@ -93,7 +106,43 @@ public abstract class MixinGui {
         lines.add(MessageUtils.translatable(KEY_INTERACTED, booleanToColoredString(guiInfo.interacted)).getString());
         lines.add(MessageUtils.translatable(KEY_IN_SELECTION, booleanToColoredString(guiInfo.posInSelectionRange)).getString());
         lines.add(MessageUtils.translatable(KEY_EXECUTED, booleanToColoredString(guiInfo.execute)).getString());
+        if (module.hasQueuedScheduler()) {
+            long scanned = module.getProducerScannedPositions();
+            long total = module.getProducerTotalPositions();
+            double percentage = total > 0L ? Math.min(100.0, scanned * 100.0 / total) : 0.0;
+            lines.add(MessageUtils.translatable(KEY_PRODUCER_PROGRESS, scanned, total,
+                    String.format(Locale.ROOT, "%.1f", percentage)).getString());
+        }
 
+        return lines;
+    }
+
+    @Unique
+    private List<String> buildQueueDebugLines(Module module) {
+        List<String> lines = new ArrayList<>();
+        lines.add(MessageUtils.translatable(KEY_QUEUE_TITLE).getString());
+        lines.add(MessageUtils.translatable(KEY_QUEUE_LENGTH,
+                module.getQueuedJobCount(), module.getJobQueueCapacity()).getString());
+        lines.add(MessageUtils.translatable(KEY_QUEUE_STATE, module.getScanState()).getString());
+
+        GuiBlockInfo currentJob = module.getCurrentJobGuiInfo();
+        if (currentJob == null) {
+            lines.add(MessageUtils.translatable(KEY_CURRENT_JOB,
+                    MessageUtils.translatable(KEY_NO_CURRENT_JOB).getString()).getString());
+            return lines;
+        }
+
+        lines.add(MessageUtils.translatable(KEY_CURRENT_JOB, currentJob.pos.toShortString()).getString());
+        if (currentJob.requiredState != null) {
+            lines.add(MessageUtils.translatable(KEY_SCHEMATIC_BLOCK,
+                    currentJob.requiredState.getBlock().getName().getString()).getString());
+        }
+        lines.add(MessageUtils.translatable(KEY_CURRENT_BLOCK,
+                currentJob.currentState.getBlock().getName().getString()).getString());
+        lines.add(MessageUtils.translatable(KEY_INTERACTED,
+                booleanToColoredString(currentJob.interacted)).getString());
+        lines.add(MessageUtils.translatable(KEY_EXECUTED,
+                booleanToColoredString(currentJob.execute)).getString());
         return lines;
     }
 
@@ -105,13 +154,13 @@ public abstract class MixinGui {
     // @formatter:off
     //#if MC>= 260200
     //#elseif MC >= 260100
-    //$$ @Inject(method = "extractHotbarAndDecorations", at = @At("TAIL"))
+    @Inject(method = "extractRenderState", at = @At("TAIL"))
     //#else
-    @Inject(method = "renderItemHotbar", at = @At("TAIL"))
+    //$$ @Inject(method = "renderItemHotbar", at = @At("TAIL"))
     //#endif
 
     //#if MC > 12006
-    private void hookRenderItemHotbar(GuiGraphics guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+    private void hookRenderItemHotbar(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
     //#elseif MC >= 12006
     //$$ private void hookRenderItemHotbar(GuiGraphics guiGraphics, float f, CallbackInfo ci) {
     //#elseif MC > 11904 && MC < 12006
@@ -164,9 +213,10 @@ public abstract class MixinGui {
             }
         }
 
-        if (validModules.isEmpty()) return;
-
         int commonInfoBottomY = drawCommonDebugInfo(SIDE_MARGIN, SIDE_MARGIN);
+        int queueInfoBottomY = drawQueueDebugInfo(ModuleManager.PRINT, scaledWidth, SIDE_MARGIN);
+
+        if (validModules.isEmpty()) return;
 
         int columnWidth = globalMaxTextWidth + DEBUG_PADDING * 2;
         int maxColumnsPerSide = calculateMaxColumnsPerSide(scaledWidth, columnWidth);
@@ -181,13 +231,45 @@ public abstract class MixinGui {
 
         if (drawnModules < validModules.size()) {
             int rightStartX = (int) (scaledWidth - SIDE_MARGIN - columnWidth);
+            int rightStartY = Math.max(commonInfoBottomY + COMMON_INFO_OFFSET_Y,
+                    queueInfoBottomY + COMMON_INFO_OFFSET_Y);
             drawModulePanels(
                     validModules, guiInfoMap, drawnModules,
-                    rightStartX, commonInfoBottomY + COMMON_INFO_OFFSET_Y,
+                    rightStartX, rightStartY,
                     columnWidth, maxColumnsPerSide, availableHeight,
                     scaledHeight
             );
         }
+    }
+
+    @Unique
+    private int drawQueueDebugInfo(Module module, float scaledWidth, int startY) {
+        if (!module.hasQueuedScheduler()) return startY;
+
+        List<String> lines = buildQueueDebugLines(module);
+        Minecraft mc = Minecraft.getInstance();
+        int maxWidth = MIN_COLUMN_WIDTH;
+        for (String line : lines) {
+            String cleanLine = line.replaceAll("§[0-9a-fA-Fklmnor]", "");
+            maxWidth = Math.max(maxWidth, mc.font.width(cleanLine));
+        }
+
+        int panelWidth = maxWidth + DEBUG_PADDING * 2;
+        int panelHeight = lines.size() * DEBUG_LINE_HEIGHT + DEBUG_PADDING * 2;
+        int startX = (int) scaledWidth - SIDE_MARGIN - panelWidth;
+
+        RenderUtils.fill(
+                startX, startY,
+                startX + panelWidth, startY + panelHeight,
+                new Color(0, 0, 0, 50)
+        );
+
+        int lineY = startY + DEBUG_PADDING;
+        for (String line : lines) {
+            drawDebugLine(line, startX + DEBUG_PADDING, lineY);
+            lineY += DEBUG_LINE_HEIGHT;
+        }
+        return startY + panelHeight;
     }
 
     @Unique
