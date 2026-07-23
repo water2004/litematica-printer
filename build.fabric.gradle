@@ -1,0 +1,110 @@
+plugins {
+    id 'mod-plugin'
+    id 'maven-publish'
+    id 'net.fabricmc.fabric-loom'
+    id 'com.replaymod.preprocess'
+}
+
+version = modConfig.fullProjectVersion
+group = modConfig.modMavenGroup
+
+repositories {
+    mavenLocal()
+    maven { name = 'FabricMC'; url = 'https://maven.fabricmc.net' }
+    maven { name = 'FallenBreath'; url = 'https://maven.fallenbreath.me/releases' }
+    maven { name = 'Modrinth'; url = 'https://api.modrinth.com/maven' }
+    maven { name = 'CurseMaven'; url = 'https://www.cursemaven.com' }
+    maven { name = 'TerraformersMC'; url = 'https://maven.terraformersmc.com/releases' }
+    maven { name = 'Nucleoid'; url = 'https://maven.nucleoid.xyz' }
+    maven { name = 'Masa'; url = 'https://masa.dy.fi/maven' }
+    maven { name = 'SakuraRyoko'; url = 'https://masa.dy.fi/maven/sakura-ryoko' }
+    maven { name = 'Kyrptonaught'; url = 'https://maven.kyrptonaught.dev' }
+    maven { name = 'Jitpack'; url = 'https://jitpack.io' }
+    maven {
+        name = 'GitHub'
+        url = 'https://maven.pkg.github.com/BiliXWhite/remote-inventory-next'
+        credentials {
+            username = System.getenv('GH_USERNAME') ?: ''
+            password = System.getenv('GH_TOKEN') ?: ''
+        }
+    }
+}
+
+configurations.configureEach {
+    resolutionStrategy {
+        force "net.fabricmc:fabric-loader:${modConfig.fabricLoaderVersion}"
+        force "com.terraformersmc:modmenu:${modConfig.prop('modmenu')}"
+        force "maven.modrinth:malilib:${modConfig.prop('malilib_dependency')}"
+        force "maven.modrinth:litematica:${modConfig.prop('litematica_dependency')}"
+        force "maven.modrinth:tweakeroo:${modConfig.prop('tweakeroo_dependency')}"
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${modConfig.mcVersion}"
+    implementation "net.fabricmc:fabric-loader:${modConfig.fabricLoaderVersion}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${modConfig.fabricApiVersion}"
+
+    def pinyinDependency = implementation("com.belerweb:pinyin4j:${modConfig.prop('pinyin_version')}")
+    include pinyinDependency
+
+    implementation "com.terraformersmc:modmenu:${modConfig.prop('modmenu')}"
+    implementation "dev.blinkwhite.remoteinventory:remote-inventory-next:${modConfig.prop('remote_inventory_version')}+${modConfig.mcVersion}"
+
+    implementation "fi.dy.masa.malilib:${modConfig.prop('malilib')}"
+    implementation "fi.dy.masa.litematica:${modConfig.prop('litematica')}"
+    implementation "fi.dy.masa.tweakeroo:${modConfig.prop('tweakeroo')}"
+
+    def quickshulkerUrl = modConfig.prop('quickshulker').toString()
+    if (!quickshulkerUrl.isEmpty()) {
+        def quickshulkerFile = modConfig.downloadDependencyMod(quickshulkerUrl)
+        if (quickshulkerFile != null && quickshulkerFile.exists()) {
+            implementation files(quickshulkerFile)
+        }
+    }
+}
+
+loom {
+    def commonVmArgs = [
+            '-Dmixin.debug.export=true',
+            '-Dmixin.debug.verbose=true',
+            '-Dmixin.env.remapRefMap=true'
+    ]
+    def clientProgramArgs = [
+            '--width', '1280',
+            '--height', '720',
+            '--username', 'PrinterTest'
+    ]
+    runs {
+        named('client') {
+            generateRunConfig.set(true)
+            jvmArguments.set(commonVmArgs)
+            programArguments.set(clientProgramArgs)
+            runDirectory.dir('../../run/client')
+        }
+    }
+}
+
+tasks.register('buildAndCollect', Copy) {
+    description = 'Build and collect the jar to the root project build directory'
+    group = 'build'
+    from(tasks.named('jar').flatMap { it.archiveFile })
+    into(rootProject.layout.buildDirectory.dir("libs/${project.property('mod_version')}"))
+    dependsOn tasks.named('build')
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifactId = modConfig.modId
+            version = modConfig.modVersion
+        }
+    }
+    repositories {
+        mavenLocal()
+        maven {
+            url = uri("${rootDir}/publish")
+        }
+    }
+}

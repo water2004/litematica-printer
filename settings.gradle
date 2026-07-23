@@ -1,0 +1,32 @@
+pluginManagement {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        gradlePluginPortal()
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net'
+        }
+        maven {
+            name = 'Jitpack'
+            url = 'https://jitpack.io'
+        }
+    }
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == 'com.replaymod.preprocess') {
+                useModule("com.github.Fallen-Breath:preprocessor:${requested.version}")
+            }
+        }
+    }
+}
+
+['26.1.2', '26.2'].each { version ->
+    include(":${version}")
+    project(":${version}").with {
+        projectDir = file("versions/${version}")
+        buildFileName = '../../build.fabric.gradle'
+    }
+}
+
+include ':fabricWrapper'

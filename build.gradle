@@ -1,0 +1,22 @@
+plugins {
+    id 'maven-publish'
+    id 'net.fabricmc.fabric-loom' version '1.17-SNAPSHOT' apply false
+    id 'net.fabricmc.fabric-loom-remap' version '1.17-SNAPSHOT' apply false
+    id 'com.replaymod.preprocess' version 'c5abb4fb12'
+}
+
+preprocess {
+    strictExtraMappings.set(false)
+
+    def mc260102 = createNode('26.1.2', 26_01_02, 'mojang')
+    def mc260200 = createNode('26.2', 26_02_00, 'mojang')
+
+    mc260102.link(mc260200, file('versions/mapping-26.1.2-26.2.txt'))
+
+    getNodes().each { node ->
+        def nodeProject = findProject(node.project)
+        if (nodeProject != null) {
+            nodeProject.ext.set('mcVersion', node.mcVersion)
+        }
+    }
+}

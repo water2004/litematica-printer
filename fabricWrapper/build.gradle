@@ -1,0 +1,95 @@
+import groovy.json.JsonBuilder
+import groovy.json.JsonSlurper
+import org.gradle.language.jvm.tasks.ProcessResources
+
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'mod-plugin'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    gradlePluginPortal()
+}
+
+group = modConfig.modMavenGroup
+version = modConfig.fullProjectVersion
+
+base {
+    archivesName.set("${modConfig.modArchivesBaseName}-versionpack")
+}
+
+def fabricSubprojects = rootProject.subprojects.findAll { it.name != 'fabricWrapper' }
+
+fabricSubprojects.each {
+    evaluationDependsOn(":${it.name}")
+}
+
+def collectSubModules = tasks.register('collectSubModules') {
+    description = 'Collect all submodules into a single jar'
+    def destination = layout.buildDirectory.dir('tmp/submods/META-INF/jars')
+
+    outputs.upToDateWhen { false }
+    dependsOn fabricSubprojects.collect { it.tasks.named('build') }
+
+    doLast {
+        def destinationDir = destination.get().asFile
+        project.delete(destinationDir)
+        destinationDir.mkdirs()
+
+        fabricSubprojects.each { subproject ->
+            def subprojectLibs = new File(subproject.projectDir, 'build/libs')
+            if (!subprojectLibs.isDirectory()) return
+
+            def jars = subprojectLibs.listFiles()?.findAll { it.name.endsWith('.jar') } ?: []
+            if (jars.isEmpty()) return
+
+            def latestJar = jars.max { it.lastModified() }
+            project.copy {
+                from latestJar
+                into destinationDir
+            }
+            println "Copied: ${latestJar.name}"
+        }
+    }
+}
+
+tasks.named('jar', Jar) {
+    dependsOn collectSubModules
+    dependsOn tasks.named('processResources')
+
+    from rootProject.file('LICENSE')
+    from layout.buildDirectory.dir('tmp/submods')
+}
+
+tasks.named('processResources', ProcessResources) {
+    dependsOn collectSubModules
+
+    doLast {
+        def jarsDir = layout.buildDirectory.dir('tmp/submods/META-INF/jars').get().asFile
+        def jars = (jarsDir.listFiles() ?: [])
+                .findAll { it.name.endsWith('.jar') }
+                .collect { [file: "META-INF/jars/${it.name}"] }
+
+        def minecraftVersions = fabricSubprojects.collect { subproject ->
+            try {
+                subproject.property('minecraft_dependency') as String
+            } catch (Exception ignored) {
+                null
+            }
+        }.findAll { it != null }.unique()
+
+        def jsonFile = layout.buildDirectory.file('resources/main/fabric.mod.json').get().asFile
+        if (jsonFile.exists()) {
+            def json = new JsonSlurper().parse(jsonFile) as Map
+            json.jars = jars
+            if (json.depends instanceof Map) {
+                json.depends.minecraft = minecraftVersions
+            }
+            jsonFile.text = new JsonBuilder(json).toPrettyString()
+            println "JAR files: ${jars.size()}, Minecraft: ${minecraftVersions}"
+        }
+    }
+}

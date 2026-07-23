@@ -1,0 +1,24 @@
+plugins {
+    id 'java-gradle-plugin'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    gradlePluginPortal()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+gradlePlugin {
+    plugins {
+        modPlugin {
+            id = 'mod-plugin'
+            implementationClass = 'ModPlugin'
+        }
+    }
+}
