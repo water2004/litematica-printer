@@ -21,12 +21,17 @@ public class Bedrock extends Module {
 
     @Override
     protected int getTickInterval() {
-        return Configs.Break.BREAK_INTERVAL.getIntegerValue();
+        return Configs.Bedrock.BREAK_INTERVAL.getIntegerValue();
     }
 
     @Override
     protected int getMaxExecutions() {
-        return Configs.Break.BREAK_BLOCKS_PER_TICK.getIntegerValue();
+        return Configs.Bedrock.BREAK_BLOCKS_PER_TICK.getIntegerValue();
+    }
+
+    @Override
+    protected boolean usesJobPool() {
+        return true;
     }
 
     @Override

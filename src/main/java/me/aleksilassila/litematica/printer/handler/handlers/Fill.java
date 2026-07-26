@@ -51,6 +51,11 @@ public class Fill extends Module {
     }
 
     @Override
+    protected boolean usesJobPool() {
+        return true;
+    }
+
+    @Override
     protected void preprocess() {
         FillBlockModeType fillMode = (FillBlockModeType) Configs.Fill.FILL_BLOCK_MODE.getOptionListValue();
         switch (fillMode) {
@@ -140,7 +145,14 @@ public class Fill extends Module {
                 || (currentState.getBlock() instanceof LiquidBlock)
                 || isReplaceable(currentState)
         ) {
-            if (!InventoryUtils.switchToItems(player, this.fillModeItemList)) {
+            InventoryUtils.ItemSwitchResult switchResult =
+                    InventoryUtils.switchToItemsResult(player, this.fillModeItemList);
+            if (switchResult != InventoryUtils.ItemSwitchResult.READY) {
+                if (switchResult == InventoryUtils.ItemSwitchResult.WAITING) {
+                    enterWaiting(blockPos);
+                    skipIteration.set(true);
+                    return;
+                }
                 if (this.fillModeItemList != null && this.fillModeItemList.length > 0 && this.fillModeItemList[0] != null) {
                     MissingMaterialTracker.getInstance().recordMissing(this.fillModeItemList[0],
                             //#if MC >= 260100

@@ -6,8 +6,6 @@ import lombok.Getter;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.*;
 import me.aleksilassila.litematica.printer.printer.*;
-import me.aleksilassila.litematica.printer.Reference;
-import me.aleksilassila.litematica.printer.utils.BreakUtils;
 import me.aleksilassila.litematica.printer.utils.ConfigUtils;
 import me.aleksilassila.litematica.printer.utils.LitematicaUtils;
 import me.aleksilassila.litematica.printer.utils.PlayerUtils;
@@ -18,13 +16,13 @@ import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
+import java.util.ArrayDeque;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
@@ -33,7 +31,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
 public abstract class Module extends ConfigUtils {
     private static final ScheduledExecutorService TIMEOUT_SCHEDULER =
@@ -46,8 +43,7 @@ public abstract class Module extends ConfigUtils {
     @Nullable
     public final AtomicReference<PrinterBox> box;
     protected final IteratorManager iteratorManager = new IteratorManager();
-    protected final ScanPlan scanPlan = new ScanPlan();
-    protected final BlockJobQueue jobQueue = new BlockJobQueue();
+    protected final BlockJobPool jobPool = new BlockJobPool();
     @Getter
     private final String id;
     @Getter
@@ -76,8 +72,6 @@ public abstract class Module extends ConfigUtils {
     private ClientLevel queuedSchedulerLevel = null;
     @Getter
     private ScanState scanState = ScanState.COLLECT;
-
-    private Iterator<BlockPos> processIter = null;
 
     @Nullable
     private BlockPos waitingPos = null;
@@ -128,23 +122,18 @@ public abstract class Module extends ConfigUtils {
             return;
         }
 
-        if (usesJobQueue() && queuedSchedulerLevel != level) {
+        if (usesJobPool() && queuedSchedulerLevel != level) {
             queuedSchedulerLevel = level;
-            resetQueuedScheduler();
+            resetScheduler();
             iteratorManager.markNeedsRebuild();
         }
 
         if (box == null) return;
         if (iteratorManager.tryBuildBox(player, selectionType != null ? selectionType.getOptionListValue() : null)) {
             box.set(iteratorManager.getBox());
-            if (usesJobQueue()) {
+            if (usesJobPool()) {
                 // 玩家移动只重置生产者游标；既有作业由消费者按当前范围惰性丢弃。
                 if (scanState != ScanState.WAITING) scanState = ScanState.COLLECT;
-            } else {
-                scanState = ScanState.COLLECT;
-                scanPlan.reset();
-                processIter = null;
-                waitingPos = null;
             }
             iteratorManager.reset();
         }
@@ -165,16 +154,7 @@ public abstract class Module extends ConfigUtils {
         // 远离工作区时提前退出，避免空跑卡顿
         if (needsAreaCheck() && !isPlayerRangeInWorkArea()) return;
 
-        if (usesJobQueue()) {
-            executeQueuedPhase(maxExecs);
-            return;
-        }
-
-        switch (scanState) {
-            case COLLECT -> collectPhase(maxExecs);
-            case PROCESS -> processPhase(maxExecs);
-            case WAITING -> waitingPhase(maxExecs);
-        }
+        if (usesJobPool()) executePooledPhase(maxExecs);
     }
 
     /**
@@ -199,24 +179,11 @@ public abstract class Module extends ConfigUtils {
         waitingPos = pos;
     }
 
-    private boolean waitingPhase(int maxExecs) {
-        // 恢复：优先处理等待位置，然后继续 PROCESS
-        BlockPos pos = waitingPos;
-        waitingPos = null;
-        scanState = ScanState.PROCESS;
-        if (processIter == null) processIter = scanPlan.createFlatIterator();
-
-        if (pos != null && needsWork(pos)) {
-            executeAndReturn(pos);
-        }
-        return true;
-    }
-
     /**
      * 持续作业调度：先消费已有作业，再用剩余时间继续扫描生产。
-     * 消费者在判断前已经将坐标移出队列，因此无法处理的坐标不会锁住队首。
+     * 消费者以最早作业为锚点向后选择执行兼容作业，不再使用严格 FIFO。
      */
-    private void executeQueuedPhase(int maxExecs) {
+    private void executePooledPhase(int maxExecs) {
         int timeLimitMs = getIterationTimeLimit();
 
         skipIteration.set(false);
@@ -237,17 +204,16 @@ public abstract class Module extends ConfigUtils {
 
                 boolean executed = false;
                 if (isQueuedPositionValid(pos) && needsQueuedWork(pos)) {
-                    executeAndReturn(pos);
-                    executed = true;
+                    executed = executeSingleWaiting(pos);
                 }
                 updateCurrentJobInfo(pos, executed);
 
-                // 保持旧 waitingPhase 语义：等待位置恢复独占当前 tick，避免突破每 tick 动作上限。
+                // 等待位置恢复独占当前 tick，避免突破每 tick 动作上限。
                 return;
             }
 
             scanState = ScanState.PROCESS;
-            consumeQueuedJobs(maxExecs);
+            consumePooledJobs(maxExecs);
 
             if (scanState == ScanState.WAITING
                     || skipIteration.get()
@@ -257,42 +223,113 @@ public abstract class Module extends ConfigUtils {
             }
 
             scanState = ScanState.COLLECT;
-            produceQueuedJobs();
+            producePooledJobs();
         } finally {
             if (timeoutTask != null) timeoutTask.cancel(false);
             timeLimitExceeded.set(false);
         }
     }
 
-    private void consumeQueuedJobs(int maxExecs) {
+    /**
+     * 按桶消费：取最早的同类事务桶，整桶连续执行直至预算耗尽或被中断。
+     * 桶内坐标在消费前逐个校验有效性，失效的直接剔除；中断时剩余坐标留在桶里下 tick 继续。
+     */
+    private void consumePooledJobs(int maxExecs) {
         int execCount = 0;
 
         while (!timeLimitExceeded.get()
                 && !skipIteration.get()
                 && !ActionManager.INSTANCE.needWaitModifyLook) {
-            BlockPos pos = jobQueue.poll();
-            queuedJobCount = jobQueue.size();
-            if (pos == null) {
+            ArrayDeque<BlockPos> bucket = null;
+            TransactionKey bucketKey = null;
+            Map.Entry<TransactionKey, ArrayDeque<BlockPos>> entry = jobPool.peekFirstBucket();
+            if (entry != null) {
+                bucketKey = entry.getKey();
+                bucket = entry.getValue();
+            }
+            queuedJobCount = jobPool.size();
+            if (bucket == null) {
                 currentJobGuiInfo = null;
                 return;
             }
 
-            boolean executed = false;
-            if (isQueuedPositionValid(pos) && needsQueuedWork(pos)) {
-                executeAndReturn(pos);
-                executed = true;
-            }
+            int remainingExecs = maxExecs > 0
+                    ? Math.max(1, maxExecs - execCount)
+                    : Integer.MAX_VALUE;
+            int executed = executeJobTransaction(bucketKey, bucket, remainingExecs, skipIteration);
+            execCount += executed;
+            queuedJobCount = jobPool.size();
 
-            updateCurrentJobInfo(pos, executed);
-
-            if (executed && maxExecs > 0 && ++execCount >= maxExecs) return;
+            if (maxExecs > 0 && execCount >= maxExecs) return;
             if (scanState == ScanState.WAITING) return;
         }
     }
 
-    private void produceQueuedJobs() {
+    /**
+     * 基类默认事务执行：遍历桶内坐标逐个执行。
+     * Fill/FluidRemoval/Bedrock 等同质模块直接使用此实现；
+     * Print 覆写以按桶的 {@link TransactionKey.Category} 分流到专门路径。
+     */
+    protected int executeJobTransaction(TransactionKey key, ArrayDeque<BlockPos> bucket,
+                                        int maxExecs,
+                                        AtomicReference<Boolean> skipIteration) {
+        return executeBucketDefault(bucket, maxExecs, skipIteration);
+    }
+
+    /**
+     * 默认桶执行：逐个校验并执行，失效的剔除，中断时保留剩余。
+     */
+    protected final int executeBucketDefault(ArrayDeque<BlockPos> bucket, int maxExecs,
+                                             AtomicReference<Boolean> skipIteration) {
+        int executed = 0;
+        while (executed < maxExecs && !bucket.isEmpty()
+                && !shouldStopJobTransaction(skipIteration)) {
+            BlockPos pos = bucket.peek();
+            if (!preparePooledJob(pos)) {
+                jobPool.pollFromBucket(bucket);
+                reportPooledJob(pos, false);
+                continue;
+            }
+            jobPool.pollFromBucket(bucket);
+            executePreparedPooledJob(pos);
+            executed++;
+        }
+        return executed;
+    }
+
+    protected final boolean preparePooledJob(BlockPos pos) {
+        return isQueuedPositionValid(pos) && needsQueuedWork(pos);
+    }
+
+    protected final void executePreparedPooledJob(BlockPos pos) {
+        executeAndReturn(pos);
+        updateCurrentJobInfo(pos, true);
+    }
+
+    protected final boolean shouldStopJobTransaction(
+            AtomicReference<Boolean> skipIteration) {
+        return timeLimitExceeded.get()
+                || skipIteration.get()
+                || ActionManager.INSTANCE.needWaitModifyLook
+                || scanState == ScanState.WAITING;
+    }
+
+    protected final void reportPooledJob(BlockPos pos, boolean executed) {
+        updateCurrentJobInfo(pos, executed);
+    }
+
+    /**
+     * 等待恢复后单点执行：该坐标已在前一轮触发 skipIteration，
+     * 恢复后独占一次执行机会，不参与桶批量。
+     */
+    private boolean executeSingleWaiting(BlockPos pos) {
+        executePreparedPooledJob(pos);
+        return true;
+    }
+
+    private void producePooledJobs() {
         try {
-            while (!jobQueue.isFull() && !timeLimitExceeded.get()) {
+            while (!jobPool.isFull() && !timeLimitExceeded.get()) {
                 BlockPos pos = iteratorManager.next();
                 if (pos == null) {
                     // 扫描持续循环，但每 tick 最多跨越一次循环边界，避免空区域高速空转。
@@ -301,16 +338,29 @@ public abstract class Module extends ConfigUtils {
                 }
 
                 if (needsAreaCheck() && !isPosInWorkspace(pos)) continue;
+                if (isOnCooldown(pos) || isCorrectBlock(pos)) continue;
 
-                if (!isOnCooldown(pos) && !isCorrectBlock(pos)) {
-                    jobQueue.offer(pos);
-                }
+                // 入队即算事务签名，把 canProcessPos 的重计算前移到生产侧以支持分组。
+                // canProcessPos 会设置子类的 action/ctx 成员，供 getTransactionKey 使用。
+                if (!canProcessPos(pos)) continue;
+
+                TransactionKey key = getTransactionKey(pos);
+                jobPool.offer(pos, key);
 
                 updateGuiInfo(pos, false);
             }
         } finally {
-            queuedJobCount = jobQueue.size();
+            queuedJobCount = jobPool.size();
         }
+    }
+
+    /**
+     * 事务签名。基类返回 {@link TransactionKey#HOMOGENEOUS}（全同质，单桶），
+     * Print 覆写为基于 action 类别与主物品的精确分组。
+     * 调用时 canProcessPos 已为该坐标设置好子类的 action/ctx 成员。
+     */
+    protected TransactionKey getTransactionKey(BlockPos pos) {
+        return TransactionKey.HOMOGENEOUS;
     }
 
     private boolean isQueuedPositionValid(@Nullable BlockPos pos) {
@@ -335,84 +385,13 @@ public abstract class Module extends ConfigUtils {
                 isPosInWorkspace(pos) && interacted);
     }
 
-    private boolean needsWork(BlockPos pos) {
-        return !isOnCooldown(pos) && canProcessPos(pos) && !isCorrectBlock(pos);
-    }
-
     private boolean needsQueuedWork(BlockPos pos) {
         return !isCorrectBlock(pos) && !isOnCooldown(pos) && canProcessPos(pos);
-    }
-
-    private boolean collectPhase(int maxExecs) {
-        return iteratePhase(0,
-                iteratorManager::next,
-                pos -> needsWork(pos) && collectAndReturn(pos),
-                () -> {
-                    scanPlan.completeCollection();
-                    scanState = ScanState.PROCESS;
-                    processIter = null;
-                });
-    }
-
-    private boolean processPhase(int maxExecs) {
-        if (processIter == null) processIter = scanPlan.createFlatIterator();
-        return iteratePhase(maxExecs,
-                () -> processIter.hasNext() ? processIter.next() : null,
-                pos -> needsWork(pos) && executeAndReturn(pos),
-                () -> {
-                    processIter = null;
-                    scanState = ScanState.COLLECT;
-                    scanPlan.reset();
-                    iteratorManager.reset();
-                });
-    }
-
-    private boolean collectAndReturn(BlockPos pos) {
-        scanPlan.collect(pos, getRequiredItems(pos));
-        return true;
     }
 
     private boolean executeAndReturn(BlockPos pos) {
         executeIteration(pos, skipIteration);
         return true;
-    }
-
-    private boolean iteratePhase(int maxExecs, Supplier<@Nullable BlockPos> nextPos,
-                                  java.util.function.Predicate<BlockPos> onPosition, Runnable onComplete) {
-        int execCount = 0;
-        int timeLimitMs = getIterationTimeLimit();
-
-        skipIteration.set(false);
-        timeLimitExceeded.set(false);
-
-        ScheduledFuture<?> timeoutTask = null;
-        if (timeLimitMs > 0) {
-            timeoutTask = TIMEOUT_SCHEDULER.schedule(
-                    () -> timeLimitExceeded.set(true),
-                    timeLimitMs, TimeUnit.MILLISECONDS);
-        }
-
-        try {
-            while (true) {
-                if (timeLimitExceeded.get()) return true;
-                if (skipIteration.get() || ActionManager.INSTANCE.needWaitModifyLook) return true;
-
-                BlockPos pos = nextPos.get();
-                if (pos == null) { onComplete.run(); return false; }
-
-                if (needsAreaCheck() && !isPosInWorkspace(pos)) continue;
-
-                boolean executed = onPosition.test(pos);
-                if (executed) {
-                    if (maxExecs > 0 && ++execCount >= maxExecs) return true;
-                }
-
-                updateGuiInfo(pos, executed);
-            }
-        } finally {
-            if (timeoutTask != null) timeoutTask.cancel(false);
-            timeLimitExceeded.set(false);
-        }
     }
 
     private boolean isPosInWorkspace(BlockPos pos) {
@@ -421,26 +400,14 @@ public abstract class Module extends ConfigUtils {
                 : LitematicaUtils.inSelection(pos);
     }
 
-    @Nullable
-    protected Item[] getRequiredItems(BlockPos pos) {
-        return null;
-    }
-
     public void resetScanState() {
-        scanState = ScanState.COLLECT;
-        scanPlan.reset();
-        processIter = null;
-        waitingPos = null;
-        jobQueue.clear();
-        queuedJobCount = 0;
-        currentJobGuiInfo = null;
-        iteratorManager.reset();
+        resetScheduler();
     }
 
-    private void resetQueuedScheduler() {
+    private void resetScheduler() {
         scanState = ScanState.COLLECT;
         waitingPos = null;
-        jobQueue.clear();
+        jobPool.clear();
         queuedJobCount = 0;
         currentJobGuiInfo = null;
         iteratorManager.reset();
@@ -451,16 +418,16 @@ public abstract class Module extends ConfigUtils {
         return currentGuiInfo;
     }
 
-    public boolean hasQueuedScheduler() {
-        return usesJobQueue();
+    public boolean hasJobPoolScheduler() {
+        return usesJobPool();
     }
 
     public int getQueuedJobCount() {
         return queuedJobCount;
     }
 
-    public int getJobQueueCapacity() {
-        return BlockJobQueue.CAPACITY;
+    public int getJobPoolCapacity() {
+        return BlockJobPool.CAPACITY;
     }
 
     public long getProducerScannedPositions() {
@@ -504,7 +471,7 @@ public abstract class Module extends ConfigUtils {
         return true;
     }
 
-    protected boolean usesJobQueue() {
+    protected boolean usesJobPool() {
         return false;
     }
 

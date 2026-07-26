@@ -42,6 +42,11 @@ public class FluidRemoval extends Module {
     }
 
     @Override
+    protected boolean usesJobPool() {
+        return true;
+    }
+
+    @Override
     protected void preprocess() {
         // 填充方块
         List<String> fileBlocks = Configs.Fluid.FLUID_REPLACE_BLOCK_LIST.getStrings();
@@ -93,7 +98,14 @@ public class FluidRemoval extends Module {
             if (!Configs.Fluid.FILL_FLOWING_FLUID.getBooleanValue() && !fluidState.isSource()) {
                 return;
             }
-            if (!InventoryUtils.switchToItems(player, fillItems.toArray(new Item[0]))) {
+            InventoryUtils.ItemSwitchResult switchResult =
+                    InventoryUtils.switchToItemsResult(player, fillItems.toArray(new Item[0]));
+            if (switchResult != InventoryUtils.ItemSwitchResult.READY) {
+                if (switchResult == InventoryUtils.ItemSwitchResult.WAITING) {
+                    enterWaiting(blockPos);
+                    skipIteration.set(true);
+                    return;
+                }
                 if (!fillItems.isEmpty() && fillItems.get(0) != null) {
                     MissingMaterialTracker.getInstance().recordMissing(fillItems.get(0),
                             //#if MC >= 260100

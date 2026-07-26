@@ -9,12 +9,15 @@ import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.BlockMatchingType;
 import me.aleksilassila.litematica.printer.enums.HighlightType;
 import me.aleksilassila.litematica.printer.handler.Module;
+import me.aleksilassila.litematica.printer.handler.TransactionKey;
 import me.aleksilassila.litematica.printer.interfaces.Implementation;
 import me.aleksilassila.litematica.printer.printer.*;
 import me.aleksilassila.litematica.printer.printer.action.Action;
+import me.aleksilassila.litematica.printer.printer.action.ChainBreakAction;
 import me.aleksilassila.litematica.printer.printer.ActionManager;
 import me.aleksilassila.litematica.printer.printer.action.ClickAction;
 import me.aleksilassila.litematica.printer.printer.MissingMaterialTracker;
+import me.aleksilassila.litematica.printer.interfaces.compat.ChainVeinCompat;
 import me.aleksilassila.litematica.printer.utils.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -72,8 +75,13 @@ public class Print extends Module {
     }
 
     @Override
-    protected boolean usesJobQueue() {
+    protected boolean usesJobPool() {
         return true;
+    }
+
+    @Override
+    protected boolean canIterate() {
+        return !ChainVeinCompat.hasPendingMineJobs();
     }
 
     @Override
@@ -115,6 +123,9 @@ public class Print extends Module {
 
         Action action = guide.getAction(ctx);
         if (action == null) return false;
+        if (action instanceof ChainBreakAction && !ChainVeinCompat.canBreakBlock(blockPos)) {
+            return false;
+        }
         this.action = action;
         return true;
     }
@@ -127,13 +138,73 @@ public class Print extends Module {
     }
 
     @Override
-    @Nullable
-    protected Item[] getRequiredItems(BlockPos pos) {
-        // canProcessPos 已设置 this.action 和 this.ctx
-        if (this.action != null && this.ctx != null) {
-            return this.action.getRequiredItems(this.ctx.requiredState.getBlock());
+    protected TransactionKey getTransactionKey(BlockPos pos) {
+        // canProcessPos 已设置 this.action / this.ctx，据此计算事务签名。
+        if (isIceBreakAndWaitJob()) {
+            return new TransactionKey(TransactionKey.Category.ICE_WATER, null);
         }
-        return null;
+        if (action instanceof ChainBreakAction) {
+            return new TransactionKey(TransactionKey.Category.CHAIN_BREAK, null);
+        }
+        TransactionKey.Category category = action instanceof ClickAction
+                ? TransactionKey.Category.CLICK
+                : TransactionKey.Category.PLACE;
+        Item[] items = action.getRequiredItems(ctx.requiredState.getBlock());
+        Item primary = (items != null && items.length > 0) ? items[0] : null;
+        return new TransactionKey(category, primary);
+    }
+
+    @Override
+    protected int executeJobTransaction(TransactionKey key, ArrayDeque<BlockPos> bucket,
+                                        int maxExecs,
+                                        AtomicReference<Boolean> skipIteration) {
+        if (key.category() == TransactionKey.Category.CHAIN_BREAK) {
+            return executeBreakTransaction(bucket, maxExecs, skipIteration);
+        }
+        return executeBucketDefault(bucket, maxExecs, skipIteration);
+    }
+
+    private int executeBreakTransaction(ArrayDeque<BlockPos> bucket, int maxExecs,
+                                        AtomicReference<Boolean> skipIteration) {
+        List<BlockPos> readyBreaks = new ArrayList<>(Math.min(maxExecs, 64));
+
+        while (readyBreaks.size() < maxExecs
+                && !bucket.isEmpty()
+                && !shouldStopJobTransaction(skipIteration)) {
+            BlockPos pos = bucket.peek();
+            if (!preparePooledJob(pos) || !(action instanceof ChainBreakAction)) {
+                jobPool.pollFromBucket(bucket);
+                reportPooledJob(pos, false);
+                continue;
+            }
+            jobPool.pollFromBucket(bucket);
+            readyBreaks.add(pos);
+        }
+
+        int queued = ChainVeinCompat.queueBreaks(readyBreaks);
+        for (int i = 0; i < readyBreaks.size(); i++) {
+            BlockPos pos = readyBreaks.get(i);
+            boolean accepted = i < queued;
+            if (accepted) {
+                addHighlight(pos, HighlightType.BREAK);
+                setCooldown(pos, ConfigUtils.getBreakCooldown());
+            } else {
+                addHighlight(pos, HighlightType.FAILED);
+            }
+            reportPooledJob(pos, accepted);
+        }
+
+        if (queued > 0) {
+            // 整批破坏是后续放置/调整的前置条件，等待客户端世界状态确认。
+            skipIteration.set(true);
+        }
+        return readyBreaks.size();
+    }
+
+    private boolean isIceBreakAndWaitJob() {
+        return Configs.Print.PRINT_ICE_FOR_WATER.getBooleanValue()
+                && BlockUtils.isNeedsWater(ctx.requiredState)
+                && ctx.currentState.getBlock() instanceof IceBlock;
     }
 
     @Override
@@ -152,12 +223,14 @@ public class Print extends Module {
             }
             // 单步阻塞式破冰放水：目标是水且当前是冰才触发
             if (ctx.currentState.getBlock() instanceof IceBlock) {
-                if (!BreakUtils.INSTANCE.inQueue(blockPos)) {
-                    BreakUtils.INSTANCE.add(blockPos);
+                if (ChainVeinCompat.queueBreaks(List.of(blockPos)) > 0) {
                     watingForWaterList.add(blockPos);
+                    enterWaiting(blockPos);
+                    skipIteration.set(true);
+                } else {
+                    setCooldown(blockPos, ConfigUtils.getBreakCooldown());
+                    addHighlight(blockPos, HighlightType.FAILED);
                 }
-                enterWaiting(blockPos);
-                skipIteration.set(true);
                 return;
             }
         }
@@ -179,12 +252,6 @@ public class Print extends Module {
             }
         }
         Item[] reqItems = action.getRequiredItems(ctx.requiredState.getBlock());
-        // 检查是否有待交换的物品
-        if (RemoteContainerUtils.hasPendingExchange()) {
-            enterWaiting(blockPos);
-            skipIteration.set(true);
-            return;
-        }
         Direction side = action.getValidSide(level, blockPos);
         if (side == null) {
             addHighlight(blockPos, HighlightType.FAILED);
@@ -193,17 +260,6 @@ public class Print extends Module {
         InventoryUtils.ItemSwitchResult switchResult = InventoryUtils.switchToItemsResult(player, reqItems);
         if (switchResult != InventoryUtils.ItemSwitchResult.READY) {
             if (switchResult == InventoryUtils.ItemSwitchResult.WAITING) {
-                enterWaiting(blockPos);
-                skipIteration.set(true);
-                return;
-            }
-
-            boolean remoteRequestStarted = false;
-            if (reqItems != null && reqItems.length > 0 && reqItems[0] != null
-                    && Configs.Print.USE_REMOTE_CONTAINER.getBooleanValue()) {
-                remoteRequestStarted = RemoteContainerUtils.tryGetItemFromContainers(reqItems[0]);
-            }
-            if (remoteRequestStarted) {
                 enterWaiting(blockPos);
                 skipIteration.set(true);
                 return;
@@ -250,4 +306,5 @@ public class Print extends Module {
                     .recordMissing(reqItems[0], ctx.getRequiredBlockName());
         }
     }
+
 }
