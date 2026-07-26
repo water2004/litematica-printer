@@ -369,6 +369,7 @@ public abstract class Module extends ConfigUtils {
     private boolean isQueuedPositionValid(@Nullable BlockPos pos) {
         if (pos == null) return false;
         if (!PlayerUtils.canInteracted(pos)) return false;
+        if (!LitematicaUtils.isPositionWithinRange(pos)) return false;
         return !needsAreaCheck() || isPosInWorkspace(pos);
     }
 

@@ -224,6 +224,7 @@ public final class AsyncSearchCoordinator {
                     pos, request.eyePos(), request.range(), request.shape())) {
                 return;
             }
+            if (!LitematicaUtils.isPositionWithinRange(pos)) return;
             if (!isInsideWorkspace(request, pos)) return;
 
             BlockState current = currentView.getBlockState(pos);
