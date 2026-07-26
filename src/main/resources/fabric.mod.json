@@ -4,7 +4,7 @@
   "version": "${mod_version}",
   "icon": "assets/litematica-printer/icon.png",
   "name": "${mod_name}",
-  "description": "An extension for Litematica that adds the missing printer functionality with modular architecture. Supports printing, mining, filling, fluid removal, and bedrock breaking as independent modules that can be enabled on demand.",
+  "description": "An extension for Litematica that adds printing, filling, fluid removal, and bedrock breaking as independent modules.",
   "authors": [
     "aleksilassila",
     "zhaixianyu",
@@ -36,7 +36,7 @@
     "fabric-content-registries-v0": "*"
   },
   "suggests": {
-    "remote-inventory-next": ">=1.0.0"
+    "chainveinfabric": ">=3.0.0"
   },
   "custom": {
     "modmenu": {

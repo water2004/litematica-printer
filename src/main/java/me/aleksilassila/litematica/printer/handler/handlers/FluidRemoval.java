@@ -2,7 +2,9 @@ package me.aleksilassila.litematica.printer.handler.handlers;
 
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.HighlightType;
+import me.aleksilassila.litematica.printer.handler.AsyncSearchCoordinator;
 import me.aleksilassila.litematica.printer.handler.Module;
+import me.aleksilassila.litematica.printer.handler.TransactionKey;
 import me.aleksilassila.litematica.printer.printer.*;
 import me.aleksilassila.litematica.printer.printer.action.Action;
 import me.aleksilassila.litematica.printer.printer.ActionManager;
@@ -89,6 +91,22 @@ public class FluidRemoval extends Module {
     public boolean isCorrectBlock(BlockPos pos) {
         FluidState fluidState = level.getBlockState(pos).getFluidState();
         return !fluids.contains(fluidState.getType());
+    }
+
+    @Override
+    protected Object captureSearchContext() {
+        return List.copyOf(fluids);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    protected TransactionKey getSearchTransactionKey(
+            AsyncSearchCoordinator.SearchBlockSnapshot block,
+            Object searchContext) {
+        List<net.minecraft.world.level.material.Fluid> searchedFluids =
+                (List<net.minecraft.world.level.material.Fluid>) searchContext;
+        return searchedFluids.contains(block.currentState().getFluidState().getType())
+                ? TransactionKey.HOMOGENEOUS : null;
     }
 
     @Override

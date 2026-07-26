@@ -18,10 +18,6 @@ public class ConfigUtils {
         return Configs.Print.ENABLED.getBooleanValue();
     }
 
-    public static boolean isMineEnabled() {
-        return Configs.Mine.ENABLED.getBooleanValue();
-    }
-
     public static boolean isFillEnabled() {
         return Configs.Fill.ENABLED.getBooleanValue();
     }
@@ -39,7 +35,7 @@ public class ConfigUtils {
     }
 
     public static int getBreakCooldown() {
-        return Configs.Break.BREAK_COOLDOWN.getIntegerValue();
+        return Configs.Print.BREAK_COOLDOWN.getIntegerValue();
     }
 
     public static int getWorkRange() {

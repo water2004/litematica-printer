@@ -5,11 +5,9 @@ import fi.dy.masa.malilib.util.LayerMode;
 import fi.dy.masa.malilib.util.LayerRange;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.IterationOrderType;
-import me.aleksilassila.litematica.printer.enums.RadiusShapeType;
 import me.aleksilassila.litematica.printer.enums.SelectionType;
 import me.aleksilassila.litematica.printer.printer.PrinterBox;
 import me.aleksilassila.litematica.printer.utils.ConfigUtils;
-import me.aleksilassila.litematica.printer.utils.PlayerUtils;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,18 +15,13 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
-
 /**
- * 迭代管理器 — 从 Module 中分离出的迭代相关逻辑。
- * 负责：PrinterBox 生命周期、迭代器缓存、形状过滤、范围裁剪。
+ * 搜索范围管理器。
+ * 只在客户端主线程捕获玩家位置、层范围与遍历设置，生成扫描边界。
+ * 实际坐标遍历和形状过滤统一由 {@link AsyncSearchCoordinator} 完成。
  */
 public class IteratorManager {
     private PrinterBox box;
-    private Iterator<BlockPos> cachedIterator;
-    private RadiusShapeType shapeType;
-    private Vec3 eyePos;
-    private double effectiveRange;
 
     private BlockPos lastEyePos;
     private int lastExpandRange = -1;
@@ -47,13 +40,9 @@ public class IteratorManager {
     private PrinterBox lastBox;
 
     private boolean needsRebuild;
-    private boolean dirtyIterator;
-    private volatile long scannedPositions;
-    private volatile long totalPositions;
 
     public IteratorManager() {
         this.needsRebuild = true;
-        this.dirtyIterator = true;
     }
 
     /**
@@ -157,20 +146,11 @@ public class IteratorManager {
 
             box = new PrinterBox(minX, minY, minZ, maxX, maxY, maxZ);
             lastBox = box;
-            scannedPositions = 0L;
-            totalPositions = getBoxVolume(box);
 
             box.iterationMode = (IterationOrderType) Configs.Core.ITERATION_ORDER.getOptionListValue();
             box.xIncrement = !Configs.Core.X_REVERSE.getBooleanValue();
             box.yIncrement = !Configs.Core.Y_REVERSE.getBooleanValue();
             box.zIncrement = !Configs.Core.Z_REVERSE.getBooleanValue();
-
-            this.shapeType = Configs.Core.ITERATOR_SHAPE.getOptionListValue() instanceof RadiusShapeType s ? s : null;
-            this.eyePos = player.getEyePosition();
-            this.effectiveRange = effectiveRange;
-
-            cachedIterator = null;
-            dirtyIterator = true;
 
             this.needsRebuild = false;
             return true;
@@ -188,55 +168,6 @@ public class IteratorManager {
         return needsRebuild;
     }
 
-    public boolean isDirtyIterator() {
-        return dirtyIterator;
-    }
-
-    /**
-     * 获取下一个需要迭代的位置（已过滤形状和可达性）。
-     * 返回 null 表示迭代结束。
-     */
-    @Nullable
-    public BlockPos next() {
-        if (box == null) return null;
-
-        if (cachedIterator == null) {
-            cachedIterator = box.iterator();
-            dirtyIterator = false;
-            scannedPositions = 0L;
-            totalPositions = getBoxVolume(box);
-        }
-
-        while (cachedIterator.hasNext()) {
-            BlockPos pos = cachedIterator.next();
-            scannedPositions++;
-            if (pos == null) continue;
-
-            if (shapeType != null) {
-                if (!PlayerUtils.canInteracted(pos, eyePos, effectiveRange, shapeType)) continue;
-            } else if (!PlayerUtils.canInteracted(pos)) continue;
-
-            return pos;
-        }
-
-        cachedIterator = null;
-        return null;
-    }
-
-    public boolean hasNext() {
-        if (box == null) return false;
-        if (cachedIterator == null) {
-            cachedIterator = box.iterator();
-            dirtyIterator = false;
-        }
-        return cachedIterator.hasNext();
-    }
-
-    public void reset() {
-        cachedIterator = null;
-        dirtyIterator = true;
-    }
-
     @Nullable
     public PrinterBox getBox() {
         return box;
@@ -246,28 +177,4 @@ public class IteratorManager {
         return box != null;
     }
 
-    /**
-     * 使用脏区域迭代器替换当前迭代器（用于 PARTIAL 模式）。
-     */
-    public void setDirtyRegionIterator(Iterator<BlockPos> dirtyIter) {
-        this.cachedIterator = dirtyIter;
-        this.dirtyIterator = false;
-        this.scannedPositions = 0L;
-        this.totalPositions = 0L;
-    }
-
-    public long getScannedPositions() {
-        return scannedPositions;
-    }
-
-    public long getTotalPositions() {
-        return totalPositions;
-    }
-
-    private static long getBoxVolume(PrinterBox box) {
-        long sizeX = (long) box.maxX - box.minX + 1L;
-        long sizeY = (long) box.maxY - box.minY + 1L;
-        long sizeZ = (long) box.maxZ - box.minZ + 1L;
-        return sizeX * sizeY * sizeZ;
-    }
 }

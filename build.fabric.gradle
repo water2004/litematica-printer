@@ -20,14 +20,6 @@ repositories {
     maven { name = 'SakuraRyoko'; url = 'https://masa.dy.fi/maven/sakura-ryoko' }
     maven { name = 'Kyrptonaught'; url = 'https://maven.kyrptonaught.dev' }
     maven { name = 'Jitpack'; url = 'https://jitpack.io' }
-    maven {
-        name = 'GitHub'
-        url = 'https://maven.pkg.github.com/BiliXWhite/remote-inventory-next'
-        credentials {
-            username = System.getenv('GH_USERNAME') ?: ''
-            password = System.getenv('GH_TOKEN') ?: ''
-        }
-    }
 }
 
 configurations.configureEach {
@@ -36,7 +28,6 @@ configurations.configureEach {
         force "com.terraformersmc:modmenu:${modConfig.prop('modmenu')}"
         force "maven.modrinth:malilib:${modConfig.prop('malilib_dependency')}"
         force "maven.modrinth:litematica:${modConfig.prop('litematica_dependency')}"
-        force "maven.modrinth:tweakeroo:${modConfig.prop('tweakeroo_dependency')}"
     }
 }
 
@@ -49,12 +40,10 @@ dependencies {
     include pinyinDependency
 
     implementation "com.terraformersmc:modmenu:${modConfig.prop('modmenu')}"
-    implementation "dev.blinkwhite.remoteinventory:remote-inventory-next:${modConfig.prop('remote_inventory_version')}+${modConfig.mcVersion}"
+    compileOnly files("${rootDir}/../ChainVeinFabric/build/libs/ChainVeinFabric-3.0.0-26.2.jar")
 
     implementation "fi.dy.masa.malilib:${modConfig.prop('malilib')}"
     implementation "fi.dy.masa.litematica:${modConfig.prop('litematica')}"
-    implementation "fi.dy.masa.tweakeroo:${modConfig.prop('tweakeroo')}"
-
     def quickshulkerUrl = modConfig.prop('quickshulker').toString()
     if (!quickshulkerUrl.isEmpty()) {
         def quickshulkerFile = modConfig.downloadDependencyMod(quickshulkerUrl)

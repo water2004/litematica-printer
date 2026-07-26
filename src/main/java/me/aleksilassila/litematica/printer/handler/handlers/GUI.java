@@ -1,26 +1,27 @@
 package me.aleksilassila.litematica.printer.handler.handlers;
 
-import fi.dy.masa.litematica.world.SchematicWorldHandler;
-import fi.dy.masa.litematica.world.WorldSchematic;
 import fi.dy.masa.malilib.config.options.ConfigBase;
 import lombok.Getter;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.BlockMatchingType;
+import me.aleksilassila.litematica.printer.handler.AsyncSearchCoordinator;
+import me.aleksilassila.litematica.printer.handler.BlockJobPool;
 import me.aleksilassila.litematica.printer.handler.Module;
 import me.aleksilassila.litematica.printer.handler.ModuleManager;
-import me.aleksilassila.litematica.printer.printer.SchematicBlockContext;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.LiquidBlock;
 
-import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * GUI 统计处理器 — 增量遍历 box 计算进度，每 tick 分摊扫描量避免卡顿。
+ * GUI 统计处理器 — 与作业生产者共用同一异步小快照搜索管线。
  */
 public class GUI extends Module {
     public final static String NAME = "gui";
-    private static final int SCAN_BUDGET_MS = 2;
 
     @Getter
     private final Progress totalProgress = new Progress(Configs.Print.ENABLED);
@@ -30,11 +31,6 @@ public class GUI extends Module {
     private final Progress fluidProgress = new Progress(Configs.Fluid.ENABLED);
     @Getter
     private final Progress fillProgress = new Progress(Configs.Fill.ENABLED);
-    @Getter
-    private final Progress mineProgress = new Progress(Configs.Mine.ENABLED);
-
-    private boolean scanning = false;
-
     public GUI() {
         super(NAME, Configs.Core.RENDER_HUD, null, true);
     }
@@ -50,6 +46,26 @@ public class GUI extends Module {
     }
 
     @Override
+    protected boolean usesAsyncSearch() {
+        return true;
+    }
+
+    @Override
+    protected boolean canSearch() {
+        return true;
+    }
+
+    @Override
+    protected boolean includeSchematicSnapshot() {
+        return true;
+    }
+
+    @Override
+    protected AsyncSearchCoordinator.WorkspaceFilter workspaceFilter() {
+        return AsyncSearchCoordinator.WorkspaceFilter.NONE;
+    }
+
+    @Override
     public boolean canProcessPos(BlockPos pos) {
         return true;
     }
@@ -60,90 +76,83 @@ public class GUI extends Module {
     }
 
     @Override
-    protected void preprocess() {
-        if (box == null || box.get() == null || level == null) return;
-
-        if (!scanning) {
-            startScan();
-        }
-
-        long deadline = System.currentTimeMillis() + SCAN_BUDGET_MS;
-        BlockPos pos;
-        while ((pos = iteratorManager.next()) != null) {
-            countPosition(pos);
-            if (System.currentTimeMillis() >= deadline) return;
-        }
-
-        finishScan();
+    protected Object captureSearchContext() {
+        return new GuiSearchContext(
+                Configs.Print.ENABLED.getBooleanValue(),
+                Configs.Fluid.ENABLED.getBooleanValue(),
+                Configs.Fill.ENABLED.getBooleanValue(),
+                Set.copyOf(List.of(ModuleManager.FILL.getFillModeItemList())));
     }
 
-    private void startScan() {
-        scanning = true;
-        totalProgress.resetCounters();
-        printProgress.resetCounters();
-        fluidProgress.resetCounters();
-        fillProgress.resetCounters();
-        mineProgress.resetCounters();
-        iteratorManager.reset();
-    }
+    @Override
+    protected AsyncSearchCoordinator.SearchTileResult searchTile(
+            Object searchContext,
+            AsyncSearchCoordinator.SearchTileSnapshot snapshot) {
+        GuiSearchContext context = (GuiSearchContext) searchContext;
+        MutableStats stats = new MutableStats();
 
-    private void finishScan() {
-        scanning = false;
-        printProgress.calculateProgress();
-        fluidProgress.calculateProgress();
-        fillProgress.calculateProgress();
-        mineProgress.calculateProgress();
-        totalProgress.calculateProgress();
-    }
-
-    private void countPosition(BlockPos blockPos) {
-        if (Configs.Print.ENABLED.getBooleanValue()) {
-            WorldSchematic schematic = SchematicWorldHandler.getSchematicWorld();
-            if (schematic != null) {
-                SchematicBlockContext context = new SchematicBlockContext(mc, level, schematic, blockPos);
-                if (!context.requiredState.isAir()) {
-                    if (BlockMatchingType.get(context) == BlockMatchingType.CORRECT) {
-                        printProgress.finished++;
-                        totalProgress.finished++;
-                    }
-                    printProgress.total++;
-                    totalProgress.total++;
+        for (AsyncSearchCoordinator.SearchBlockSnapshot block : snapshot.blocks()) {
+            if (context.printEnabled()
+                    && block.requiredState() != null
+                    && !block.requiredState().isAir()) {
+                stats.printTotal++;
+                stats.totalTotal++;
+                if (BlockMatchingType.get(
+                        block.requiredState(), block.currentState())
+                        == BlockMatchingType.CORRECT) {
+                    stats.printFinished++;
+                    stats.totalFinished++;
+                }
+            }
+            if (context.fluidEnabled()) {
+                stats.fluidTotal++;
+                stats.totalTotal++;
+                if (!(block.currentState().getBlock() instanceof LiquidBlock)) {
+                    stats.fluidFinished++;
+                    stats.totalFinished++;
+                }
+            }
+            if (context.fillEnabled()) {
+                stats.fillTotal++;
+                stats.totalTotal++;
+                if (context.fillItems().contains(
+                        block.currentState().getBlock().asItem())) {
+                    stats.fillFinished++;
+                    stats.totalFinished++;
                 }
             }
         }
-        if (Configs.Fluid.ENABLED.getBooleanValue()) {
-            if (!(level.getBlockState(blockPos).getBlock() instanceof LiquidBlock)) {
-                fluidProgress.finished++;
-                totalProgress.finished++;
-            }
-            fluidProgress.total++;
-            totalProgress.total++;
+
+        return new AsyncSearchCoordinator.SearchTileResult(
+                snapshot.ordinal(),
+                snapshot.scannedPositions(),
+                List.of(),
+                stats.freeze());
+    }
+
+    @Override
+    protected void publishSearchRound(
+            AsyncSearchCoordinator.SearchRequest request,
+            List<AsyncSearchCoordinator.SearchTileResult> results) {
+        if (!isSearchRequestCurrent(request)) return;
+
+        MutableStats totals = new MutableStats();
+        for (AsyncSearchCoordinator.SearchTileResult result : results) {
+            if (result.payload() instanceof GuiStats stats) totals.add(stats);
         }
-        if (Configs.Fill.ENABLED.getBooleanValue()) {
-            if (Arrays.asList(ModuleManager.FILL.getFillModeItemList()).contains(level.getBlockState(blockPos).getBlock().asItem())) {
-                fillProgress.finished++;
-                totalProgress.finished++;
-            }
-            fillProgress.total++;
-            totalProgress.total++;
-        }
-        if (Configs.Mine.ENABLED.getBooleanValue()) {
-            if (level.getBlockState(blockPos).isAir()) {
-                mineProgress.finished++;
-                totalProgress.finished++;
-            }
-            mineProgress.total++;
-            totalProgress.total++;
-        }
+        totalProgress.publish(totals.totalTotal, totals.totalFinished);
+        printProgress.publish(totals.printTotal, totals.printFinished);
+        fluidProgress.publish(totals.fluidTotal, totals.fluidFinished);
+        fillProgress.publish(totals.fillTotal, totals.fillFinished);
     }
 
     @Getter
     public static class Progress {
         private final ConfigBase<?> config;
-        private long total;
-        private long finished;
-        private double progress;
-        private double lastProgress;
+        private volatile long total;
+        private volatile long finished;
+        private volatile double progress;
+        private volatile double lastProgress;
 
         public Progress(ConfigBase<?> config) {
             this.config = config;
@@ -156,14 +165,59 @@ public class GUI extends Module {
             return progress <= 0 ? lastProgress : progress;
         }
 
-        public void resetCounters() {
-            this.total = 0;
-            this.finished = 0;
+        public void publish(long total, long finished) {
+            this.total = total;
+            this.finished = finished;
+            progress = total < 1 ? lastProgress : (double) finished / total;
+            lastProgress = progress;
+        }
+    }
+
+    private record GuiSearchContext(
+            boolean printEnabled,
+            boolean fluidEnabled,
+            boolean fillEnabled,
+            Set<Item> fillItems) {
+    }
+
+    private record GuiStats(
+            long totalTotal,
+            long totalFinished,
+            long printTotal,
+            long printFinished,
+            long fluidTotal,
+            long fluidFinished,
+            long fillTotal,
+            long fillFinished) {
+    }
+
+    private static final class MutableStats {
+        long totalTotal;
+        long totalFinished;
+        long printTotal;
+        long printFinished;
+        long fluidTotal;
+        long fluidFinished;
+        long fillTotal;
+        long fillFinished;
+
+        void add(GuiStats stats) {
+            totalTotal += stats.totalTotal();
+            totalFinished += stats.totalFinished();
+            printTotal += stats.printTotal();
+            printFinished += stats.printFinished();
+            fluidTotal += stats.fluidTotal();
+            fluidFinished += stats.fluidFinished();
+            fillTotal += stats.fillTotal();
+            fillFinished += stats.fillFinished();
         }
 
-        public void calculateProgress() {
-            progress = total < 1 ? lastProgress : (float) finished / total;
-            lastProgress = progress;
+        GuiStats freeze() {
+            return new GuiStats(
+                    totalTotal, totalFinished,
+                    printTotal, printFinished,
+                    fluidTotal, fluidFinished,
+                    fillTotal, fillFinished);
         }
     }
 }

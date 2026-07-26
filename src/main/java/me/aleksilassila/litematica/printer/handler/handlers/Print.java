@@ -8,6 +8,7 @@ import me.aleksilassila.litematica.printer.I18n;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.BlockMatchingType;
 import me.aleksilassila.litematica.printer.enums.HighlightType;
+import me.aleksilassila.litematica.printer.handler.AsyncSearchCoordinator;
 import me.aleksilassila.litematica.printer.handler.Module;
 import me.aleksilassila.litematica.printer.handler.TransactionKey;
 import me.aleksilassila.litematica.printer.interfaces.Implementation;
@@ -80,11 +81,6 @@ public class Print extends Module {
     }
 
     @Override
-    protected boolean canIterate() {
-        return !ChainVeinCompat.hasPendingMineJobs();
-    }
-
-    @Override
     public boolean canProcessPos(BlockPos blockPos) {
         WorldSchematic schematic = SchematicWorldHandler.getSchematicWorld();
         if (schematic == null) return false;
@@ -138,10 +134,104 @@ public class Print extends Module {
     }
 
     @Override
-    protected TransactionKey getTransactionKey(BlockPos pos) {
-        // canProcessPos 已设置 this.action / this.ctx，据此计算事务签名。
-        if (isIceBreakAndWaitJob()) {
-            return new TransactionKey(TransactionKey.Category.ICE_WATER, null);
+    protected Object captureSearchContext() {
+        return new PrintSearchContext(
+                Configs.Print.BREAK_EXTRA_BLOCK.getBooleanValue(),
+                Configs.Print.BREAK_WRONG_BLOCK.getBooleanValue(),
+                Configs.Print.PRINT_REPLACE.getBooleanValue(),
+                List.copyOf(Configs.Print.REPLACEABLE_LIST.getStrings()),
+                Configs.Print.PRINT_SKIP.getBooleanValue(),
+                List.copyOf(Configs.Print.PRINT_SKIP_LIST.getStrings()),
+                Configs.Print.PRINT_ICE_FOR_WATER.getBooleanValue(),
+                ChainVeinCompat.isAvailable());
+    }
+
+    @Override
+    protected TransactionKey getSearchTransactionKey(
+            AsyncSearchCoordinator.SearchBlockSnapshot block,
+            Object searchContext) {
+        PrintSearchContext search = (PrintSearchContext) searchContext;
+        BlockState required = block.requiredState();
+        if (required == null) return null;
+        BlockState current = block.currentState();
+
+        if (search.skipEnabled()) {
+            for (String rule : search.skipRules()) {
+                if (PinYinSearchUtils.matchName(rule, required)) return null;
+            }
+        }
+
+        BlockMatchingType matching = getSnapshotMatchingType(required, current, search);
+        if (matching == BlockMatchingType.CORRECT) return null;
+        if (required.isAir() && !search.breakExtra()) return null;
+
+        SchematicBlockContext snapshotContext = new SchematicBlockContext(
+                client,
+                block.currentView(),
+                block.requiredView(),
+                block.pos());
+        Action snapshotAction = guide.getAction(snapshotContext);
+        if (snapshotAction != null) {
+            if (snapshotAction instanceof ChainBreakAction
+                    && !search.chainVeinAvailable()) {
+                return null;
+            }
+            return transactionKeyFor(
+                    snapshotAction, snapshotContext, search.iceForWater());
+        }
+
+        /*
+         * 小快照边界外的依赖（例如较长观察者链）可能让快照版 guide 保守返回 null。
+         * 缺失方块仍可用目标物品生成准确的放置事务键；消费者会做最终实时校验。
+         */
+        if (matching == BlockMatchingType.MISSING_BLOCK) {
+            return new TransactionKey(
+                    TransactionKey.Category.PLACE,
+                    required.getBlock().asItem());
+        }
+        return null;
+    }
+
+    private static BlockMatchingType getSnapshotMatchingType(
+            BlockState required,
+            BlockState current,
+            PrintSearchContext search) {
+        if (required.equals(current)) return BlockMatchingType.CORRECT;
+        if (required.getBlock().equals(current.getBlock())) {
+            return BlockUtils.statesEqualIgnoreProperties(required, current)
+                    ? BlockMatchingType.CORRECT
+                    : BlockMatchingType.ERROR_BLOCK_STATE;
+        }
+        if (!required.isAir() && current.isAir()) {
+            return BlockMatchingType.MISSING_BLOCK;
+        }
+        if (search.replaceEnabled()) {
+            for (String rule : search.replaceRules()) {
+                if (!PinYinSearchUtils.matchName(rule, required)
+                        && PinYinSearchUtils.matchName(rule, current)) {
+                    return BlockMatchingType.MISSING_BLOCK;
+                }
+            }
+        }
+        return BlockMatchingType.ERROR_BLOCK;
+    }
+
+    @Override
+    protected TransactionKey getPreparedTransactionKey(BlockPos pos) {
+        return transactionKeyFor(
+                action,
+                ctx,
+                Configs.Print.PRINT_ICE_FOR_WATER.getBooleanValue());
+    }
+
+    private static TransactionKey transactionKeyFor(
+            Action action,
+            SchematicBlockContext context,
+            boolean iceForWater) {
+        if (iceForWater
+                && BlockUtils.isNeedsWater(context.requiredState)
+                && context.currentState.getBlock() instanceof IceBlock) {
+            return new TransactionKey(TransactionKey.Category.ICE_WATER, Items.ICE);
         }
         if (action instanceof ChainBreakAction) {
             return new TransactionKey(TransactionKey.Category.CHAIN_BREAK, null);
@@ -149,36 +239,39 @@ public class Print extends Module {
         TransactionKey.Category category = action instanceof ClickAction
                 ? TransactionKey.Category.CLICK
                 : TransactionKey.Category.PLACE;
-        Item[] items = action.getRequiredItems(ctx.requiredState.getBlock());
-        Item primary = (items != null && items.length > 0) ? items[0] : null;
+        Item[] items = action.getRequiredItems(context.requiredState.getBlock());
+        Item primary = items != null && items.length > 0 ? items[0] : null;
         return new TransactionKey(category, primary);
     }
 
+    /**
+     * 搜索键只是快照提示；每个坐标在主线程重建真实 Action 后统一执行。
+     * 这样快照过时或特殊方块分类变化也不会走错语义。
+     */
     @Override
-    protected int executeJobTransaction(TransactionKey key, ArrayDeque<BlockPos> bucket,
-                                        int maxExecs,
-                                        AtomicReference<Boolean> skipIteration) {
-        if (key.category() == TransactionKey.Category.CHAIN_BREAK) {
-            return executeBreakTransaction(bucket, maxExecs, skipIteration);
-        }
-        return executeBucketDefault(bucket, maxExecs, skipIteration);
-    }
-
-    private int executeBreakTransaction(ArrayDeque<BlockPos> bucket, int maxExecs,
-                                        AtomicReference<Boolean> skipIteration) {
+    protected int executeJobTransaction(
+            TransactionKey key,
+            ArrayDeque<BlockPos> bucket,
+            int maxExecs,
+            AtomicReference<Boolean> skipIteration) {
         List<BlockPos> readyBreaks = new ArrayList<>(Math.min(maxExecs, 64));
+        int attempted = 0;
 
-        while (readyBreaks.size() < maxExecs
+        while (attempted < maxExecs
                 && !bucket.isEmpty()
                 && !shouldStopJobTransaction(skipIteration)) {
-            BlockPos pos = bucket.peek();
-            if (!preparePooledJob(pos) || !(action instanceof ChainBreakAction)) {
-                jobPool.pollFromBucket(bucket);
+            BlockPos pos = jobPool.pollFromBucket(key, bucket);
+            if (pos == null) break;
+            if (!prepareMatchingPooledJob(pos, key)) {
                 reportPooledJob(pos, false);
                 continue;
             }
-            jobPool.pollFromBucket(bucket);
-            readyBreaks.add(pos);
+            attempted++;
+            if (action instanceof ChainBreakAction) {
+                readyBreaks.add(pos);
+            } else {
+                executePreparedPooledJob(pos, key);
+            }
         }
 
         int queued = ChainVeinCompat.queueBreaks(readyBreaks);
@@ -198,7 +291,7 @@ public class Print extends Module {
             // 整批破坏是后续放置/调整的前置条件，等待客户端世界状态确认。
             skipIteration.set(true);
         }
-        return readyBreaks.size();
+        return attempted;
     }
 
     private boolean isIceBreakAndWaitJob() {
@@ -290,7 +383,7 @@ public class Print extends Module {
         ActionManager.INSTANCE.setLook(action.getPlayerLook());
         ActionManager.INSTANCE.setNeedWaitModifyLookFromAction(action.getNeedWaitModifyLook());
         boolean needWait = ActionManager.INSTANCE.sendQueue(player).needWaitModifyLook;
-        if (needWait || hitModifier != null) {
+        if (needWait) {
             skipIteration.set(true);
         }
         setCooldown(blockPos, ConfigUtils.getPlaceCooldown());
@@ -305,6 +398,17 @@ public class Print extends Module {
             MissingMaterialTracker.getInstance()
                     .recordMissing(reqItems[0], ctx.getRequiredBlockName());
         }
+    }
+
+    private record PrintSearchContext(
+            boolean breakExtra,
+            boolean breakWrong,
+            boolean replaceEnabled,
+            List<String> replaceRules,
+            boolean skipEnabled,
+            List<String> skipRules,
+            boolean iceForWater,
+            boolean chainVeinAvailable) {
     }
 
 }

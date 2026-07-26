@@ -2,6 +2,8 @@ package me.aleksilassila.litematica.printer.handler;
 
 import fi.dy.masa.malilib.config.options.ConfigBoolean;
 import fi.dy.masa.malilib.config.options.ConfigOptionList;
+import fi.dy.masa.litematica.world.SchematicWorldHandler;
+import fi.dy.masa.litematica.world.WorldSchematic;
 import lombok.Getter;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.*;
@@ -17,12 +19,14 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
@@ -75,10 +79,16 @@ public abstract class Module extends ConfigUtils {
 
     @Nullable
     private BlockPos waitingPos = null;
+    @Nullable
+    private TransactionKey waitingKey = null;
 
     private volatile GuiBlockInfo currentGuiInfo = null;
     private volatile GuiBlockInfo currentJobGuiInfo = null;
     private volatile int queuedJobCount = 0;
+    private volatile long producerScannedPositions = 0L;
+    private volatile long producerTotalPositions = 0L;
+    private volatile boolean searchPrepared = false;
+    private long moduleGeneration = 0L;
 
     protected Module(String id, @Nullable ConfigBoolean enableConfig, @Nullable ConfigOptionList selectionType, boolean useBox) {
         this.id = id;
@@ -100,6 +110,43 @@ public abstract class Module extends ConfigUtils {
                 ? (BlockHitResult) hitResult : null;
     }
 
+    /**
+     * 主线程只捕获搜索描述所需的轻量状态，不执行任何范围扫描。
+     * 即使业务动作因容器、延迟检测或换手而暂停，这一步仍可独立推进。
+     */
+    public final void prepareAsyncSearch() {
+        searchPrepared = false;
+        if (!isConfigAllowed()) {
+            pendingHighlights.clear();
+            return;
+        }
+
+        updateVariables();
+        if (mc == null || level == null || player == null || connection == null || gameMode == null || gameType == null) {
+            return;
+        }
+
+        if (usesAsyncSearch() && queuedSchedulerLevel != level) {
+            queuedSchedulerLevel = level;
+            resetScheduler();
+            iteratorManager.markNeedsRebuild();
+        }
+
+        if (box == null) return;
+        if (iteratorManager.tryBuildBox(player, selectionType != null ? selectionType.getOptionListValue() : null)) {
+            box.set(iteratorManager.getBox());
+            // 玩家移动只替换下一轮扫描描述；旧快照结果可安全发布，
+            // 消费者会按最新范围与世界状态惰性丢弃。
+            if (scanState != ScanState.WAITING) scanState = ScanState.COLLECT;
+        }
+
+        preprocess();
+        searchPrepared = true;
+    }
+
+    /**
+     * 客户端主线程的纯消费者阶段。
+     */
     public void tick() {
         int tickInterval = getTickInterval();
         if (tickInterval > 0) {
@@ -110,36 +157,7 @@ public abstract class Module extends ConfigUtils {
             lastTickTime = currentTickTime;
         }
 
-        if (!isConfigAllowed()) {
-            pendingHighlights.clear();
-            // 开关关闭只暂停调度。保留生产者游标、消费者队列和等待作业，
-            // 重新开启后从原状态继续；跨维度时仍会在下方单独重置。
-            return;
-        }
-
-        updateVariables();
-        if (mc == null || level == null || player == null || connection == null || gameMode == null || gameType == null) {
-            return;
-        }
-
-        if (usesJobPool() && queuedSchedulerLevel != level) {
-            queuedSchedulerLevel = level;
-            resetScheduler();
-            iteratorManager.markNeedsRebuild();
-        }
-
-        if (box == null) return;
-        if (iteratorManager.tryBuildBox(player, selectionType != null ? selectionType.getOptionListValue() : null)) {
-            box.set(iteratorManager.getBox());
-            if (usesJobPool()) {
-                // 玩家移动只重置生产者游标；既有作业由消费者按当前范围惰性丢弃。
-                if (scanState != ScanState.WAITING) scanState = ScanState.COLLECT;
-            }
-            iteratorManager.reset();
-        }
-
-        preprocess();
-
+        if (!isConfigAllowed() || !searchPrepared) return;
         skipIteration.set(false);
         int remainingExecs = Math.max(getMaxExecutions(), 0);
         executeScanPhase(remainingExecs);
@@ -180,8 +198,7 @@ public abstract class Module extends ConfigUtils {
     }
 
     /**
-     * 持续作业调度：先消费已有作业，再用剩余时间继续扫描生产。
-     * 消费者以最早作业为锚点向后选择执行兼容作业，不再使用严格 FIFO。
+     * 消费者调度：搜索生产由独立线程持续推进，这里只消费已发布的有限快照桶。
      */
     private void executePooledPhase(int maxExecs) {
         int timeLimitMs = getIterationTimeLimit();
@@ -199,31 +216,35 @@ public abstract class Module extends ConfigUtils {
         try {
             if (scanState == ScanState.WAITING) {
                 BlockPos pos = waitingPos;
+                TransactionKey key = waitingKey;
                 waitingPos = null;
+                waitingKey = null;
                 scanState = ScanState.PROCESS;
 
                 boolean executed = false;
-                if (isQueuedPositionValid(pos) && needsQueuedWork(pos)) {
-                    executed = executeSingleWaiting(pos);
+                if (key != null && prepareMatchingPooledJob(pos, key)) {
+                    executed = executeSingleWaiting(pos, key);
                 }
                 updateCurrentJobInfo(pos, executed);
 
-                // 等待位置恢复独占当前 tick，避免突破每 tick 动作上限。
-                return;
+                if (scanState != ScanState.WAITING) {
+                    int remainingExecs = maxExecs > 0
+                            ? Math.max(0, maxExecs - (executed ? 1 : 0))
+                            : -1;
+                    if (remainingExecs != 0
+                            && !skipIteration.get()
+                            && !timeLimitExceeded.get()
+                            && !ActionManager.INSTANCE.needWaitModifyLook) {
+                        // 换手确认后主手材料已就绪，立即继续消费同一快照桶，
+                        // 避免只放一个方块便切换到其他材料。
+                        consumePooledJobs(remainingExecs);
+                    }
+                }
+            } else {
+                scanState = ScanState.PROCESS;
+                consumePooledJobs(maxExecs);
             }
-
-            scanState = ScanState.PROCESS;
-            consumePooledJobs(maxExecs);
-
-            if (scanState == ScanState.WAITING
-                    || skipIteration.get()
-                    || ActionManager.INSTANCE.needWaitModifyLook
-                    || timeLimitExceeded.get()) {
-                return;
-            }
-
-            scanState = ScanState.COLLECT;
-            producePooledJobs();
+            if (scanState != ScanState.WAITING) scanState = ScanState.COLLECT;
         } finally {
             if (timeoutTask != null) timeoutTask.cancel(false);
             timeLimitExceeded.set(false);
@@ -231,8 +252,8 @@ public abstract class Module extends ConfigUtils {
     }
 
     /**
-     * 按桶消费：取最早的同类事务桶，整桶连续执行直至预算耗尽或被中断。
-     * 桶内坐标在消费前逐个校验有效性，失效的直接剔除；中断时剩余坐标留在桶里下 tick 继续。
+     * 消费者从共享目录摘取一个有限快照桶，跨 tick 连续消费直到为空。
+     * 生产者不会再向这个桶写入；桶内坐标在消费前逐个校验，失效的直接剔除。
      */
     private void consumePooledJobs(int maxExecs) {
         int execCount = 0;
@@ -240,12 +261,12 @@ public abstract class Module extends ConfigUtils {
         while (!timeLimitExceeded.get()
                 && !skipIteration.get()
                 && !ActionManager.INSTANCE.needWaitModifyLook) {
+            BlockJobPool.BucketSelection selection = jobPool.currentBucket();
             ArrayDeque<BlockPos> bucket = null;
             TransactionKey bucketKey = null;
-            Map.Entry<TransactionKey, ArrayDeque<BlockPos>> entry = jobPool.peekFirstBucket();
-            if (entry != null) {
-                bucketKey = entry.getKey();
-                bucket = entry.getValue();
+            if (selection != null) {
+                bucketKey = selection.key();
+                bucket = selection.bucket();
             }
             queuedJobCount = jobPool.size();
             if (bucket == null) {
@@ -253,15 +274,18 @@ public abstract class Module extends ConfigUtils {
                 return;
             }
 
-            int remainingExecs = maxExecs > 0
+            int allowedExecutions = maxExecs > 0
                     ? Math.max(1, maxExecs - execCount)
                     : Integer.MAX_VALUE;
-            int executed = executeJobTransaction(bucketKey, bucket, remainingExecs, skipIteration);
+            int executed = executeJobTransaction(bucketKey, bucket, allowedExecutions, skipIteration);
             execCount += executed;
             queuedJobCount = jobPool.size();
 
-            if (maxExecs > 0 && execCount >= maxExecs) return;
+            // 快照桶不再放回共享目录。阻塞换手、动作限额或时间片结束时
+            // 留到下一 tick 继续；桶被取空后 pollFromBucket 会自动释放。
             if (scanState == ScanState.WAITING) return;
+
+            if (maxExecs > 0 && execCount >= maxExecs) return;
         }
     }
 
@@ -273,25 +297,27 @@ public abstract class Module extends ConfigUtils {
     protected int executeJobTransaction(TransactionKey key, ArrayDeque<BlockPos> bucket,
                                         int maxExecs,
                                         AtomicReference<Boolean> skipIteration) {
-        return executeBucketDefault(bucket, maxExecs, skipIteration);
+        return executeBucketDefault(key, bucket, maxExecs, skipIteration);
     }
 
     /**
      * 默认桶执行：逐个校验并执行，失效的剔除，中断时保留剩余。
      */
-    protected final int executeBucketDefault(ArrayDeque<BlockPos> bucket, int maxExecs,
+    protected final int executeBucketDefault(TransactionKey key, ArrayDeque<BlockPos> bucket,
+                                             int maxExecs,
                                              AtomicReference<Boolean> skipIteration) {
         int executed = 0;
         while (executed < maxExecs && !bucket.isEmpty()
                 && !shouldStopJobTransaction(skipIteration)) {
-            BlockPos pos = bucket.peek();
-            if (!preparePooledJob(pos)) {
-                jobPool.pollFromBucket(bucket);
+            // 取出即消费；后续无论已完成、跳过、失败还是成功都不放回。
+            // 世界仍不正确时，持续扫描的生产者会重新生成该坐标的作业。
+            BlockPos pos = jobPool.pollFromBucket(key, bucket);
+            if (pos == null) break;
+            if (!prepareMatchingPooledJob(pos, key)) {
                 reportPooledJob(pos, false);
                 continue;
             }
-            jobPool.pollFromBucket(bucket);
-            executePreparedPooledJob(pos);
+            executePreparedPooledJob(pos, key);
             executed++;
         }
         return executed;
@@ -301,8 +327,21 @@ public abstract class Module extends ConfigUtils {
         return isQueuedPositionValid(pos) && needsQueuedWork(pos);
     }
 
-    protected final void executePreparedPooledJob(BlockPos pos) {
+    /**
+     * 现场重建结果必须仍与搜索时的桶签名一致；不一致的作业只消费、不改写。
+     */
+    protected final boolean prepareMatchingPooledJob(
+            BlockPos pos, TransactionKey expectedKey) {
+        return preparePooledJob(pos)
+                && expectedKey.equals(getPreparedTransactionKey(pos));
+    }
+
+    protected final void executePreparedPooledJob(
+            BlockPos pos, TransactionKey expectedKey) {
         executeAndReturn(pos);
+        if (scanState == ScanState.WAITING) {
+            waitingKey = expectedKey;
+        }
         updateCurrentJobInfo(pos, true);
     }
 
@@ -322,55 +361,15 @@ public abstract class Module extends ConfigUtils {
      * 等待恢复后单点执行：该坐标已在前一轮触发 skipIteration，
      * 恢复后独占一次执行机会，不参与桶批量。
      */
-    private boolean executeSingleWaiting(BlockPos pos) {
-        executePreparedPooledJob(pos);
+    private boolean executeSingleWaiting(BlockPos pos, TransactionKey expectedKey) {
+        executePreparedPooledJob(pos, expectedKey);
         return true;
-    }
-
-    private void producePooledJobs() {
-        try {
-            while (!jobPool.isFull() && !timeLimitExceeded.get()) {
-                BlockPos pos = iteratorManager.next();
-                if (pos == null) {
-                    // 扫描持续循环，但每 tick 最多跨越一次循环边界，避免空区域高速空转。
-                    iteratorManager.reset();
-                    return;
-                }
-
-                if (needsAreaCheck() && !isPosInWorkspace(pos)) continue;
-                if (isOnCooldown(pos) || isCorrectBlock(pos)) continue;
-
-                // 入队即算事务签名，把 canProcessPos 的重计算前移到生产侧以支持分组。
-                // canProcessPos 会设置子类的 action/ctx 成员，供 getTransactionKey 使用。
-                if (!canProcessPos(pos)) continue;
-
-                TransactionKey key = getTransactionKey(pos);
-                jobPool.offer(pos, key);
-
-                updateGuiInfo(pos, false);
-            }
-        } finally {
-            queuedJobCount = jobPool.size();
-        }
-    }
-
-    /**
-     * 事务签名。基类返回 {@link TransactionKey#HOMOGENEOUS}（全同质，单桶），
-     * Print 覆写为基于 action 类别与主物品的精确分组。
-     * 调用时 canProcessPos 已为该坐标设置好子类的 action/ctx 成员。
-     */
-    protected TransactionKey getTransactionKey(BlockPos pos) {
-        return TransactionKey.HOMOGENEOUS;
     }
 
     private boolean isQueuedPositionValid(@Nullable BlockPos pos) {
         if (pos == null) return false;
         if (!PlayerUtils.canInteracted(pos)) return false;
         return !needsAreaCheck() || isPosInWorkspace(pos);
-    }
-
-    private void updateGuiInfo(BlockPos pos, boolean executed) {
-        currentGuiInfo = createGuiInfo(pos, executed);
     }
 
     private void updateCurrentJobInfo(@Nullable BlockPos pos, boolean executed) {
@@ -405,12 +404,15 @@ public abstract class Module extends ConfigUtils {
     }
 
     private void resetScheduler() {
+        moduleGeneration++;
         scanState = ScanState.COLLECT;
         waitingPos = null;
+        waitingKey = null;
         jobPool.clear();
         queuedJobCount = 0;
         currentJobGuiInfo = null;
-        iteratorManager.reset();
+        producerScannedPositions = 0L;
+        producerTotalPositions = 0L;
     }
 
     @Nullable
@@ -431,16 +433,195 @@ public abstract class Module extends ConfigUtils {
     }
 
     public long getProducerScannedPositions() {
-        return iteratorManager.getScannedPositions();
+        return producerScannedPositions;
     }
 
     public long getProducerTotalPositions() {
-        return iteratorManager.getTotalPositions();
+        return producerTotalPositions;
     }
 
     @Nullable
     public GuiBlockInfo getCurrentJobGuiInfo() {
         return currentJobGuiInfo;
+    }
+
+    /**
+     * 主线程创建不可变扫描描述；不读取范围内的任何方块。
+     */
+    @Nullable
+    public final AsyncSearchCoordinator.SearchRequest captureSearchRequest() {
+        if (!searchPrepared || !usesAsyncSearch() || box == null || box.get() == null
+                || level == null || player == null || !canSearch()) {
+            return null;
+        }
+
+        PrinterBox currentBox = box.get();
+        Object context = captureSearchContext();
+        WorldSchematic schematic = includeSchematicSnapshot()
+                ? SchematicWorldHandler.getSchematicWorld()
+                : null;
+        if (workspaceFilter() == AsyncSearchCoordinator.WorkspaceFilter.SCHEMATIC
+                && schematic == null) {
+            return null;
+        }
+
+        RadiusShapeType shape =
+                Configs.Core.ITERATOR_SHAPE.getOptionListValue() instanceof RadiusShapeType value
+                        ? value : RadiusShapeType.SPHERE;
+        AsyncSearchCoordinator.SearchBounds bounds = new AsyncSearchCoordinator.SearchBounds(
+                currentBox.minX, currentBox.minY, currentBox.minZ,
+                currentBox.maxX, currentBox.maxY, currentBox.maxZ,
+                currentBox.iterationMode,
+                currentBox.xIncrement, currentBox.yIncrement, currentBox.zIncrement);
+
+        List<AsyncSearchCoordinator.SearchBounds> selectionBoxes = List.of();
+        if (workspaceFilter() == AsyncSearchCoordinator.WorkspaceFilter.SELECTION) {
+            selectionBoxes = LitematicaUtils.getSelectionBoxesSnapshot().stream()
+                    .map(value -> new AsyncSearchCoordinator.SearchBounds(
+                            value.minX, value.minY, value.minZ,
+                            value.maxX, value.maxY, value.maxZ,
+                            value.iterationMode,
+                            value.xIncrement, value.yIncrement, value.zIncrement))
+                    .toList();
+            if (selectionBoxes.isEmpty()) return null;
+        }
+
+        return new AsyncSearchCoordinator.SearchRequest(
+                this,
+                level,
+                schematic,
+                bounds,
+                workspaceFilter(),
+                selectionBoxes,
+                player.getEyePosition(),
+                ConfigUtils.getEffectiveRange(),
+                shape,
+                includeSchematicSnapshot(),
+                context,
+                moduleGeneration,
+                jobPool.generation());
+    }
+
+    /**
+     * 搜索线程入口。默认实现只产生不可变坐标和事务键，不接触模块动作状态。
+     */
+    final AsyncSearchCoordinator.SearchTileResult searchSnapshotTile(
+            Object searchContext,
+            AsyncSearchCoordinator.SearchTileSnapshot snapshot) {
+        return searchTile(searchContext, snapshot);
+    }
+
+    protected AsyncSearchCoordinator.SearchTileResult searchTile(
+            Object searchContext,
+            AsyncSearchCoordinator.SearchTileSnapshot snapshot) {
+        List<BlockJobPool.Job> jobs = new ArrayList<>();
+        SearchCandidateInfo lastCandidate = null;
+        for (AsyncSearchCoordinator.SearchBlockSnapshot block : snapshot.blocks()) {
+            TransactionKey key = getSearchTransactionKey(block, searchContext);
+            if (key == null) continue;
+            jobs.add(new BlockJobPool.Job(block.pos(), key));
+            lastCandidate = new SearchCandidateInfo(
+                    block.pos(), block.currentState(), block.requiredState());
+        }
+        return new AsyncSearchCoordinator.SearchTileResult(
+                snapshot.ordinal(),
+                snapshot.scannedPositions(),
+                List.copyOf(jobs),
+                lastCandidate);
+    }
+
+    /**
+     * 调度线程发布一整轮结果。所有工作线程此时均已完成。
+     */
+    protected void publishSearchRound(
+            AsyncSearchCoordinator.SearchRequest request,
+            List<AsyncSearchCoordinator.SearchTileResult> results) {
+        if (!isSearchRequestCurrent(request)) return;
+
+        List<BlockJobPool.Job> jobs = new ArrayList<>();
+        SearchCandidateInfo lastCandidate = null;
+        for (AsyncSearchCoordinator.SearchTileResult result : results) {
+            jobs.addAll(result.jobs());
+            if (result.payload() instanceof SearchCandidateInfo block) {
+                lastCandidate = block;
+            }
+        }
+        jobPool.publish(jobs, request.poolGeneration());
+        queuedJobCount = jobPool.size();
+
+        if (lastCandidate != null) {
+            BlockState required = lastCandidate.requiredState() != null
+                    ? lastCandidate.requiredState() : lastCandidate.currentState();
+            currentGuiInfo = new GuiBlockInfo(
+                    lastCandidate.pos(),
+                    lastCandidate.currentState(),
+                    required,
+                    true,
+                    false,
+                    true);
+        }
+    }
+
+    protected void searchRoundStarted(
+            AsyncSearchCoordinator.SearchRequest request, long totalPositions) {
+        if (!isSearchRequestCurrent(request)) return;
+        producerScannedPositions = 0L;
+        producerTotalPositions = totalPositions;
+        if (scanState != ScanState.WAITING) scanState = ScanState.COLLECT;
+    }
+
+    protected void searchRoundProgress(
+            AsyncSearchCoordinator.SearchRequest request,
+            long scannedPositions,
+            long totalPositions) {
+        if (!isSearchRequestCurrent(request)) return;
+        producerScannedPositions = Math.min(scannedPositions, totalPositions);
+        producerTotalPositions = totalPositions;
+    }
+
+    protected final boolean isSearchRequestCurrent(
+            AsyncSearchCoordinator.SearchRequest request) {
+        return request.owner() == this
+                && request.level() == queuedSchedulerLevel
+                && request.moduleGeneration() == moduleGeneration;
+    }
+
+    /**
+     * 搜索配置只在主线程捕获一次，工作线程必须把它视为不可变对象。
+     */
+    protected Object captureSearchContext() {
+        return EmptySearchContext.INSTANCE;
+    }
+
+    /**
+     * 纯搜索判定：只允许读取小块快照与 captureSearchContext() 返回的不可变配置。
+     */
+    @Nullable
+    protected TransactionKey getSearchTransactionKey(
+            AsyncSearchCoordinator.SearchBlockSnapshot block,
+            Object searchContext) {
+        return null;
+    }
+
+    /**
+     * 消费前按实时世界重建的事务键。与搜索快照键不一致时，作业直接丢弃。
+     */
+    protected TransactionKey getPreparedTransactionKey(BlockPos pos) {
+        return TransactionKey.HOMOGENEOUS;
+    }
+
+    protected boolean includeSchematicSnapshot() {
+        return needSchematic;
+    }
+
+    protected AsyncSearchCoordinator.WorkspaceFilter workspaceFilter() {
+        return needSchematic
+                ? AsyncSearchCoordinator.WorkspaceFilter.SCHEMATIC
+                : AsyncSearchCoordinator.WorkspaceFilter.SELECTION;
+    }
+
+    protected boolean canSearch() {
+        return canIterate() && !jobPool.isFull();
     }
 
     private boolean isConfigAllowed() {
@@ -475,6 +656,10 @@ public abstract class Module extends ConfigUtils {
         return false;
     }
 
+    protected boolean usesAsyncSearch() {
+        return usesJobPool();
+    }
+
     public abstract boolean canProcessPos(BlockPos pos);
 
     public abstract boolean isCorrectBlock(BlockPos pos);
@@ -507,5 +692,18 @@ public abstract class Module extends ConfigUtils {
     }
 
     public record PendingHighlight(BlockPos pos, long time, HighlightType type) {
+    }
+
+    private enum EmptySearchContext {
+        INSTANCE
+    }
+
+    /**
+     * HUD 只需保留候选位置和状态，不能让结果 payload 间接持有整个小块快照。
+     */
+    private record SearchCandidateInfo(
+            BlockPos pos,
+            BlockState currentState,
+            @Nullable BlockState requiredState) {
     }
 }

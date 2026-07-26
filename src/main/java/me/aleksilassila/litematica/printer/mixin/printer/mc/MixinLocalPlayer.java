@@ -6,7 +6,6 @@ import fi.dy.masa.litematica.world.WorldSchematic;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.handler.ModuleManager;
 import me.aleksilassila.litematica.printer.printer.BlockPosCooldownManager;
-import me.aleksilassila.litematica.printer.utils.BreakUtils;
 import me.aleksilassila.litematica.printer.utils.LitematicaUtils;
 import me.aleksilassila.litematica.printer.utils.ModUtils;
 import net.minecraft.client.Minecraft;
@@ -63,10 +62,6 @@ public class MixinLocalPlayer extends AbstractClientPlayer {
     public void tick(CallbackInfo ci) {
         ModuleManager.updateTickHandlerTime();
         BlockPosCooldownManager.INSTANCE.tick();
-        BreakUtils.INSTANCE.preprocess();
-        if (BreakUtils.INSTANCE.isNeedHandle()) {
-            BreakUtils.INSTANCE.onTick();
-        }
         ModuleManager.tick();
     }
 

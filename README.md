@@ -44,17 +44,13 @@
 - [Litematica](https://modrinth.com/mod/litematica)
 
 ### 可选
-- [Tweakeroo](https://modrinth.com/mod/tweakeroo) - 挖掘限制名单，自动选择工具
+- [ChainVeinFabric](https://github.com/water2004/ChainVeinFabric) - 打印时破坏错误、多余方块及破冰所需；未安装时这些破坏功能不会启用
 - [Quick Shulker](https://modrinth.com/mod/quick-shulker) 或 [AxShulkers](https://modrinth.com/mod/axshulkers) - 快捷潜影盒（双模式兼容）
 - [Fabric-Bedrock-Miner](https://github.com/bunnyi116/fabric-bedrock-miner) - 破基岩所需前置
 
 ---
 
 ## 特性
-
-### 远程容器系统-重构版
-- **远程容器物品获取** — 通过网络数据包远程扫描/请求容器（箱子、潜影盒等）中的物品，自动取料打印
-- **智能物品回塞（FIFO）** — 使用完后自动将物品按 FIFO 顺序回塞到原来的容器，缓存持久化到磁盘
 
 ### 性能优化
 - 更流畅的打印体验
@@ -71,7 +67,8 @@
 - 48 种范围迭代逻辑
 - 破坏错误额外方块和错误状态方块
 - 农作物催熟 - 方便打印大片稻田类原理图
-- 即时挖掘 - 经可能更快的破坏方块
+- 有界作业池 - 以最早作业为锚点，向后选择同类放置、使用或破坏作业批量处理
+- ChainVein 作业接口 - 错误方块、多余方块和破冰统一批量提交给 ChainVein 客户端作业队列
 - 多语言支持 - **中文（简体）** · **中文（繁体）** · **文言文** · **English** · **Русский**
 
 ### 方块放置修复

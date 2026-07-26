@@ -9,7 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.*;
@@ -343,7 +343,7 @@ public class BlockUtils {
     }
 
     public static Map<Direction, Vec3> getSlabSides(
-            Level world, BlockPos pos, SlabType requiredHalf) {
+            BlockGetter world, BlockPos pos, SlabType requiredHalf) {
         if (requiredHalf == SlabType.DOUBLE) requiredHalf = SlabType.BOTTOM;
         Direction requiredDir = requiredHalf == SlabType.TOP ? Direction.UP : Direction.DOWN;
         Map<Direction, Vec3> sides = new HashMap<>();

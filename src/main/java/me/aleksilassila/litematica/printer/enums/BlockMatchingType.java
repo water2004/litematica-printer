@@ -39,14 +39,19 @@ public enum BlockMatchingType {
     CORRECT;
 
     // Cached replaceSet — avoids new HashSet allocation on every get() call
-    private static List<String> lastReplaceConfig = Collections.emptyList();
-    private static Set<String> replaceSetCache = Collections.emptySet();
+    private static volatile List<String> lastReplaceConfig = Collections.emptyList();
+    private static volatile Set<String> replaceSetCache = Collections.emptySet();
 
     private static Set<String> getReplaceSet() {
-        List<String> current = Configs.Print.REPLACEABLE_LIST.getStrings();
+        List<String> current = List.copyOf(
+                Configs.Print.REPLACEABLE_LIST.getStrings());
         if (!current.equals(lastReplaceConfig)) {
-            replaceSetCache = new HashSet<>(current);
-            lastReplaceConfig = new ArrayList<>(current);
+            synchronized (BlockMatchingType.class) {
+                if (!current.equals(lastReplaceConfig)) {
+                    replaceSetCache = Set.copyOf(new HashSet<>(current));
+                    lastReplaceConfig = List.copyOf(current);
+                }
+            }
         }
         return replaceSetCache;
     }

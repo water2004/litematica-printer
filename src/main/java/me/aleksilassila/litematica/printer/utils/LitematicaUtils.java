@@ -131,6 +131,20 @@ public class LitematicaUtils {
     }
 
     /**
+     * 在客户端主线程捕获当前选区的不可变边界副本，供异步搜索调度器使用。
+     * 搜索线程只读取这些坐标边界，不再访问可变的 SelectionManager。
+     */
+    public static List<PrinterBox> getSelectionBoxesSnapshot() {
+        AreaSelection selection = DataManager.getSelectionManager().getCurrentSelection();
+        if (selection == null) return List.of();
+        return getSelectionBoxes(selection).stream()
+                .map(box -> new PrinterBox(
+                        box.minX, box.minY, box.minZ,
+                        box.maxX, box.maxY, box.maxZ))
+                .toList();
+    }
+
+    /**
      * 获取当前投影选区的联合边界，用于裁剪迭代盒子。
      * @return 选区边界，无选区时返回 null
      */

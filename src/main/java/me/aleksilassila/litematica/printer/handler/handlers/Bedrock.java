@@ -4,7 +4,9 @@ import me.aleksilassila.litematica.printer.I18n;
 import me.aleksilassila.litematica.printer.utils.ModUtils;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.HighlightType;
+import me.aleksilassila.litematica.printer.handler.AsyncSearchCoordinator;
 import me.aleksilassila.litematica.printer.handler.Module;
+import me.aleksilassila.litematica.printer.handler.TransactionKey;
 import me.aleksilassila.litematica.printer.interfaces.compat.BedrockCompat;
 import me.aleksilassila.litematica.printer.utils.MessageUtils;
 import net.minecraft.core.BlockPos;
@@ -63,6 +65,20 @@ public class Bedrock extends Module {
     @Override
     public boolean isCorrectBlock(BlockPos pos) {
         return !level.getBlockState(pos).is(Blocks.BEDROCK);
+    }
+
+    @Override
+    protected TransactionKey getSearchTransactionKey(
+            AsyncSearchCoordinator.SearchBlockSnapshot block,
+            Object searchContext) {
+        return block.currentState().is(Blocks.BEDROCK)
+                ? TransactionKey.HOMOGENEOUS : null;
+    }
+
+    @Override
+    protected boolean canSearch() {
+        return super.canSearch()
+                && (ModUtils.isBedrockMinerLoaded() || ModUtils.isBlockMinerLoaded());
     }
 
     @Override

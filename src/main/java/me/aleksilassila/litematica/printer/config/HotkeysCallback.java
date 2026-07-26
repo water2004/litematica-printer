@@ -21,7 +21,6 @@ public class HotkeysCallback {
         Configs.Hotkeys.CYCLE_MODE.getKeybind().setCallback((action, keybind) -> {
             var modes = new fi.dy.masa.malilib.config.options.ConfigBooleanHotkeyed[]{
                     Configs.Print.ENABLED,
-                    Configs.Mine.ENABLED,
                     Configs.Fill.ENABLED,
                     Configs.Fluid.ENABLED,
                     Configs.Bedrock.ENABLED
@@ -36,6 +35,7 @@ public class HotkeysCallback {
             for (var m : modes) m.setBooleanValue(false);
             int next = (current + 1) % modes.length;
             modes[next].setBooleanValue(true);
+            Configs.Core.WORK_SWITCH.setBooleanValue(true);
             MessageUtils.setOverlayMessage(modes[next].getPrettyName());
             return true;
         });
@@ -43,7 +43,6 @@ public class HotkeysCallback {
         Configs.Hotkeys.CLOSE_ALL_MODE.getKeybind().setCallback((action, keybind) -> {
             if (keybind.isKeybindHeld()) {
                 Configs.Print.ENABLED.setBooleanValue(false);
-                Configs.Mine.ENABLED.setBooleanValue(false);
                 Configs.Fill.ENABLED.setBooleanValue(false);
                 Configs.Fluid.ENABLED.setBooleanValue(false);
                 Configs.Bedrock.ENABLED.setBooleanValue(false);
@@ -80,10 +79,6 @@ public class HotkeysCallback {
 
         // 特殊设置时，自动刷新界面
         Configs.Print.FILL_COMPOSTER.setValueChangeCallback(b -> ConfigUi.refresh());
-        Configs.Break.BREAK_LIMITER.setValueChangeCallback(b -> ConfigUi.refresh());
-        Configs.Break.BREAK_LIMIT.setValueChangeCallback(b -> ConfigUi.refresh());
-        Configs.Mine.EXCAVATE_LIMITER.setValueChangeCallback(b -> ConfigUi.refresh());
-        Configs.Mine.EXCAVATE_LIMIT.setValueChangeCallback(b -> ConfigUi.refresh());
         Configs.Fill.FILL_BLOCK_MODE.setValueChangeCallback(b -> ConfigUi.refresh());
         Configs.Core.LAG_CHECK.setValueChangeCallback(b -> ConfigUi.refresh());
     }

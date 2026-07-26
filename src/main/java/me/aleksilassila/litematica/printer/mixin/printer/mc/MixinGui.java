@@ -106,7 +106,7 @@ public abstract class MixinGui {
         lines.add(MessageUtils.translatable(KEY_INTERACTED, booleanToColoredString(guiInfo.interacted)).getString());
         lines.add(MessageUtils.translatable(KEY_IN_SELECTION, booleanToColoredString(guiInfo.posInSelectionRange)).getString());
         lines.add(MessageUtils.translatable(KEY_EXECUTED, booleanToColoredString(guiInfo.execute)).getString());
-        if (module.hasQueuedScheduler()) {
+        if (module.hasJobPoolScheduler()) {
             long scanned = module.getProducerScannedPositions();
             long total = module.getProducerTotalPositions();
             double percentage = total > 0L ? Math.min(100.0, scanned * 100.0 / total) : 0.0;
@@ -122,7 +122,7 @@ public abstract class MixinGui {
         List<String> lines = new ArrayList<>();
         lines.add(MessageUtils.translatable(KEY_QUEUE_TITLE).getString());
         lines.add(MessageUtils.translatable(KEY_QUEUE_LENGTH,
-                module.getQueuedJobCount(), module.getJobQueueCapacity()).getString());
+                module.getQueuedJobCount(), module.getJobPoolCapacity()).getString());
         lines.add(MessageUtils.translatable(KEY_QUEUE_STATE, module.getScanState()).getString());
 
         GuiBlockInfo currentJob = module.getCurrentJobGuiInfo();
@@ -244,7 +244,7 @@ public abstract class MixinGui {
 
     @Unique
     private int drawQueueDebugInfo(Module module, float scaledWidth, int startY) {
-        if (!module.hasQueuedScheduler()) return startY;
+        if (!module.hasJobPoolScheduler()) return startY;
 
         List<String> lines = buildQueueDebugLines(module);
         Minecraft mc = Minecraft.getInstance();

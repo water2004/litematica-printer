@@ -5,7 +5,9 @@ import me.aleksilassila.litematica.printer.I18n;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.FillBlockModeType;
 import me.aleksilassila.litematica.printer.enums.HighlightType;
+import me.aleksilassila.litematica.printer.handler.AsyncSearchCoordinator;
 import me.aleksilassila.litematica.printer.handler.Module;
+import me.aleksilassila.litematica.printer.handler.TransactionKey;
 import me.aleksilassila.litematica.printer.printer.*;
 import me.aleksilassila.litematica.printer.printer.action.Action;
 import me.aleksilassila.litematica.printer.utils.*;
@@ -139,6 +141,28 @@ public class Fill extends Module {
     }
 
     @Override
+    protected Object captureSearchContext() {
+        return new FillSearchContext(List.copyOf(Configs.Print.REPLACEABLE_LIST.getStrings()));
+    }
+
+    @Override
+    protected TransactionKey getSearchTransactionKey(
+            AsyncSearchCoordinator.SearchBlockSnapshot block,
+            Object searchContext) {
+        BlockState state = block.currentState();
+        if (state.isAir() || state.getBlock() instanceof LiquidBlock) {
+            return TransactionKey.HOMOGENEOUS;
+        }
+        FillSearchContext context = (FillSearchContext) searchContext;
+        for (String rule : context.replaceRules()) {
+            if (PinYinSearchUtils.matchName(rule, state)) {
+                return TransactionKey.HOMOGENEOUS;
+            }
+        }
+        return null;
+    }
+
+    @Override
     protected void executeIteration(BlockPos blockPos, AtomicReference<Boolean> skipIteration) {
         BlockState currentState = level.getBlockState(blockPos);
         if (currentState.isAir()
@@ -195,4 +219,6 @@ public class Fill extends Module {
         }
     }
 
+    private record FillSearchContext(List<String> replaceRules) {
+    }
 }

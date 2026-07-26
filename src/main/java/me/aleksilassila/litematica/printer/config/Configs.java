@@ -8,12 +8,10 @@ import fi.dy.masa.malilib.config.options.*;
 import fi.dy.masa.malilib.event.InputEventHandler;
 import fi.dy.masa.malilib.hotkeys.IHotkey;
 import fi.dy.masa.malilib.hotkeys.KeybindSettings;
-import fi.dy.masa.malilib.util.restrictions.UsageRestriction;
 import fi.dy.masa.malilib.config.ConfigManager;
 import me.aleksilassila.litematica.printer.Reference;
 import me.aleksilassila.litematica.printer.enums.*;
 import me.aleksilassila.litematica.printer.gui.ConfigUi;
-import me.aleksilassila.litematica.printer.utils.ModUtils;
 import net.minecraft.world.level.block.Blocks;
 
 import java.io.File;
@@ -33,16 +31,8 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
     private static final String FILE_PATH = "./config/" + Reference.MOD_ID + ".json";
     private static final File CONFIG_DIR = new File("./config");
 
-    private static final BooleanSupplier isBreakCustom = () -> Break.BREAK_LIMITER.getOptionListValue().equals(MiningFilterType.CUSTOM);
-    private static final BooleanSupplier isBreakWhitelist = () -> isBreakCustom.getAsBoolean() && Break.BREAK_LIMIT.getOptionListValue().equals(UsageRestriction.ListType.WHITELIST);
-    private static final BooleanSupplier isBreakBlacklist = () -> isBreakCustom.getAsBoolean() && Break.BREAK_LIMIT.getOptionListValue().equals(UsageRestriction.ListType.BLACKLIST);
-
-    private static final BooleanSupplier isExcavateCustom = () -> Mine.EXCAVATE_LIMITER.getOptionListValue().equals(MiningFilterType.CUSTOM);
-    private static final BooleanSupplier isExcavateWhitelist = () -> isExcavateCustom.getAsBoolean() && Mine.EXCAVATE_LIMIT.getOptionListValue().equals(UsageRestriction.ListType.WHITELIST);
-    private static final BooleanSupplier isExcavateBlacklist = () -> isExcavateCustom.getAsBoolean() && Mine.EXCAVATE_LIMIT.getOptionListValue().equals(UsageRestriction.ListType.BLACKLIST);
     private static final BooleanSupplier isBlocklist = () -> Fill.FILL_BLOCK_MODE.getOptionListValue().equals(FillBlockModeType.BLOCKLIST);
     private static final BooleanSupplier isHandheld = () -> Fill.FILL_BLOCK_MODE.getOptionListValue().equals(FillBlockModeType.HANDHELD);
-    private static final BooleanSupplier isRemoteInventoryLoaded = ModUtils::isRemoteInventoryNextLoaded;
 
     public static final ImmutableList<IConfigBase> OPTIONS;
     public static final ImmutableList<IHotkey> HOTKEYS;
@@ -51,10 +41,8 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
         LinkedHashSet<IConfigBase> optionSet = new LinkedHashSet<>();
         optionSet.addAll(Core.OPTIONS);
         optionSet.addAll(Placement.OPTIONS);
-        optionSet.addAll(Break.OPTIONS);
         optionSet.addAll(Hotkeys.OPTIONS);
         optionSet.addAll(Print.OPTIONS);
-        optionSet.addAll(Mine.OPTIONS);
         optionSet.addAll(Fill.OPTIONS);
         optionSet.addAll(Fluid.OPTIONS);
         optionSet.addAll(Bedrock.OPTIONS);
@@ -73,10 +61,8 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
     public static ImmutableList<IConfigBase> All = ImmutableList.<IConfigBase>builder()
             .addAll(Core.OPTIONS)
             .addAll(Placement.OPTIONS)
-            .addAll(Break.OPTIONS)
             .addAll(Hotkeys.OPTIONS)
             .addAll(Print.OPTIONS)
-            .addAll(Mine.OPTIONS)
             .addAll(Fill.OPTIONS)
             .addAll(Fluid.OPTIONS)
             .addAll(Bedrock.OPTIONS)
@@ -95,6 +81,14 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
         public static final ConfigDouble WORK_RANGE = floatValue("workRange")
                 .defaultValue(0)
                 .range(0, 256)
+                .build();
+
+        // 异步搜索工作线程上限；实际线程使用量受当前小块任务数量限制
+        public static final ConfigInteger SEARCH_THREADS = integerValue("searchThreads")
+                .defaultValue(Math.max(
+                        1,
+                        Math.min(8, Runtime.getRuntime().availableProcessors() - 1)))
+                .range(1, 64)
                 .build();
 
         // 迭代占用时长（毫秒）
@@ -167,6 +161,7 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
         public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
                 WORK_SWITCH,
                 WORK_RANGE,
+                SEARCH_THREADS,
                 ITERATION_TIME_LIMIT,
                 RENDER_HUD,
                 MISSING_MATERIAL_HUD,
@@ -190,13 +185,13 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
                 .defaultValue(false)
                 .build();
 
-        // 核心 - 工作间隔
+        // 打印作业间隔
         public static final ConfigInteger PLACE_INTERVAL = integerValue("placeInterval")
                 .defaultValue(1)
                 .range(0, 20)
                 .build();
 
-        // 每刻放置方块数
+        // 每刻打印作业数
         public static final ConfigInteger PLACE_BLOCKS_PER_TICK = integerValue("placeBlocksPerTick")
                 .defaultValue(1)
                 .range(0, 256)
@@ -222,78 +217,13 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
         );
     }
 
-    public static class Break {
-        public static final ConfigBoolean BREAK_USE_PACKET = booleanValue("breakUsePacket")
-                .defaultValue(false)
-                .build();
-
-        public static final ConfigInteger BREAK_PROGRESS_THRESHOLD = integerValue("breakProgressThreshold")
-                .defaultValue(100)
-                .range(70, 100)
-                .build();
-
-        public static final ConfigInteger BREAK_INTERVAL = integerValue("breakInterval")
-                .defaultValue(1)
-                .range(0, 20)
-                .build();
-
-        public static final ConfigInteger BREAK_BLOCKS_PER_TICK = integerValue("breakBlocksPerTick")
-                .defaultValue(1)
-                .range(0, 256)
-                .build();
-
+    public static class Print {
+        // 打印破坏重试冷却
         public static final ConfigInteger BREAK_COOLDOWN = integerValue("breakCooldown")
                 .defaultValue(3)
                 .range(0, 64)
                 .build();
 
-        public static final ConfigBoolean BREAK_CHECK_HARDNESS = booleanValue("breakCheckHardness")
-                .defaultValue(true)
-                .build();
-
-        // 即时挖掘
-        public static final ConfigBoolean BREAK_INSTANT_MINE = booleanValue("breakInstantOnSameTick")
-                .defaultValue(false)
-                .build();
-
-        // 模式限制器
-        public static final ConfigOptionList BREAK_LIMITER = optionList("breakLimiter")
-                .defaultValue(MiningFilterType.CUSTOM)
-                .build();
-
-        // 模式限制
-        public static final ConfigOptionList BREAK_LIMIT = optionList("breakLimit")
-                .defaultValue(UsageRestriction.ListType.NONE)
-                .setVisible(isBreakCustom)
-                .build();
-
-        // 白名单
-        public static final ConfigStringList BREAK_WHITELIST = stringListValue("breakWhitelist")
-                .setVisible(isBreakWhitelist)
-                .build();
-
-        // 黑名单
-        public static final ConfigStringList BREAK_BLACKLIST = stringListValue("breakBlacklist")
-                .setVisible(isBreakBlacklist)
-                .build();
-
-        public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
-                BREAK_CHECK_HARDNESS,
-                BREAK_INSTANT_MINE,
-                BREAK_USE_PACKET,
-                BREAK_INTERVAL,
-                BREAK_BLOCKS_PER_TICK,
-                BREAK_COOLDOWN,
-                BREAK_PROGRESS_THRESHOLD,
-                // 限制器
-                BREAK_LIMITER,
-                BREAK_LIMIT,
-                BREAK_WHITELIST,
-                BREAK_BLACKLIST
-        );
-    }
-
-    public static class Print {
         // 启用打印
         public static final ConfigBooleanHotkeyed ENABLED = booleanHotkey("printEnabled")
                 .defaultValue(false)
@@ -398,18 +328,6 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
                 .defaultValue(false)
                 .build();
 
-        // 使用远程容器材料
-        public static final ConfigBooleanHotkeyed USE_REMOTE_CONTAINER = booleanHotkey("useRemoteContainer")
-                .defaultValue(false)
-                .setVisible(isRemoteInventoryLoaded)
-                .build();
-
-        // 远程容器方块列表
-        public static final ConfigStringList REMOTE_CONTAINER_BLOCKS = stringListValue("remoteContainerBlocks")
-                .defaultValue("minecraft:chest", "minecraft:trapped_chest", "minecraft:barrel")
-                .setVisible(isRemoteInventoryLoaded)
-                .build();
-
         // 使用快捷潜影盒
         public static final ConfigBoolean USE_QUICK_SHULKER = booleanValue("useQuickShulker")
                 .defaultValue(true)
@@ -431,19 +349,6 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
                 .defaultValue(true)
                 .build();
 
-        // 背包满时有序放回远程容器
-        public static final ConfigBoolean RETURN_TO_CONTAINER_WHEN_FULL = booleanValue("returnToContainerWhenFull")
-                .defaultValue(true)
-                .setVisible(isRemoteInventoryLoaded)
-                .build();
-
-        // 远程容器回塞节流（tick）
-        public static final ConfigInteger CONTAINER_RETURN_INTERVAL = integerValue("containerReturnInterval")
-                .defaultValue(60)
-                .range(1, 200)
-                .setVisible(isRemoteInventoryLoaded)
-                .build();
-
         public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
                 ENABLED,
                 PRINT_SELECTION_TYPE,
@@ -453,6 +358,7 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
                 BREAK_WRONG_BLOCK,
                 BREAK_EXTRA_BLOCK,
                 BREAK_WRONG_STATE_BLOCK,
+                BREAK_COOLDOWN,
                 PRINT_SKIP,
                 PRINT_SKIP_LIST,
                 PRINT_REPLACE,
@@ -466,56 +372,10 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
                 FILL_COMPOSTER,
                 FILL_COMPOSTER_WHITELIST,
                 BONEMEAL_CROPS,
-                USE_REMOTE_CONTAINER,
-                REMOTE_CONTAINER_BLOCKS,
                 USE_QUICK_SHULKER,
                 SHULKER_SOURCE,
                 SHULKER_COOLDOWN,
-                RETURN_TO_SHULKER_WHEN_FULL,
-                RETURN_TO_CONTAINER_WHEN_FULL,
-                CONTAINER_RETURN_INTERVAL
-        );
-    }
-
-    public static class Mine {
-        // 启用挖掘
-        public static final ConfigBooleanHotkeyed ENABLED = booleanHotkey("mineEnabled")
-                .defaultValue(false)
-                .build();
-
-        // 选区类型
-        public static final ConfigOptionList MINE_SELECTION_TYPE = optionList("mineSelectionType")
-                .defaultValue(SelectionType.LITEMATICA_SELECTION)
-                .build();
-
-        // 挖掘模式限制器
-        public static final ConfigOptionList EXCAVATE_LIMITER = optionList("excavateLimiter")
-                .defaultValue(MiningFilterType.CUSTOM)
-                .build();
-
-        // 挖掘模式限制
-        public static final ConfigOptionList EXCAVATE_LIMIT = optionList("excavateLimit")
-                .defaultValue(UsageRestriction.ListType.NONE)
-                .setVisible(isExcavateCustom)
-                .build();
-
-        // 挖掘白名单
-        public static final ConfigStringList EXCAVATE_WHITELIST = stringListValue("excavateWhitelist")
-                .setVisible(isExcavateWhitelist)
-                .build();
-
-        // 挖掘黑名单
-        public static final ConfigStringList EXCAVATE_BLACKLIST = stringListValue("excavateBlacklist")
-                .setVisible(isExcavateBlacklist)
-                .build();
-
-        public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
-                ENABLED,
-                MINE_SELECTION_TYPE,
-                EXCAVATE_LIMITER,
-                EXCAVATE_LIMIT,
-                EXCAVATE_WHITELIST,
-                EXCAVATE_BLACKLIST
+                RETURN_TO_SHULKER_WHEN_FULL
         );
     }
 
@@ -597,13 +457,27 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
     }
 
     public static class Bedrock {
+        // 破基岩执行间隔
+        public static final ConfigInteger BREAK_INTERVAL = integerValue("breakInterval")
+                .defaultValue(1)
+                .range(0, 20)
+                .build();
+
+        // 每刻破基岩作业数
+        public static final ConfigInteger BREAK_BLOCKS_PER_TICK = integerValue("breakBlocksPerTick")
+                .defaultValue(1)
+                .range(0, 256)
+                .build();
+
         // 启用破基岩
         public static final ConfigBooleanHotkeyed ENABLED = booleanHotkey("bedrockEnabled")
                 .defaultValue(false)
                 .build();
 
         public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
-                ENABLED
+                ENABLED,
+                BREAK_INTERVAL,
+                BREAK_BLOCKS_PER_TICK
         );
     }
 

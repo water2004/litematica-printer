@@ -38,7 +38,7 @@ public class PinYinSearchUtils {
      * @param str 输入字符串（支持中文、英文、数字等混合）
      * @return 拼音组合列表（非null）
      */
-    public static synchronized ArrayList<String> getPinYin(@Nullable String str) {
+    public static ArrayList<String> getPinYin(@Nullable String str) {
         // 空值处理：输入null/空字符串返回空列表
         if (str == null || str.isEmpty()) {
             return new ArrayList<>();
