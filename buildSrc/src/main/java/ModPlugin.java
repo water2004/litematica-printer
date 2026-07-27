@@ -65,8 +65,8 @@ public final class ModPlugin implements Plugin<Project> {
 
     private static void configureJar(Project project, ModProjectExtension config) {
         project.getTasks().withType(Jar.class).configureEach(task -> {
-            task.from(project.getRootProject().file("LICENSE"), spec ->
-                    spec.rename(name -> name + "_" + config.getModArchivesBaseName()));
+            task.from(project.getRootProject().file("LICENSE.md"), spec ->
+                    spec.rename(name -> "LICENSE_" + config.getModArchivesBaseName() + ".md"));
             task.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE);
             task.getManifest().attributes(Map.of(
                     "Implementation-Title", project.getName(),

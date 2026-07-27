@@ -1,22 +1,10 @@
 pluginManagement {
     repositories {
-        mavenLocal()
         mavenCentral()
         gradlePluginPortal()
         maven {
             name = 'Fabric'
             url = 'https://maven.fabricmc.net'
-        }
-        maven {
-            name = 'Jitpack'
-            url = 'https://jitpack.io'
-        }
-    }
-    resolutionStrategy {
-        eachPlugin {
-            if (requested.id.id == 'com.replaymod.preprocess') {
-                useModule("com.github.Fallen-Breath:preprocessor:${requested.version}")
-            }
         }
     }
 }
@@ -29,4 +17,4 @@ pluginManagement {
     }
 }
 
-include ':fabricWrapper'
+include ':core'

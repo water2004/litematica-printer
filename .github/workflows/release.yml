@@ -1,15 +1,9 @@
 name: release
 
 on:
-  release:
-    types:
-      - published
-  workflow_dispatch:
-    inputs:
-      target_release_tag:
-        description: Git tag to attach build artifacts to
-        type: string
-        required: true
+  push:
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
@@ -17,15 +11,34 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GH_USERNAME: ${{ secrets.GH_USERNAME }}
-      IS_THIS_RELEASE: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
           fetch-depth: '0'
+
+      - name: Verify release tag
+        shell: bash
+        run: |
+          git fetch origin main
+          tag_commit="$(git rev-list -n 1 "$GITHUB_SHA")"
+          if ! git merge-base --is-ancestor "$tag_commit" origin/main; then
+            echo "Release tags must point to a commit contained in main." >&2
+            exit 1
+          fi
+
+          project_version="$(sed -n 's/^mod_version=//p' gradle.properties)"
+          expected_tag="v${project_version}"
+          if [[ "$GITHUB_REF_NAME" != "$expected_tag" ]]; then
+            echo "Tag $GITHUB_REF_NAME does not match project version $project_version (expected $expected_tag)." >&2
+            exit 1
+          fi
+
+          notes_file=".github/release-notes/${GITHUB_REF_NAME}.md"
+          if [[ ! -f "$notes_file" ]]; then
+            echo "Missing release notes: $notes_file" >&2
+            exit 1
+          fi
 
       - name: Validate gradle wrapper
         uses: gradle/actions/wrapper-validation@v6
@@ -57,23 +70,27 @@ jobs:
         if: steps.gradle-cache.outputs.cache-hit != 'true'
         run: ./gradlew dependencies --stacktrace
 
-      - name: Build fabricWrapper subprojects
-        run: |
-          chmod +x gradlew
-          ./gradlew :fabricWrapper:build --stacktrace
+      - name: Build version projects
+        run: ./gradlew clean build --stacktrace
 
-      - name: Capture versionpack artifacts
+      - name: Capture version artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: Artifacts
-          path: fabricWrapper/build/libs/*.jar
-          archive: false
+          name: litematica-printer-${{ github.ref_name }}
+          path: versions/*/build/libs/litematica-printer-mc*.jar
+          if-no-files-found: error
 
       - name: Collect mod jars
+        shell: bash
         run: |
-          shopt -s extglob
           mkdir mod-jars
-          for jar in fabricWrapper/build/libs/!(*-@(dev|sources|shadow)).jar; do
+          mapfile -t jars < <(find versions -type f -path '*/build/libs/litematica-printer-mc*.jar' | sort)
+          if [[ "${#jars[@]}" -ne 2 ]]; then
+            echo "Expected exactly 2 release jars, found ${#jars[@]}." >&2
+            printf '%s\n' "${jars[@]}"
+            exit 1
+          fi
+          for jar in "${jars[@]}"; do
               cp -p "$jar" mod-jars/
           done
           ls -l mod-jars
@@ -81,6 +98,11 @@ jobs:
       - name: Upload to Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ inputs.target_release_tag || github.ref_name }}
-          files: mod-jars/*
+          name: Litematica Printer 4th ${{ github.ref_name }}
+          body_path: .github/release-notes/${{ github.ref_name }}.md
+          files: mod-jars/*.jar
+          draft: false
+          prerelease: false
+          make_latest: true
+          fail_on_unmatched_files: true
           token: ${{ secrets.GITHUB_TOKEN }}

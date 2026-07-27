@@ -2,10 +2,7 @@ import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -16,7 +13,7 @@ public class ModProjectExtension {
         this.project = project;
     }
 
-    public Object propOrNull(String key) {
+    private Object propOrNull(String key) {
         return project.findProperty(key);
     }
 
@@ -28,7 +25,7 @@ public class ModProjectExtension {
         return value;
     }
 
-    public String propStrOrNull(String key) {
+    private String propStrOrNull(String key) {
         Object value = propOrNull(key);
         return value == null ? null : value.toString();
     }
@@ -42,24 +39,15 @@ public class ModProjectExtension {
     }
 
     public File downloadDependencyMod(String downloadUrl) {
-        return downloadDependencyMod(downloadUrl, null);
-    }
-
-    public File downloadDependencyMod(String downloadUrl, String fileName) {
         return ExternalModDownloader.download(
                 project,
                 downloadUrl,
-                new File(project.getRootProject().getProjectDir(), "libs"),
-                fileName
+                new File(project.getRootProject().getProjectDir(), "libs")
         );
     }
 
     public String getModId() {
         return propStr("mod_id");
-    }
-
-    public String getWrapperModId() {
-        return getModId() + "-wrapper";
     }
 
     public String getModName() {
@@ -102,16 +90,6 @@ public class ModProjectExtension {
         return propStrOrNull("minecraft_version");
     }
 
-    public int getMcVersionInt() {
-        String value = propStrOrNull("mcVersion");
-        if (value == null) return -1;
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException ignored) {
-            return -1;
-        }
-    }
-
     public String getFabricLoaderVersion() {
         return propStrOrNull("loader_version");
     }
@@ -133,12 +111,7 @@ public class ModProjectExtension {
     }
 
     public JavaVersion getJavaVersion() {
-        int version = getMcVersionInt();
-        if (version >= 260000) return JavaVersion.VERSION_25;
-        if (version >= 12005) return JavaVersion.VERSION_21;
-        if (version >= 11800) return JavaVersion.VERSION_17;
-        if (version >= 11700) return JavaVersion.VERSION_16;
-        return JavaVersion.VERSION_1_8;
+        return JavaVersion.toVersion(propStr("java_version"));
     }
 
     public String getMixinJavaVersion() {
@@ -146,21 +119,18 @@ public class ModProjectExtension {
     }
 
     public String getFullProjectVersion() {
-        return createFullProjectVersion(getModVersion());
+        return getModVersion();
     }
 
     public Map<String, Object> getPlaceholderProps() {
         Map<String, Object> properties = new LinkedHashMap<>();
         putIfPresent(properties, "mod_id", getModId());
-        putIfPresent(properties, "mod_wrapper_id", getWrapperModId());
         putIfPresent(properties, "mod_name", getModName());
         putIfPresent(properties, "mod_version", getFullProjectVersion());
         putIfPresent(properties, "mod_description", getModDescription());
         putIfPresent(properties, "mod_homepage", getModHomepage());
         putIfPresent(properties, "mod_license", getModLicense());
         putIfPresent(properties, "mod_sources", getModSources());
-        putIfPresent(properties, "loader_version", getFabricLoaderVersion());
-        putIfPresent(properties, "fabric_api_version", getFabricApiVersion());
         putIfPresent(properties, "minecraft_dependency", getMcDependency());
         putIfPresent(properties, "compatibility_level", getMixinJavaVersion());
         putIfPresent(properties, "malilib", getMalilib());
@@ -172,37 +142,4 @@ public class ModProjectExtension {
         if (value != null) properties.put(key, value);
     }
 
-    private String createFullProjectVersion(String modVersion) {
-        Integer commitCount = getCommitCountNumber();
-        String commitHash = System.getenv("COMMIT_HASH");
-        boolean release = Boolean.parseBoolean(System.getenv("IS_THIS_RELEASE"));
-        boolean pullRequest = Boolean.parseBoolean(System.getenv("PR_BUILD"));
-        boolean ci = "true".equals(System.getenv("CI"))
-                || "true".equals(System.getenv("GITHUB_ACTIONS"));
-
-        if (release) return modVersion;
-        if (pullRequest) return modVersion + "-" + commitCount + "-" + commitHash + "-pr";
-        if (ci) return modVersion + "-" + commitCount + "-" + commitHash + "-ci";
-        return modVersion + "-" + System.currentTimeMillis() + "-development";
-    }
-
-    private Integer getCommitCountNumber() {
-        try {
-            Process process = new ProcessBuilder("git", "rev-list", "--count", "HEAD")
-                    .directory(project.getRootDir())
-                    .redirectErrorStream(true)
-                    .start();
-            StringBuilder output = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                    process.getInputStream(), StandardCharsets.UTF_8))) {
-                String line;
-                while ((line = reader.readLine()) != null) output.append(line);
-            }
-            int exitCode = process.waitFor();
-            return exitCode == 0 ? Integer.parseInt(output.toString().trim()) : null;
-        } catch (Exception exception) {
-            project.getLogger().debug("Unable to determine Git commit count", exception);
-            return null;
-        }
-    }
 }

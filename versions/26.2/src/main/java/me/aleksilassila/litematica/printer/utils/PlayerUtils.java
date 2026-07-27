@@ -1,0 +1,241 @@
+package me.aleksilassila.litematica.printer.utils;
+
+import fi.dy.masa.malilib.config.options.ConfigOptionList;
+import me.aleksilassila.litematica.printer.config.Configs;
+import me.aleksilassila.litematica.printer.enums.RadiusShapeType;
+import me.aleksilassila.litematica.printer.enums.SelectionType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.world.effect.MobEffectUtil;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Abilities;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
+import java.util.Optional;
+
+@SuppressWarnings("EnhancedSwitchMigration")
+public class PlayerUtils {
+    private static final Minecraft client = Minecraft.getInstance();
+
+    public static Optional<LocalPlayer> getPlayer() {
+        return Optional.ofNullable(client.player);
+    }
+
+    public static Abilities getAbilities(LocalPlayer playerEntity) {
+        return playerEntity.getAbilities();
+    }
+
+    public static double getInteractionRange(double defaultRange) {
+        if (client.player != null) {
+            return client.player.blockInteractionRange() + 1;
+        }
+        return defaultRange;
+    }
+
+    public static boolean isWithinBlockInteractionRange(LocalPlayer player, BlockPos blockPos, double additionalRange) {
+        double blockPosX = blockPos.getX();
+        double blockPosY = blockPos.getY();
+        double blockPosZ = blockPos.getZ();
+        double eyePosX = player.getX();
+        double eyePosZ = player.getZ();
+        double eyePosY = player.getEyeY();
+        double distance = getInteractionRange(5) + additionalRange;
+        double dx = Math.max(Math.max(blockPosX - eyePosX, eyePosX - (blockPosX + 1)), 0);
+        double dy = Math.max(Math.max(blockPosY - eyePosY, eyePosY - (blockPosY + 1)), 0);
+        double dz = Math.max(Math.max(blockPosZ - eyePosZ, eyePosZ - (blockPosZ + 1)), 0);
+        return dx * dx + dy * dy + dz * dz < distance * distance;
+    }
+
+    // 球面（碰撞箱最近点距离，与 Minecraft 实际交互距离检查一致）
+    public static boolean isWithinWorkInteractedEuclideanRange(BlockPos blockPos, double range) {
+        LocalPlayer player = client.player;
+        if (player == null || blockPos == null) return false;
+        Vec3 eyePos = player.getEyePosition();
+        double dx = Math.max(Math.max(blockPos.getX() - eyePos.x, eyePos.x - (blockPos.getX() + 1)), 0);
+        double dy = Math.max(Math.max(blockPos.getY() - eyePos.y, eyePos.y - (blockPos.getY() + 1)), 0);
+        double dz = Math.max(Math.max(blockPos.getZ() - eyePos.z, eyePos.z - (blockPos.getZ() + 1)), 0);
+        return dx * dx + dy * dy + dz * dz <= range * range;
+    }
+
+    /** 快速路径：调用方已缓存 eyePos，消除 getEyePosition() 分配 */
+    public static boolean isWithinWorkInteractedEuclideanRange(BlockPos blockPos, Vec3 eyePos, double range) {
+        return isWithinWorkInteractedEuclideanRange(blockPos.getX(), blockPos.getY(), blockPos.getZ(), eyePos, range);
+    }
+
+    /** 最内层：原始 int 参数，消除所有 getter 调用 */
+    public static boolean isWithinWorkInteractedEuclideanRange(int x, int y, int z, Vec3 eyePos, double range) {
+        double rangeSq = range * range;
+        double dx = Math.max(Math.max(x - eyePos.x, eyePos.x - (x + 1)), 0);
+        double dy = Math.max(Math.max(y - eyePos.y, eyePos.y - (y + 1)), 0);
+        double dz = Math.max(Math.max(z - eyePos.z, eyePos.z - (z + 1)), 0);
+        return dx * dx + dy * dy + dz * dz <= rangeSq;
+    }
+
+    public static boolean isWithinWorkInteractedManhattanRange(BlockPos blockPos, double range) {
+        LocalPlayer player = client.player;
+        if (player == null || blockPos == null) return false;
+        Vec3 eyePos = player.getEyePosition();
+        BlockPos eyeBlockPos = new BlockPos((int) Math.round(eyePos.x), (int) Math.round(eyePos.y), (int) Math.round(eyePos.z));
+        int dx = Math.abs(blockPos.getX() - eyeBlockPos.getX());
+        int dy = Math.abs(blockPos.getY() - eyeBlockPos.getY());
+        int dz = Math.abs(blockPos.getZ() - eyeBlockPos.getZ());
+        return dx + dy + dz <= range;
+    }
+
+    /** 快速路径：调用方已缓存 eyePos */
+    public static boolean isWithinWorkInteractedManhattanRange(BlockPos blockPos, Vec3 eyePos, double range) {
+        return isWithinWorkInteractedManhattanRange(blockPos.getX(), blockPos.getY(), blockPos.getZ(), eyePos, range);
+    }
+
+    /** 最内层：原始 int 参数 */
+    public static boolean isWithinWorkInteractedManhattanRange(int x, int y, int z, Vec3 eyePos, double range) {
+        int ex = (int) Math.round(eyePos.x);
+        int ey = (int) Math.round(eyePos.y);
+        int ez = (int) Math.round(eyePos.z);
+        int dx = Math.abs(x - ex);
+        int dy = Math.abs(y - ey);
+        int dz = Math.abs(z - ez);
+        return dx + dy + dz <= range;
+    }
+
+    public static boolean isWithinWorkInteractedCubeRange(BlockPos blockPos, double range) {
+        LocalPlayer player = client.player;
+        if (player == null || blockPos == null) return false;
+        Vec3 eyePos = player.getEyePosition();
+        BlockPos eyeBlockPos = new BlockPos((int) Math.round(eyePos.x), (int) Math.round(eyePos.y), (int) Math.round(eyePos.z));
+        int dx = Math.abs(blockPos.getX() - eyeBlockPos.getX());
+        int dy = Math.abs(blockPos.getY() - eyeBlockPos.getY());
+        int dz = Math.abs(blockPos.getZ() - eyeBlockPos.getZ());
+        return dx <= range && dy <= range && dz <= range;
+    }
+
+    /** 快速路径：调用方已缓存 eyePos */
+    public static boolean isWithinWorkInteractedCubeRange(BlockPos blockPos, Vec3 eyePos, double range) {
+        return isWithinWorkInteractedCubeRange(blockPos.getX(), blockPos.getY(), blockPos.getZ(), eyePos, range);
+    }
+
+    /** 最内层：原始 int 参数 */
+    public static boolean isWithinWorkInteractedCubeRange(int x, int y, int z, Vec3 eyePos, double range) {
+        int ex = (int) Math.round(eyePos.x);
+        int ey = (int) Math.round(eyePos.y);
+        int ez = (int) Math.round(eyePos.z);
+        int dx = Math.abs(x - ex);
+        int dy = Math.abs(y - ey);
+        int dz = Math.abs(z - ez);
+        return dx <= range && dy <= range && dz <= range;
+    }
+
+
+    public static float getDestroyProgress(LocalPlayer player, BlockState state, ItemStack itemStack) {
+        float hardness = state.getBlock().defaultDestroyTime();
+        if (hardness == -1.0F) {
+            return 0.0F;
+        } else {
+            int i = player.hasCorrectToolForDrops(state) ? 30 : 100;
+            return getBlockBreakingSpeed(player, state, itemStack) / hardness / (float) i;
+        }
+    }
+
+    public static float getDestroyProgress(LocalPlayer player, BlockState state, boolean mainHand) {
+        return getDestroyProgress(player, state, mainHand ? player.getMainHandItem() : player.getOffhandItem());
+    }
+
+    public static float getDestroyProgress(LocalPlayer player, BlockState state) {
+        return getDestroyProgress(player, state, true);
+    }
+
+    /**
+     * 获取当前物品能够破坏指定方块的破坏速度.
+     *
+     * @param blockState 要破坏的方块状态
+     * @param itemStack  使用工具/物品破坏方块
+     * @return 当前物品破坏该方块所需的时间（单位为 tick）
+     */
+    public static float getBlockBreakingSpeed(LocalPlayer player, BlockState blockState, ItemStack itemStack) {
+        float f = itemStack.getDestroySpeed(blockState);
+        if (f > 1.0F) {
+            for (Holder<Enchantment> enchantment : itemStack.getEnchantments().keySet()) {
+                Optional<ResourceKey<Enchantment>> enchantmentKey = enchantment.unwrapKey();
+                if (enchantmentKey.isPresent()) {
+                    if (enchantmentKey.get() == Enchantments.EFFICIENCY) {
+                        int level = EnchantmentHelper.getItemEnchantmentLevel(enchantment, itemStack);
+                        if (level > 0 && !itemStack.isEmpty()) {
+                            f += (float) (level * level + 1);
+                        }
+                    }
+                }
+            }
+        }
+        if (MobEffectUtil.hasDigSpeed(player)) {
+            f *= 1.0F + (float) (MobEffectUtil.getDigSpeedAmplification(player) + 1) * 0.2F;
+        }
+        if (player.hasEffect(MobEffects.MINING_FATIGUE)) {
+            float g;
+            switch (Objects.requireNonNull(player.getEffect(MobEffects.MINING_FATIGUE)).getAmplifier()) {
+                case 0:
+                    g = 0.3F;
+                    break;
+                case 1:
+                    g = 0.09F;
+                    break;
+                case 2:
+                    g = 0.0027F;
+                    break;
+                default:
+                    g = 8.1E-4F;
+                    break;
+            }
+            f *= g;
+        }
+        f *= (float) player.getAttributeValue(Attributes.BLOCK_BREAK_SPEED);
+        if (player.isEyeInFluid(FluidTags.WATER)) {
+            AttributeInstance submergedMiningSpeed = player.getAttribute(Attributes.SUBMERGED_MINING_SPEED);
+            if (submergedMiningSpeed != null) {
+                f *= (float) submergedMiningSpeed.getValue();
+            }
+        }
+        if (!player.onGround()) {
+            f /= 5.0F;
+        }
+        return f;
+    }
+
+    public static boolean canInteracted(BlockPos blockPos) {
+        if (ConfigUtils.client.player == null || blockPos == null) return false;
+
+        double effectiveRange = ConfigUtils.getEffectiveRange();
+        if (Configs.Core.ITERATOR_SHAPE.getOptionListValue() instanceof RadiusShapeType radiusShapeType) {
+            return switch (radiusShapeType) {
+                case SPHERE -> isWithinWorkInteractedEuclideanRange(blockPos, effectiveRange);
+                case OCTAHEDRON -> isWithinWorkInteractedManhattanRange(blockPos, effectiveRange);
+                case CUBE -> isWithinWorkInteractedCubeRange(blockPos, effectiveRange);
+            };
+        }
+        return isWithinWorkInteractedEuclideanRange(blockPos, effectiveRange);
+    }
+
+    /** 快速路径：调用方已缓存 eyePos，消除 getEyePosition() 分配 + switch 派发 */
+    public static boolean canInteracted(BlockPos blockPos, Vec3 eyePos, double range, RadiusShapeType shapeType) {
+        if (blockPos == null) return false;
+        int x = blockPos.getX(), y = blockPos.getY(), z = blockPos.getZ();
+        return switch (shapeType) {
+            case SPHERE -> isWithinWorkInteractedEuclideanRange(x, y, z, eyePos, range);
+            case OCTAHEDRON -> isWithinWorkInteractedManhattanRange(x, y, z, eyePos, range);
+            case CUBE -> isWithinWorkInteractedCubeRange(x, y, z, eyePos, range);
+        };
+    }
+}

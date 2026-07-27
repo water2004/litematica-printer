@@ -16,7 +16,7 @@ public final class ExternalModDownloader {
 
     private ExternalModDownloader() {}
 
-    public static File download(Project project, String downloadUrl, File outputDir, String fileName) {
+    public static File download(Project project, String downloadUrl, File outputDir) {
         String trimmedUrl = downloadUrl.trim();
         if (trimmedUrl.isBlank()) throw new IllegalArgumentException("下载链接不能为空！");
         if (!outputDir.isDirectory() && !outputDir.mkdirs()) {
@@ -24,7 +24,7 @@ public final class ExternalModDownloader {
         }
 
         try {
-            String targetFileName = fileName != null ? fileName : extractFileNameFromUrl(trimmedUrl);
+            String targetFileName = extractFileNameFromUrl(trimmedUrl);
             if (targetFileName == null) {
                 throw new IOException("无法识别文件名，请手动指定 fileName 参数");
             }

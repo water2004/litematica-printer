@@ -1,22 +1,21 @@
-# text stuff
+# Text
 * text=auto
 *.bat text eol=crlf
+*.gradle text eol=lf
 *.groovy text eol=lf
 *.java text eol=crlf
+*.json text eol=lf
 *.md text
 *.properties text eol=lf
-*.scala text eol=lf
 *.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
 .gitattributes text eol=lf
 .gitignore text eol=lf
-build.gradle text eol=lf
 gradlew text eol=lf
 gradle/wrapper/gradle-wrapper.properties text eol=crlf
-COPYING.txt text eol=lf
-COPYING.LESSER.txt text eol=lf
-README.md text eol=lf
 
-#binary
+# Binary
 *.dat binary
 *.bin binary
 *.png binary

@@ -1,23 +1,15 @@
 name: build
 on:
   push:
-    branches: ['**'] # stop build tag commits
+    branches: [main]
     paths-ignore: ['*.md']
   workflow_dispatch:
   workflow_call:
-    inputs:
-      pr_build:
-        type: boolean
-        required: false
-        default: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
     if: ${{ !contains(github.event.head_commit.message, 'SKIP') }}
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GH_USERNAME: ${{ secrets.GH_USERNAME }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -46,10 +38,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-common
 
-      # only build.yml. Obtaining a commit hash makes it easier to find commits
-      - name: Get latest short hash
-        run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-
       - name: Make gradle wrapper executable
         run: chmod +x ./gradlew
 
@@ -60,21 +48,11 @@ jobs:
           contains(github.event.head_commit.message, 'DEPS')
         run: ./gradlew dependencies --stacktrace
 
-      - name: Build fabricWrapper subproject
-        run: ./gradlew :fabricWrapper:build
-        env:
-          PR_BUILD: ${{ inputs.pr_build }}
+      - name: Build version projects
+        run: ./gradlew build
 
-      - name: Capture versionpack artifacts
+      - name: Capture version artifacts
         uses: actions/upload-artifact@v7
         with:
           name: Artifacts
-          path: fabricWrapper/build/libs/*.jar
-          archive: false
-
-      # providing individual versions of artifacts。 only build.yml
-      - name: Capture single version artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: single-version-artifacts
-          path: fabricWrapper/build/tmp/submods/META-INF/jars/*.jar
+          path: versions/*/build/libs/*.jar

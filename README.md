@@ -1,17 +1,31 @@
-# Litematica Printer
+# Litematica Printer 4th
 
-![GitHub stars](https://img.shields.io/github/stars/BiliXWhite/litematica-printer)
-![GitHub release](https://img.shields.io/github/v/release/BiliXWhite/litematica-printer)
-![Minecraft](https://img.shields.io/badge/Minecraft-1.18.2%20~%2026.2-blue)
+![GitHub stars](https://img.shields.io/github/stars/water2004/litematica-printer)
+![GitHub release](https://img.shields.io/github/v/release/water2004/litematica-printer)
+![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2%20%7C%2026.2-blue)
 
-为 [Litematica](https://modrinth.com/mod/litematica) 投影添加自动建造功能的 Minecraft Fabric 模组。支持 1.18.2 ~ 26.2 版本。
+为 [Litematica](https://modrinth.com/mod/litematica) 投影添加自动建造功能的 Minecraft Fabric 客户端模组。当前正式版本为 **1.0.0**，支持 Minecraft 26.1.2 和 26.2。
 
-该分支基于[宅咸鱼二改版](https://github.com/zhaixianyu/litematica-printer)修改，添加了更多实用功能。
+本项目是 [BiliXWhite/litematica-printer](https://github.com/BiliXWhite/litematica-printer)（投影打印机三改版）的 fork，即投影打印机四改版。项目演进关系为：[aleksilassila 原版](https://github.com/aleksilassila/litematica-printer) → [zhaixianyu 二改版](https://github.com/zhaixianyu/litematica-printer) → [BiliXWhite 三改版](https://github.com/BiliXWhite/litematica-printer) → 本项目四改版。
 
 如果你觉得好用，欢迎给项目点个 Star ⭐️
 
 > [!TIP]
-> 该分支始终保持开源免费，不会存在任何收费内容。条件允许的话可以给作者[买瓶脉动](https://ifdian.net/a/BlinkWhite)支持一下！
+> 本项目保持开源免费，不包含任何收费内容。
+
+---
+
+## 相比三改版的主要变化
+
+- 持续扫描的生产者与作业池消费者并行工作，不再依赖旧的往返搜索调度。
+- 同类放置、使用和破坏作业按事务批量处理，并保证跳过、失败和失效作业不会阻塞其他任务。
+- 搜索使用分块世界快照异步并发执行，减少对客户端主线程的影响，并遵循 Litematica 可见层设置。
+- 物品切换和远程容器取物改为等待确认后继续，避免材料尚未到达就继续打印。
+- 错误方块、多余方块和破冰通过可选的 ChainVeinFabric 3.0.0 客户端 API 批量处理。
+- 调试 HUD 增加生产者扫描比例、作业池长度、消费者状态和当前任务；关闭打印开关不会清空调度状态。
+- 保留原木放置后去皮、放水、破冰、状态调整、填充与破基岩等原有打印语义。
+- 删除旧挖掘模式、内置远程大仓和多版本包装器，仅提供 26.1.2 与 26.2 的独立正式 jar。
+- 工程拆分为纯 Java `core` 调度层和各 Minecraft 版本的独立适配层，不再使用源码预处理与版本 mapping。
 
 ---
 
@@ -19,20 +33,15 @@
 
 | 渠道              | 链接                                                                |
 |-----------------|-------------------------------------------------------------------|
-| GitHub Releases | [点击下载](https://github.com/BiliXWhite/litematica-printer/releases) |
-| 蓝奏云分流（密码: cgxw） | [点击下载](https://xeno.lanzoue.com/b00l1v20vi)                       |
+| GitHub Releases | [点击下载](https://github.com/water2004/litematica-printer/releases) |
 
 ---
 
 ## 支持的游戏版本
 
-| 版本支持                                                |
-|-----------------------------------------------------|
-| 1.18.2 · 1.19.4 · 1.20.1 · 1.20.2 · 1.20.4 · 1.20.6 |
-| 1.21.1 ~ 1.21.11 · 26.1 · 26.2                      |
-
-> [!NOTE]
-> 1.18.2 以下版本暂不接受更新，小版本是否可用请自行尝试
+| 版本支持        |
+|-------------|
+| 26.1.2 · 26.2 |
 
 ---
 
@@ -44,7 +53,7 @@
 - [Litematica](https://modrinth.com/mod/litematica)
 
 ### 可选
-- [ChainVeinFabric](https://github.com/water2004/ChainVeinFabric) - 打印时破坏错误、多余方块及破冰所需；未安装时这些破坏功能不会启用
+- [ChainVeinFabric 3.0.0+](https://github.com/water2004/ChainVeinFabric/releases) - 打印时破坏错误、多余方块及破冰所需；未安装时这些破坏功能不会启用
 - [Quick Shulker](https://modrinth.com/mod/quick-shulker) 或 [AxShulkers](https://modrinth.com/mod/axshulkers) - 快捷潜影盒（双模式兼容）
 - [Fabric-Bedrock-Miner](https://github.com/bunnyi116/fabric-bedrock-miner) - 破基岩所需前置
 
@@ -105,7 +114,7 @@
 - 非原版游戏内容
 
 > [!TIP]
-> 如发现其他方块放置错误，请尝试降低建造速度。若问题依旧存在，请提交 [Issue](https://github.com/BiliXWhite/litematica-printer/issues)
+> 如发现其他方块放置错误，请尝试降低建造速度。若问题依旧存在，请提交 [Issue](https://github.com/water2004/litematica-printer/issues)
 
 ---
 
@@ -117,7 +126,7 @@
 ### 命令行编译
 
 ```bash
-git clone https://github.com/BiliXWhite/litematica-printer.git
+git clone https://github.com/water2004/litematica-printer.git
 cd litematica-printer
 ./gradlew build
 ```
@@ -130,10 +139,18 @@ cd litematica-printer
 
 ### 构建产物位置
 
-| 类型      | 位置                                                |
-|---------|---------------------------------------------------|
-| 多版本 jar | `./fabricWrapper/build/libs/`                     |
-| 单版本 jar | `./fabricWrapper/build/tmp/submods/META-INF/jars` |
+| 类型    | 位置                             |
+|-------|--------------------------------|
+| 版本 jar | `./versions/<版本>/build/libs/` |
+
+### 源码结构
+
+- `core/`：只包含纯 Java 的泛型作业池与并发轮次抽象，不依赖 Minecraft、Fabric、MaLiLib 或 Litematica。
+- `versions/26.1.2/`：26.1.2 的完整客户端实现与资源。
+- `versions/26.2/`：26.2 的完整客户端实现与资源。
+- `buildSrc/`：Gradle 自动加载的构建插件，只负责版本号、资源占位符、依赖下载和 jar 配置，不进入模组运行时。
+
+版本源码之间不使用预处理指令或 mapping。Minecraft API 差异由各版本目录自行实现；与版本无关的调度机制通过 `core` 的泛型接口接入。
 
 ---
 
@@ -143,7 +160,7 @@ cd litematica-printer
 
 如果你喜欢跟进体验最新的功能，持续提供可复现的Bug，那么推荐你加入QQ群聊以便直接和开发者沟通！
 
-[点击加入 QQ 群聊](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=ttinzrJB3jYRLSTJM8R2YfwYdCm4Zo90&authKey=vfwF)
+[三改版原项目的 QQ 群聊](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=ttinzrJB3jYRLSTJM8R2YfwYdCm4Zo90&authKey=vfwF)
 
 ---
 
@@ -158,7 +175,7 @@ cd litematica-printer
 - 开启「使用数据包打印」模式
 - 调大「打印机工作间隔」
 
-如仍无法解决，请提交 [Issue](https://github.com/BiliXWhite/litematica-printer/issues/new?template=bug%E6%8A%A5%E5%91%8A.yml)
+如仍无法解决，请提交 [Issue](https://github.com/water2004/litematica-printer/issues/new?template=bug%E6%8A%A5%E5%91%8A.yml)
 
 ---
 
@@ -173,7 +190,7 @@ cd litematica-printer
 - 增大「打印机工作间隔」
 - 降低建造速度
 
-如问题持续，请提交 [Issue](https://github.com/BiliXWhite/litematica-printer/issues/new?template=%E6%89%93%E5%8D%A0%E6%96%B9%E5%9D%97%E8%AF%B7%E6%B1%82.yml)
+如问题持续，请提交 [Issue](https://github.com/water2004/litematica-printer/issues/new?template=%E6%89%93%E5%8D%A0%E6%96%B9%E5%9D%97%E8%AF%B7%E6%B1%82.yml)
 
 ---
 
@@ -189,7 +206,7 @@ cd litematica-printer
 - 确认所选择的工作模式是正确的
 
 > [!NOTE]
-> 快捷潜影盒功能现已重写。如遇问题请提交 [Issue](https://github.com/BiliXWhite/litematica-printer/issues)
+> 快捷潜影盒功能现已重写。如遇问题请提交 [Issue](https://github.com/water2004/litematica-printer/issues)
 
 ---
 
@@ -198,6 +215,7 @@ cd litematica-printer
 - [bunny_i](https://github.com/bunnyi116) - 开发者之一
 - [aleksilassila](https://github.com/aleksilassila/litematica-printer) - 原创基础
 - [zhaixianyu](https://github.com/zhaixianyu/litematica-printer) - 二改版本
+- [BiliXWhite](https://github.com/BiliXWhite/litematica-printer) - 三改版本及本项目的直接上游
 - [MoRanpcy](https://github.com/MoRanpcy/quickshulker) - 快捷潜影盒支持
 - [bunnyi116](https://github.com/bunnyi116/fabric-bedrock-miner) - 新的破基岩
 - [Rofumer](https://github.com/Rofumer) - 俄语本地化、性能优化、Bug 修复

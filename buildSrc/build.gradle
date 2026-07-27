@@ -2,12 +2,6 @@ plugins {
     id 'java-gradle-plugin'
 }
 
-repositories {
-    mavenLocal()
-    mavenCentral()
-    gradlePluginPortal()
-}
-
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
