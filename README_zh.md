@@ -1,35 +1,35 @@
-# Litematica Printer 4th
+# Litematica Printer 四改版
 
-[简体中文](README_zh.md)
+[English](README.md)
 
 ![GitHub stars](https://img.shields.io/github/stars/water2004/litematica-printer)
 ![GitHub release](https://img.shields.io/github/v/release/water2004/litematica-printer)
 ![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2%20%7C%2026.2-blue)
 
 > [!IMPORTANT]
-> **This repository is a fork of [BiliXWhite/litematica-printer](https://github.com/BiliXWhite/litematica-printer), the Litematica Printer third revision.** It is maintained here as the **fourth revision**.
+> **本仓库 fork 自 [BiliXWhite/litematica-printer](https://github.com/BiliXWhite/litematica-printer)，即投影打印机三改版。** 本项目在其基础上作为**投影打印机四改版**继续维护。
 >
-> Fork lineage: [aleksilassila original](https://github.com/aleksilassila/litematica-printer) → [zhaixianyu second revision](https://github.com/zhaixianyu/litematica-printer) → [BiliXWhite third revision](https://github.com/BiliXWhite/litematica-printer) → this fourth revision.
+> 项目演进关系：[aleksilassila 原版](https://github.com/aleksilassila/litematica-printer) → [zhaixianyu 二改版](https://github.com/zhaixianyu/litematica-printer) → [BiliXWhite 三改版](https://github.com/BiliXWhite/litematica-printer) → 本项目四改版。
 >
-> The current fourth-revision release is [1.0.0](https://github.com/water2004/litematica-printer/releases/tag/v1.0.0) and supports **Minecraft 26.1.2 and 26.2 only**. The compatibility and download information in the preserved upstream README below belongs to the upstream project and does not describe this fork.
+> 四改版当前正式版本为 [1.0.0](https://github.com/water2004/litematica-printer/releases/tag/v1.0.0)，**仅支持 Minecraft 26.1.2 和 26.2**。下方保留的版本支持和下载信息属于上游项目，不代表本 fork 的当前情况。
 
-## Changes from the third revision
+## 相比三改版的变化
 
-- Replaced the old back-and-forth scheduler with a continuously scanning producer and a bounded job-pool consumer.
-- Added fair transaction-bucket traversal and same-kind batching for placement, use/adjustment, and breaking jobs. Skipped, failed, stale, and submitted jobs are consumed immediately; unfinished positions are rediscovered by later scans.
-- Moved scanning to asynchronously processed, already-sliced world snapshots so search work does not block the client main thread, while respecting Litematica's visible-layer setting.
-- Made every item switch—including remote-container retrieval—wait for client confirmation before printing continues.
-- Routed wrong-block, extra-block, and ice-breaking work through the optional [ChainVeinFabric 3.0.0](https://github.com/water2004/ChainVeinFabric/releases/tag/v3.0.0) client job API. These breaking features stay disabled when ChainVeinFabric is absent.
-- Expanded the debug HUD with producer progress, job-pool length, consumer state, and the current job; toggling printing off no longer clears scheduler state.
-- Preserved the established block-operation semantics, including place-then-strip logs, water placement, ice breaking, state adjustment, fill mode, and bedrock breaking.
-- Removed the legacy mining mode, built-in remote warehouse, and multiversion wrapper. Releases now contain separate jars for Minecraft 26.1.2 and 26.2.
-- Reorganized the project into a pure-Java, Minecraft-independent `core` scheduler plus isolated per-version adapters, without source preprocessing or version mapping.
+- 用持续扫描的生产者和有界作业池消费者替换旧的往返搜索调度。
+- 消费者公平遍历事务桶，并批量处理同类的放置、使用/调整和破坏作业。跳过、失败、过期及已经提交的作业都会立即消费；尚未完成的位置由后续扫描重新发现。
+- 搜索基于已经切分好的世界快照异步并发执行，避免阻塞客户端主线程，同时遵循 Litematica 可见层设置。
+- 所有物品切换（包括远程容器取物）都会等待客户端确认完成后再继续打印。
+- 错误方块、多余方块和破冰统一通过可选的 [ChainVeinFabric 3.0.0](https://github.com/water2004/ChainVeinFabric/releases/tag/v3.0.0) 客户端作业 API 处理；未安装时不启用这些破坏功能。
+- 调试 HUD 增加生产者扫描进度、作业池长度、消费者状态和当前作业；关闭打印开关不再清空调度状态。
+- 保留已有的具体方块操作语义，包括原木放置后去皮、放水、破冰、方块状态调整、填充和破基岩。
+- 删除旧挖掘模式、内置远程大仓和多版本包装器；发布物改为 Minecraft 26.1.2 与 26.2 的独立 jar。
+- 工程调整为纯 Java、与 Minecraft 无关的 `core` 调度层和彼此隔离的版本适配层，不再使用源码预处理或版本 mapping。
 
 ---
 
-## Original upstream README
+## 上游原 README
 
-> The content below is preserved from the direct upstream repository.
+> 以下内容原样保留自直接上游仓库。
 
 # Litematica Printer
 
