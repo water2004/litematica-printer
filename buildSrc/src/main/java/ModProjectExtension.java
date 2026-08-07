@@ -119,7 +119,10 @@ public class ModProjectExtension {
     }
 
     public String getFullProjectVersion() {
-        return getModVersion();
+        String minecraftVersion = getMcVersion();
+        return minecraftVersion == null || minecraftVersion.isBlank()
+                ? getModVersion()
+                : getModVersion() + "+" + minecraftVersion;
     }
 
     public Map<String, Object> getPlaceholderProps() {

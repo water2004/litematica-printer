@@ -95,6 +95,28 @@ jobs:
           done
           ls -l mod-jars
 
+      - name: Remove previous jar assets
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const tag = context.ref.replace('refs/tags/', '');
+            try {
+              const { data: release } = await github.rest.repos.getReleaseByTag({
+                ...context.repo,
+                tag,
+              });
+              for (const asset of release.assets) {
+                if (asset.name.endsWith('.jar')) {
+                  await github.rest.repos.deleteReleaseAsset({
+                    ...context.repo,
+                    asset_id: asset.id,
+                  });
+                }
+              }
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+
       - name: Upload to Release
         uses: softprops/action-gh-release@v3
         with:
@@ -104,5 +126,6 @@ jobs:
           draft: false
           prerelease: false
           make_latest: true
+          overwrite_files: true
           fail_on_unmatched_files: true
           token: ${{ secrets.GITHUB_TOKEN }}

@@ -89,7 +89,7 @@ publishing {
         mavenJava(MavenPublication) {
             from components.java
             artifactId = modConfig.modId
-            version = modConfig.modVersion
+            version = modConfig.fullProjectVersion
         }
     }
     repositories {
