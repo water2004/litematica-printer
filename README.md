@@ -11,7 +11,7 @@
 >
 > Fork lineage: [aleksilassila original](https://github.com/aleksilassila/litematica-printer) → [zhaixianyu second revision](https://github.com/zhaixianyu/litematica-printer) → [BiliXWhite third revision](https://github.com/BiliXWhite/litematica-printer) → this fourth revision.
 >
-> The current fourth-revision release is [1.0.0](https://github.com/water2004/litematica-printer/releases/tag/v1.0.0) and supports **Minecraft 26.1.2 and 26.2 only**. The compatibility and download information in the preserved upstream README below belongs to the upstream project and does not describe this fork.
+> The current fourth-revision release is [1.0.1](https://github.com/water2004/litematica-printer/releases/tag/v1.0.1) and supports **Minecraft 26.1.2 and 26.2 only**. The compatibility and download information in the preserved upstream README below belongs to the upstream project and does not describe this fork.
 
 ## Changes from the third revision
 

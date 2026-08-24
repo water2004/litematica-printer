@@ -11,7 +11,7 @@
 >
 > 项目演进关系：[aleksilassila 原版](https://github.com/aleksilassila/litematica-printer) → [zhaixianyu 二改版](https://github.com/zhaixianyu/litematica-printer) → [BiliXWhite 三改版](https://github.com/BiliXWhite/litematica-printer) → 本项目四改版。
 >
-> 四改版当前正式版本为 [1.0.0](https://github.com/water2004/litematica-printer/releases/tag/v1.0.0)，**仅支持 Minecraft 26.1.2 和 26.2**。下方保留的版本支持和下载信息属于上游项目，不代表本 fork 的当前情况。
+> 四改版当前正式版本为 [1.0.1](https://github.com/water2004/litematica-printer/releases/tag/v1.0.1)，**仅支持 Minecraft 26.1.2 和 26.2**。下方保留的版本支持和下载信息属于上游项目，不代表本 fork 的当前情况。
 
 ## 相比三改版的变化
 

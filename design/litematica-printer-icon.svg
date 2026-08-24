@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1024"
+     height="1024"
+     viewBox="0 0 1024 1024"
+     role="img"
+     aria-labelledby="title description">
+  <title id="title">Litematica Printer icon</title>
+  <desc id="description">Three white isometric blocks in a pale blue and lavender room.</desc>
+
+  <!-- Flat three-plane background. -->
+  <path d="M0 0H512V546L0 846Z" fill="#D3DEF0"/>
+  <path d="M512 0H1024V846L512 546Z" fill="#E1E0F4"/>
+  <path d="M0 846L512 546L1024 846V1024H0Z" fill="#EAF0F9"/>
+
+  <!-- Flat cube faces. Every edge uses the same color and width. -->
+  <g stroke="#7889B8"
+     stroke-width="4"
+     stroke-linecap="square"
+     stroke-linejoin="miter"
+     vector-effect="non-scaling-stroke">
+
+    <!-- Upper cube. -->
+    <path d="M512 250L640 324L512 398L384 324Z" fill="#FFFFFF"/>
+    <path d="M384 324L512 398V546L384 472Z" fill="#FBFDFF"/>
+    <path d="M512 398L640 324V472L512 546Z" fill="#FCFBFF"/>
+
+    <!-- Lower-left cube. -->
+    <path d="M384 472L512 546L384 620L256 546Z" fill="#FFFFFF"/>
+    <path d="M256 546L384 620V768L256 694Z" fill="#FBFDFF"/>
+    <path d="M384 620L512 546V694L384 768Z" fill="#FCFBFF"/>
+
+    <!-- Lower-right cube. -->
+    <path d="M640 472L768 546L640 620L512 546Z" fill="#FFFFFF"/>
+    <path d="M512 546L640 620V768L512 694Z" fill="#FBFDFF"/>
+    <path d="M640 620L768 546V694L640 768Z" fill="#FCFBFF"/>
+  </g>
+</svg>
