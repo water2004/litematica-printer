@@ -75,7 +75,13 @@ public final class FluidRemovalGameTest implements FabricClientGameTest {
             var player = server.getPlayerList().getPlayers().getFirst();
             player.getInventory().clearContent();
 
-            level.setBlockAndUpdate(FLUID_TARGET.below(), Blocks.COBBLESTONE.defaultBlockState());
+            for (int x = -2; x <= 6; x++) {
+                for (int z = -6; z <= 3; z++) {
+                    level.setBlockAndUpdate(
+                            new BlockPos(x, 63, z),
+                            Blocks.COBBLESTONE.defaultBlockState());
+                }
+            }
             level.setBlockAndUpdate(FLUID_TARGET, Blocks.WATER.defaultBlockState());
             level.setBlockAndUpdate(FLUID_TARGET.above(), Blocks.AIR.defaultBlockState());
             player.getInventory().setItem(9, new ItemStack(Items.SAND, MATERIAL_COUNT));
