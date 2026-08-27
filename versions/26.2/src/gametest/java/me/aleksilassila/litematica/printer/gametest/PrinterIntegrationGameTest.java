@@ -209,7 +209,8 @@ public final class PrinterIntegrationGameTest implements FabricClientGameTest {
                         + quickShulkerMode);
             }
             TransferObservation observation = waitForTransfer(
-                    context, quickShulkerMode, packetLoss, MATERIAL_COUNT, 0,
+                    context, quickShulkerMode, packetLoss, MATERIAL_COUNT,
+                    usesDirectProtocol(quickShulkerMode) ? 0 : -1,
                     "material extraction");
             if (packetLoss) {
                 assertQuickShulkerPacketLoss(
