@@ -1,0 +1,126 @@
+name: gametest
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  client-gametest:
+    name: MC ${{ matrix.minecraft }} / ChainVein ${{ matrix.chainvein }} / QuickShulker ${{ matrix.quickshulker }} / loss ${{ matrix.packetloss }} / Servux protocol ${{ matrix.servux }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - minecraft: 26.1.2
+            chainvein: false
+            quickshulker: none
+            packetloss: false
+            servux: false
+          - minecraft: 26.1.2
+            chainvein: true
+            quickshulker: none
+            packetloss: false
+            servux: false
+          - minecraft: 26.1.2
+            chainvein: false
+            quickshulker: direct
+            packetloss: false
+            servux: false
+          - minecraft: 26.1.2
+            chainvein: true
+            quickshulker: direct
+            packetloss: false
+            servux: false
+          - minecraft: 26.1.2
+            chainvein: false
+            quickshulker: legacy
+            packetloss: false
+            servux: false
+          - minecraft: 26.1.2
+            chainvein: true
+            quickshulker: legacy
+            packetloss: false
+            servux: false
+          - minecraft: 26.2
+            chainvein: false
+            quickshulker: none
+            packetloss: false
+            servux: false
+          - minecraft: 26.2
+            chainvein: true
+            quickshulker: none
+            packetloss: false
+            servux: false
+          - minecraft: 26.2
+            chainvein: false
+            quickshulker: direct
+            packetloss: false
+            servux: false
+          - minecraft: 26.2
+            chainvein: true
+            quickshulker: direct
+            packetloss: false
+            servux: false
+          - minecraft: 26.2
+            chainvein: false
+            quickshulker: legacy
+            packetloss: false
+            servux: false
+          - minecraft: 26.2
+            chainvein: true
+            quickshulker: legacy
+            packetloss: false
+            servux: false
+          - minecraft: 26.2
+            chainvein: false
+            quickshulker: direct
+            packetloss: true
+            servux: false
+          - minecraft: 26.2
+            chainvein: false
+            quickshulker: none
+            packetloss: false
+            servux: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Run client GameTest
+        run: >-
+          xvfb-run -a ./gradlew
+          ":${{ matrix.minecraft }}:runClientGameTest"
+          -PprinterGameTest=true
+          -PprinterGameTestChainVein=${{ matrix.chainvein }}
+          -PprinterGameTestQuickShulker=${{ matrix.quickshulker }}
+          -PprinterGameTestQuickShulkerPacketLoss=${{ matrix.packetloss }}
+          -PprinterGameTestServux=${{ matrix.servux }}
+          --no-daemon
+          --stacktrace
+
+      - name: Upload GameTest diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gametest-${{ matrix.minecraft }}-chain-${{ matrix.chainvein }}-quick-${{ matrix.quickshulker }}-loss-${{ matrix.packetloss }}-servux-${{ matrix.servux }}
+          path: |
+            versions/${{ matrix.minecraft }}/build/run/clientGameTest/logs/**
+            versions/${{ matrix.minecraft }}/build/run/clientGameTest/crash-reports/**
+          if-no-files-found: warn

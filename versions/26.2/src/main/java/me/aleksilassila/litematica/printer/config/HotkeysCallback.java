@@ -3,6 +3,7 @@ package me.aleksilassila.litematica.printer.config;
 import me.aleksilassila.litematica.printer.gui.ConfigUi;
 import me.aleksilassila.litematica.printer.printer.ActionManager;
 import me.aleksilassila.litematica.printer.utils.MessageUtils;
+import me.aleksilassila.litematica.printer.utils.ServuxHandItemConfirmation;
 import me.aleksilassila.litematica.printer.interfaces.compat.BedrockCompat;
 import net.minecraft.client.Minecraft;
 
@@ -81,5 +82,7 @@ public class HotkeysCallback {
         Configs.Print.FILL_COMPOSTER.setValueChangeCallback(b -> ConfigUi.refresh());
         Configs.Fill.FILL_BLOCK_MODE.setValueChangeCallback(b -> ConfigUi.refresh());
         Configs.Core.LAG_CHECK.setValueChangeCallback(b -> ConfigUi.refresh());
+        Configs.Print.SERVUX_HAND_CONFIRMATION.setValueChangeCallback(
+                b -> ServuxHandItemConfirmation.reset());
     }
 }

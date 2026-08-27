@@ -235,6 +235,11 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
                 .defaultValue(false)
                 .build();
 
+        // 使用 Servux 返回的玩家数据确认服务端主手
+        public static final ConfigBoolean SERVUX_HAND_CONFIRMATION = booleanValue("servuxHandConfirmation")
+                .defaultValue(false)
+                .build();
+
         // 凭空放置
         public static final ConfigBoolean PLACE_IN_AIR = booleanValue("placeInAir")
                 .defaultValue(true)
@@ -349,6 +354,7 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
                 ENABLED,
                 PRINT_SELECTION_TYPE,
                 EASY_PLACE_PROTOCOL,
+                SERVUX_HAND_CONFIRMATION,
                 PLACE_IN_AIR,
                 PRINT_FORCED_SNEAK,
                 BREAK_WRONG_BLOCK,

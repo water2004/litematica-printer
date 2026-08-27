@@ -91,7 +91,7 @@ public class QuickShulkerUtils {
      * 根据 ShulkerSource 配置分发潜影盒取物请求。
      * @return true 已发起请求（调用方应等待），false 无法处理
      */
-    public static boolean requestShulkerItem(LocalPlayer player, Item[] items) {
+    public static boolean requestLegacyShulkerItem(LocalPlayer player, Item[] items) {
         if (!Configs.Print.USE_QUICK_SHULKER.getBooleanValue()) return false;
 
         ShulkerSource source = (ShulkerSource) Configs.Print.SHULKER_SOURCE.getOptionListValue();
@@ -156,17 +156,19 @@ public class QuickShulkerUtils {
 
     private static boolean openSelectedShulker(Inventory inventory, int shulkerSlot, ShulkerSource source) {
         ItemStack shulkerStack = inventory.getItem(shulkerSlot);
+        boolean opened;
+        if (source == ShulkerSource.PLUGIN) {
+            openShulkerByRightClick(shulkerSlot);
+            opened = true;
+        } else {
+            opened = QuickShulkerCompat.openLegacyShulker(shulkerStack, shulkerSlot);
+        }
+        if (!opened) return false;
+
         setShulkerBoxSlot(shulkerSlot);
         ModUtils.closeScreen++;
         setOpenHandler(true);
         setShulkerCooldown(Configs.Print.SHULKER_COOLDOWN.getIntegerValue());
-
-        // 按来源打开潜影盒：PLUGIN 走右键模拟，MOD 走 QuickShulker API
-        if (source == ShulkerSource.PLUGIN) {
-            openShulkerByRightClick(shulkerSlot);
-        } else {
-            QuickShulkerCompat.openShulker(shulkerStack, shulkerSlot);
-        }
         return true;
     }
 

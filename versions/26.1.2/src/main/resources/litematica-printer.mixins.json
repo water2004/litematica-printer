@@ -6,6 +6,7 @@
   "mixins": [
     "litematica.EasyPlaceUtilsAccessor",
     "litematica.InventoryUtilsAccessor",
+    "litematica.MixinEntityDataManager",
     "litematica.MixinInventoryUtils",
     "litematica.MixinMaterialListUtils",
     "malilib.config.MixinConfigBase",

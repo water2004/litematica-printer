@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "me.aleksilassila.litematica.printer.gametest.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "ConnectionMixin",
+    "LitematicaUtilsMixin",
+    "QuickStorageCapabilityMixin",
+    "ServerGamePacketListenerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

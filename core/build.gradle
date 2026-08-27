@@ -2,6 +2,16 @@ plugins {
     id 'java-library'
 }
 
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.13.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
 group = 'com.blinkwhite.litematica-printer'
 
 java {
@@ -12,4 +22,8 @@ java {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.compilerArgs.addAll('-Xlint:deprecation', '-Xlint:unchecked')
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
 }

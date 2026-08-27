@@ -4,7 +4,7 @@ import me.aleksilassila.litematica.printer.I18n;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.utils.ConfigUtils;
 import me.aleksilassila.litematica.printer.utils.LitematicaUtils;
-import me.aleksilassila.litematica.printer.utils.QuickShulkerUtils;
+import me.aleksilassila.litematica.printer.interfaces.compat.QuickShulkerCompat;
 import me.aleksilassila.litematica.printer.utils.MessageUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -35,10 +35,10 @@ public abstract class MixinClientPacketListener {
     @Inject(method = "handleContainerContent", at = @At("RETURN"))
     private void onContainerContent(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
         LocalPlayer player = Minecraft.getInstance().player;
-        if (QuickShulkerUtils.isOpenHandler() && player != null
+        if (QuickShulkerCompat.isLegacyOpenHandler() && player != null
                 && packet.containerId() == player.containerMenu.containerId
         ) {
-            QuickShulkerUtils.switchFromShulker();
+            QuickShulkerCompat.handleLegacyContainerContent();
         }
     }
 }

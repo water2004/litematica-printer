@@ -8,7 +8,7 @@ import me.aleksilassila.litematica.printer.handler.handlers.*;
 import me.aleksilassila.litematica.printer.printer.ActionManager;
 import me.aleksilassila.litematica.printer.printer.MissingMaterialTracker;
 import me.aleksilassila.litematica.printer.utils.ConfigUtils;
-import me.aleksilassila.litematica.printer.utils.QuickShulkerUtils;
+import me.aleksilassila.litematica.printer.interfaces.compat.QuickShulkerCompat;
 import me.aleksilassila.litematica.printer.interfaces.compat.TakeItOutCompat;
 import net.minecraft.client.Minecraft;
 
@@ -53,7 +53,7 @@ public class ModuleManager {
         // all processing so the printer does not interfere.
         if (TakeItOutCompat.isAwaitingItem()) return;
 
-        QuickShulkerUtils.tick();
+        QuickShulkerCompat.tick();
         // 任意容器界面尚未真正关闭时，暂停整个调度器。否则换手会用玩家背包
         // containerId=0 操作仍处于打开状态的容器，客户端会忽略点击并在随后同步时回滚库存。
         if (mc.player == null || mc.player.containerMenu != mc.player.inventoryMenu) {

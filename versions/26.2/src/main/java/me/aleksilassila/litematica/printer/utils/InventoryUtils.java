@@ -11,8 +11,10 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.Getter;
 import lombok.Setter;
 import me.aleksilassila.litematica.printer.config.Configs;
+import me.aleksilassila.litematica.printer.core.network.HandConfirmationGate;
 import me.aleksilassila.litematica.printer.mixin.printer.litematica.EasyPlaceUtilsAccessor;
 import me.aleksilassila.litematica.printer.mixin.printer.litematica.InventoryUtilsAccessor;
+import me.aleksilassila.litematica.printer.interfaces.compat.QuickShulkerCompat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.LocalPlayer;
@@ -94,8 +96,11 @@ public class InventoryUtils {
 
     public static void setHotbarSlot(int slot, Inventory inventory) {
         boolean usePacket = Configs.Placement.PRINT_USE_PACKET.getBooleanValue();
-        if (usePacket) {
-            client.getConnection().send(new ServerboundSetCarriedItemPacket(slot));
+        if (usePacket || ServuxHandItemConfirmation.isEnabled()) {
+            ServerboundSetCarriedItemPacket packet =
+                    new ServerboundSetCarriedItemPacket(slot);
+            ServuxHandItemConfirmation.recordSelectedSlotPacket(slot, packet);
+            client.getConnection().send(packet);
         }
         setSelectedSlot(inventory, slot);
     }
@@ -185,7 +190,8 @@ public class InventoryUtils {
                 return false;
             }
             int currentHotbarSlot = getSelectedSlot(player.getInventory());
-            if (Configs.Placement.PRINT_USE_PACKET.getBooleanValue()) {
+            if (Configs.Placement.PRINT_USE_PACKET.getBooleanValue()
+                    || ServuxHandItemConfirmation.isEnabled()) {
                 NonNullList<Slot> slots = player.inventoryMenu.slots;
                 int totalSlots = slots.size();
                 List<ItemStack> copies = Lists.newArrayListWithCapacity(totalSlots);
@@ -204,7 +210,7 @@ public class InventoryUtils {
                 }
 
                 HashedStack hashedStack = HashedStack.create(player.inventoryMenu.getCarried(), connection.decoratedHashOpsGenenerator());
-                connection.send(new ServerboundContainerClickPacket(
+                ServerboundContainerClickPacket packet = new ServerboundContainerClickPacket(
                         player.inventoryMenu.containerId,
                         player.inventoryMenu.getStateId(),
                         Shorts.checkedCast(slot),
@@ -212,7 +218,9 @@ public class InventoryUtils {
                         ContainerInput.SWAP,
                         snapshot,
                         hashedStack
-                ));
+                );
+                ServuxHandItemConfirmation.recordInventorySwitchPacket(packet);
+                connection.send(packet);
 
                 player.inventoryMenu.clicked(slot, currentHotbarSlot, ContainerInput.SWAP, player);
             } else {
@@ -353,6 +361,15 @@ public class InventoryUtils {
         ItemStack currentMainHand = player.getMainHandItem();
         for (Item item : items) {
             if (currentMainHand.is(item)) {
+                HandConfirmationGate.Status confirmation =
+                        ServuxHandItemConfirmation.verify(player, items);
+                if (confirmation == HandConfirmationGate.Status.MISMATCH) {
+                    ServuxHandItemConfirmation.retrySwitch(player);
+                    return ItemSwitchResult.WAITING;
+                }
+                if (confirmation != HandConfirmationGate.Status.CONFIRMED) {
+                    return ItemSwitchResult.WAITING;
+                }
                 return ItemSwitchResult.READY;
             }
         }
@@ -360,6 +377,7 @@ public class InventoryUtils {
         Inventory inventory = player.getInventory();
         boolean isCreativeMode = PlayerUtils.getAbilities(player).instabuild;
         if (isCreativeMode) {
+            ServuxHandItemConfirmation.beginSwitch();
             ItemStack stack = new ItemStack(items[0]);
             boolean switched = InventoryUtils.setPickedItemToHand(stack, client);
             return switched || player.getMainHandItem().is(items[0])
@@ -370,6 +388,7 @@ public class InventoryUtils {
         for (Item item : items) {
             int slot = findItemInInventory(inventory, item);
             if (slot != -1) {
+                ServuxHandItemConfirmation.beginSwitch();
                 ItemStack itemStack = inventory.getItem(slot);
                 orderlyStoreItem = itemStack.copy();
                 // 找到后只执行切换；实际打印留到下一 tick 重新验证主手后执行。
@@ -380,11 +399,11 @@ public class InventoryUtils {
             }
         }
         // 没找到，尝试使用快捷潜影盒
-        boolean requestStarted = QuickShulkerUtils.requestShulkerItem(player, items);
+        boolean requestStarted = QuickShulkerCompat.requestShulkerItem(player, items);
         if (requestStarted
-                || QuickShulkerUtils.isBusy()
+                || QuickShulkerCompat.isBusy()
                 || (Configs.Print.USE_QUICK_SHULKER.getBooleanValue()
-                    && QuickShulkerUtils.getShulkerCooldown() > 0)) {
+                    && QuickShulkerCompat.getCooldown() > 0)) {
             return ItemSwitchResult.WAITING;
         }
         return ItemSwitchResult.UNAVAILABLE;

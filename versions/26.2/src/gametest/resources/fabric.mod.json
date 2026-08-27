@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "litematica-printer-gametest",
+  "version": "1.0.0",
+  "name": "Litematica Printer Game Tests",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-client-gametest": [
+      "me.aleksilassila.litematica.printer.gametest.PrinterIntegrationGameTest",
+      "me.aleksilassila.litematica.printer.gametest.FluidRemovalGameTest",
+      "me.aleksilassila.litematica.printer.gametest.PacketLossReproductionGameTest",
+      "me.aleksilassila.litematica.printer.gametest.ServuxHandConfirmationGameTest"
+    ]
+  },
+  "mixins": [
+    "litematica-printer-gametest.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": "*",
+    "fabric-api": "*",
+    "minecraft": "*",
+    "litematica-printer": "*"
+  }
+}

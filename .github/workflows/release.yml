@@ -9,8 +9,12 @@ permissions:
   contents: write
 
 jobs:
+  gametest:
+    uses: ./.github/workflows/gametest.yml
+
   build:
     runs-on: ubuntu-latest
+    needs: gametest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
