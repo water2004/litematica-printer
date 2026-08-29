@@ -1,6 +1,5 @@
 package me.aleksilassila.litematica.printer.utils;
 
-import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.data.EntityDataManager;
 import fi.dy.masa.litematica.network.ServuxLitematicaHandler;
 import fi.dy.masa.litematica.network.ServuxLitematicaPacket;
@@ -61,10 +60,6 @@ public final class ServuxHandItemConfirmation {
         }
         ensureSession(player);
 
-        if (DataManager.getInstance().hasIntegratedServer()) {
-            return HandConfirmationGate.Status.CONFIRMED;
-        }
-
         Set<String> acceptedIds = itemIds(acceptedItems);
         String localItemId = itemId(player.getMainHandItem());
         if (desiredHotbarSlot < 0) {
@@ -93,8 +88,7 @@ public final class ServuxHandItemConfirmation {
     public static synchronized void handleEntityData(int entityId, CompoundData data) {
         if (!isEnabled()
                 || data == null
-                || entityId != sessionEntityId
-                || DataManager.getInstance().hasIntegratedServer()) {
+                || entityId != sessionEntityId) {
             return;
         }
 

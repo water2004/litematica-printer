@@ -17,7 +17,8 @@ final class QuickShulkerLegacyBridge {
         resolve();
         if (checkAndSend == null) return false;
         try {
-            return Boolean.TRUE.equals(checkAndSend.invoke(null, stack, inventorySlot));
+            return Boolean.TRUE.equals(checkAndSend.invoke(
+                    null, stack, QuickShulkerInventory.inventoryMenuSlot(inventorySlot)));
         } catch (ReflectiveOperationException | LinkageError error) {
             checkAndSend = null;
             return false;

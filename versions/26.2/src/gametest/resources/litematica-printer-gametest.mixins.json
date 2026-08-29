@@ -4,10 +4,8 @@
   "package": "me.aleksilassila.litematica.printer.gametest.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
-    "ConnectionMixin",
     "LitematicaUtilsMixin",
-    "QuickStorageCapabilityMixin",
-    "ServerGamePacketListenerMixin"
+    "QuickStorageCapabilityMixin"
   ],
   "injectors": {
     "defaultRequire": 1

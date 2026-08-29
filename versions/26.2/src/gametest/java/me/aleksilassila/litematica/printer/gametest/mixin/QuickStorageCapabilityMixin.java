@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /** Simulates a new client API connected to a server that does not advertise the protocol. */
 @Pseudo
-@Mixin(targets = "net.kyrptonaught.quickshulker.client.api.QuickStorageClient", remap = false)
+@Mixin(targets = "net.kyrptonaught.quickshulker.api.shulker.client.ShulkerTransferClient", remap = false)
 public abstract class QuickStorageCapabilityMixin {
     @Inject(method = "isAvailable", at = @At("HEAD"), cancellable = true, require = 0)
     private static void litematicaPrinter$forceUnavailable(

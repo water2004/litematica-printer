@@ -32,7 +32,7 @@
   "depends": {
     "minecraft": "${minecraft_dependency}",
     "malilib": ">=${malilib}",
-    "litematica": ">=${litematica}",
+    "litematica": "*",
     "fabric-content-registries-v0": "*"
   },
   "suggests": {

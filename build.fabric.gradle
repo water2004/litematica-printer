@@ -36,14 +36,46 @@ def gameTestQuickShulkerLegacyPacketLoss = providers.gradleProperty(
         .map { it.toBoolean() }
         .orElse(false)
         .get()
+def gameTestQuickShulkerStress = providers.gradleProperty(
+        'printerGameTestQuickShulkerStress')
+        .map { it.toBoolean() }
+        .orElse(false)
+        .get()
+def gameTestQuickShulkerStressLossPercent = providers.gradleProperty(
+        'printerGameTestQuickShulkerStressLossPercent')
+        .orElse('15')
+        .get()
+def gameTestQuickShulkerIntegrationOnly = providers.gradleProperty(
+        'printerGameTestQuickShulkerIntegrationOnly')
+        .map { it.toBoolean() }
+        .orElse(false)
+        .get()
 def gameTestServux = providers.gradleProperty('printerGameTestServux')
         .map { it.toBoolean() }
         .orElse(false)
         .get()
+def gameTestBedrockMiner = providers.gradleProperty('printerGameTestBedrockMiner')
+        .orElse('none')
+        .get()
+def gameTestLitematica = providers.gradleProperty('printerGameTestLitematica')
+        .orElse('default')
+        .get()
+def gameTestMalilib = providers.gradleProperty('printerGameTestMalilib')
+        .orElse('default')
+        .get()
+def gameTestLitematicaOverride = gameTestLitematica != 'default'
 
 if (!(gameTestQuickShulker in ['none', 'current', 'legacy', 'direct', 'direct-fallback'])) {
     throw new GradleException(
             "printerGameTestQuickShulker 必须是 none、current、legacy、direct 或 direct-fallback，当前为 ${gameTestQuickShulker}")
+}
+if (!(gameTestBedrockMiner in ['none', 'bedrockminer', 'blockminer'])) {
+    throw new GradleException(
+            "printerGameTestBedrockMiner 必须是 none、bedrockminer 或 blockminer，当前为 ${gameTestBedrockMiner}")
+}
+if (gameTestLitematicaOverride != (gameTestMalilib != 'default')) {
+    throw new GradleException(
+            'printerGameTestLitematica 和 printerGameTestMalilib 必须同时指定')
 }
 
 fabricApi {
@@ -73,8 +105,10 @@ configurations.configureEach {
     resolutionStrategy {
         force "net.fabricmc:fabric-loader:${modConfig.fabricLoaderVersion}"
         force "com.terraformersmc:modmenu:${modConfig.prop('modmenu')}"
-        force "maven.modrinth:malilib:${modConfig.prop('malilib_dependency')}"
-        force "maven.modrinth:litematica:${modConfig.prop('litematica_dependency')}"
+        force "maven.modrinth:malilib:${gameTestLitematicaOverride
+                ? gameTestMalilib : modConfig.prop('malilib_dependency')}"
+        force "maven.modrinth:litematica:${gameTestLitematicaOverride
+                ? gameTestLitematica : modConfig.prop('litematica_dependency')}"
     }
 }
 
@@ -105,8 +139,13 @@ dependencies {
         }
     }
 
-    implementation "fi.dy.masa.malilib:${modConfig.prop('malilib')}"
-    implementation "fi.dy.masa.litematica:${modConfig.prop('litematica')}"
+    if (printerGameTest && gameTestLitematicaOverride) {
+        implementation "maven.modrinth:malilib:${gameTestMalilib}"
+        implementation "maven.modrinth:litematica:${gameTestLitematica}"
+    } else {
+        implementation "fi.dy.masa.malilib:${modConfig.prop('malilib')}"
+        implementation "fi.dy.masa.litematica:${modConfig.prop('litematica')}"
+    }
     def quickshulkerUrl = modConfig.prop('quickshulker').toString()
     if (!quickshulkerUrl.isEmpty()) {
         def quickshulkerFile = modConfig.downloadDependencyMod(quickshulkerUrl)
@@ -128,6 +167,30 @@ dependencies {
             throw new GradleException('无法下载 QuickShulker 3.0.4 测试依赖')
         }
         gametestImplementation files(legacyQuickShulkerFile)
+    }
+
+    def networkChaosUrl = project.findProperty('network_chaos')?.toString()
+    if (networkChaosUrl != null && !networkChaosUrl.isEmpty()) {
+        def networkChaosFile = modConfig.downloadDependencyMod(networkChaosUrl)
+        if (networkChaosFile == null || !networkChaosFile.exists()) {
+            throw new GradleException('无法下载 NetworkChaosFabric GameTest 依赖')
+        }
+        gametestImplementation files(networkChaosFile)
+    }
+
+    if (printerGameTest && gameTestBedrockMiner != 'none') {
+        def propertyName = gameTestBedrockMiner == 'bedrockminer'
+                ? 'bedrock_miner_gametest'
+                : 'block_miner_gametest'
+        def minerUrl = project.findProperty(propertyName)?.toString()
+        if (minerUrl == null || minerUrl.isEmpty()) {
+            throw new GradleException("未配置 ${gameTestBedrockMiner} GameTest 发布依赖")
+        }
+        def minerFile = modConfig.downloadDependencyMod(minerUrl)
+        if (minerFile == null || !minerFile.exists()) {
+            throw new GradleException("无法下载 ${gameTestBedrockMiner} GameTest 依赖")
+        }
+        gametestImplementation files(minerFile)
     }
 }
 
@@ -163,8 +226,14 @@ tasks.named('runClientGameTest') {
     jvmArgs "-Dlitematica-printer.gametest.quickshulker=${gameTestQuickShulker}"
     jvmArgs "-Dlitematica-printer.gametest.quickshulkerPacketLoss=${gameTestQuickShulkerPacketLoss}"
     jvmArgs "-Dlitematica-printer.gametest.quickshulkerLegacyPacketLoss=${gameTestQuickShulkerLegacyPacketLoss}"
+    jvmArgs "-Dlitematica-printer.gametest.quickshulkerStress=${gameTestQuickShulkerStress}"
+    jvmArgs "-Dlitematica-printer.gametest.quickshulkerStressLossPercent=${gameTestQuickShulkerStressLossPercent}"
+    jvmArgs "-Dlitematica-printer.gametest.quickshulkerIntegrationOnly=${gameTestQuickShulkerIntegrationOnly}"
     jvmArgs "-Dlitematica-printer.gametest.networkFaults=${gameTestNetworkFaults}"
     jvmArgs "-Dlitematica-printer.gametest.servux=${gameTestServux}"
+    jvmArgs "-Dlitematica-printer.gametest.bedrockMiner=${gameTestBedrockMiner}"
+    jvmArgs "-Dlitematica-printer.gametest.litematica=${gameTestLitematica}"
+    jvmArgs "-Dlitematica-printer.gametest.malilib=${gameTestMalilib}"
 }
 
 publishing {

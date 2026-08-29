@@ -25,6 +25,8 @@ public final class NetworkFaultController {
     private static final AtomicInteger REMAINING_USE_ITEM_ON_DROPS = new AtomicInteger();
     private static final AtomicLong RANDOM_SEEN = new AtomicLong();
     private static final AtomicLong RANDOM_DROPPED = new AtomicLong();
+    private static final AtomicLong RANDOM_DROP_STREAK = new AtomicLong();
+    private static final AtomicLong RANDOM_MAX_DROP_STREAK = new AtomicLong();
     private static final Map<String, AtomicLong> RANDOM_CLASS_OCCURRENCES =
             new ConcurrentHashMap<>();
     private static final Map<String, AtomicLong> RANDOM_DROPS_BY_CLASS =
@@ -42,6 +44,8 @@ public final class NetworkFaultController {
         REMAINING_USE_ITEM_ON_DROPS.set(0);
         RANDOM_SEEN.set(0);
         RANDOM_DROPPED.set(0);
+        RANDOM_DROP_STREAK.set(0);
+        RANDOM_MAX_DROP_STREAK.set(0);
         RANDOM_CLASS_OCCURRENCES.clear();
         RANDOM_DROPS_BY_CLASS.clear();
     }
@@ -72,6 +76,8 @@ public final class NetworkFaultController {
         randomLossPercent = lossPercent;
         RANDOM_SEEN.set(0);
         RANDOM_DROPPED.set(0);
+        RANDOM_DROP_STREAK.set(0);
+        RANDOM_MAX_DROP_STREAK.set(0);
         RANDOM_CLASS_OCCURRENCES.clear();
         RANDOM_DROPS_BY_CLASS.clear();
         if (!ARMED.compareAndSet(Fault.NONE, Fault.RANDOM_ALL_PACKETS)) {
@@ -81,11 +87,15 @@ public final class NetworkFaultController {
 
     public static RandomLossSnapshot stopRandomLoss() {
         ARMED.compareAndSet(Fault.RANDOM_ALL_PACKETS, Fault.NONE);
+        Map<String, Long> seenByClass = new TreeMap<>();
+        RANDOM_CLASS_OCCURRENCES.forEach((name, count) ->
+                seenByClass.put(name, count.get()));
         Map<String, Long> droppedByClass = new TreeMap<>();
         RANDOM_DROPS_BY_CLASS.forEach((name, count) ->
                 droppedByClass.put(name, count.get()));
         return new RandomLossSnapshot(
-                RANDOM_SEEN.get(), RANDOM_DROPPED.get(), droppedByClass);
+                RANDOM_SEEN.get(), RANDOM_DROPPED.get(),
+                RANDOM_MAX_DROP_STREAK.get(), seenByClass, droppedByClass);
     }
 
     public static boolean dropRandomPacket(Packet<?> packet) {
@@ -98,9 +108,14 @@ public final class NetworkFaultController {
         long sample = mix64(randomSeed
                 ^ ((long) className.hashCode() << 32)
                 ^ occurrence);
-        if (Long.remainderUnsigned(sample, 100) >= randomLossPercent) return false;
+        if (Long.remainderUnsigned(sample, 100) >= randomLossPercent) {
+            RANDOM_DROP_STREAK.set(0L);
+            return false;
+        }
 
         RANDOM_DROPPED.incrementAndGet();
+        long streak = RANDOM_DROP_STREAK.incrementAndGet();
+        RANDOM_MAX_DROP_STREAK.accumulateAndGet(streak, Math::max);
         RANDOM_DROPS_BY_CLASS
                 .computeIfAbsent(className, ignored -> new AtomicLong())
                 .incrementAndGet();
@@ -147,6 +162,8 @@ public final class NetworkFaultController {
     public record RandomLossSnapshot(
             long seenPackets,
             long droppedPackets,
+            long maxConsecutiveDrops,
+            Map<String, Long> seenByClass,
             Map<String, Long> droppedByClass) {
     }
 }

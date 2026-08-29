@@ -7,6 +7,7 @@ import fi.dy.masa.litematica.world.WorldSchematic;
 import lombok.Getter;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.core.job.JobPool;
+import me.aleksilassila.litematica.printer.core.status.PrinterWaitReason;
 import me.aleksilassila.litematica.printer.enums.*;
 import me.aleksilassila.litematica.printer.printer.*;
 import me.aleksilassila.litematica.printer.utils.ConfigUtils;
@@ -83,10 +84,13 @@ public abstract class Module extends ConfigUtils {
     private BlockPos waitingPos = null;
     @Nullable
     private TransactionKey waitingKey = null;
+    @Getter
+    private PrinterWaitReason waitingReason = PrinterWaitReason.ITEM_SWITCH;
 
     private volatile GuiBlockInfo currentGuiInfo = null;
     private volatile GuiBlockInfo currentJobGuiInfo = null;
     private volatile int queuedJobCount = 0;
+    private volatile long lastJobActivityTick = Long.MIN_VALUE;
     private volatile long producerScannedPositions = 0L;
     private volatile long producerTotalPositions = 0L;
     private volatile boolean searchPrepared = false;
@@ -195,8 +199,13 @@ public abstract class Module extends ConfigUtils {
     }
 
     protected void enterWaiting(@Nullable BlockPos pos) {
+        enterWaiting(pos, PrinterWaitReason.ITEM_SWITCH);
+    }
+
+    protected void enterWaiting(@Nullable BlockPos pos, PrinterWaitReason reason) {
         scanState = ScanState.WAITING;
         waitingPos = pos;
+        waitingReason = reason;
     }
 
     /**
@@ -221,6 +230,7 @@ public abstract class Module extends ConfigUtils {
                 TransactionKey key = waitingKey;
                 waitingPos = null;
                 waitingKey = null;
+                waitingReason = PrinterWaitReason.ITEM_SWITCH;
                 scanState = ScanState.PROCESS;
 
                 boolean executed = false;
@@ -378,6 +388,7 @@ public abstract class Module extends ConfigUtils {
 
     private void updateCurrentJobInfo(@Nullable BlockPos pos, boolean executed) {
         currentJobGuiInfo = pos == null ? null : createGuiInfo(pos, executed);
+        if (pos != null) lastJobActivityTick = ModuleManager.getCurrentHandlerTime();
     }
 
     private GuiBlockInfo createGuiInfo(BlockPos pos, boolean executed) {
@@ -412,9 +423,11 @@ public abstract class Module extends ConfigUtils {
         scanState = ScanState.COLLECT;
         waitingPos = null;
         waitingKey = null;
+        waitingReason = PrinterWaitReason.ITEM_SWITCH;
         jobPool.clear();
         queuedJobCount = 0;
         currentJobGuiInfo = null;
+        lastJobActivityTick = Long.MIN_VALUE;
         producerScannedPositions = 0L;
         producerTotalPositions = 0L;
     }
@@ -430,6 +443,10 @@ public abstract class Module extends ConfigUtils {
 
     public int getQueuedJobCount() {
         return queuedJobCount;
+    }
+
+    public boolean wasJobActiveOnTick(long tick) {
+        return lastJobActivityTick == tick;
     }
 
     public int getJobPoolCapacity() {

@@ -131,7 +131,10 @@ public class FluidRemoval extends Module {
                 }
                 return;
             }
-            Action action = new Action().queueAction(blockPos, Direction.UP, false, player);
+            // Click the upper face of the block below the fluid.  Using UP here
+            // targets the air above when place-in-air is disabled, so falling
+            // blocks can be queued repeatedly before the first one settles.
+            Action action = new Action().queueAction(blockPos, Direction.DOWN, false, player);
             addHighlight(blockPos, HighlightType.PLACE);
             ActionManager.INSTANCE.setNeedWaitModifyLookFromAction(action.getNeedWaitModifyLook());
             if (ActionManager.INSTANCE.sendQueue(player).needWaitModifyLook) {

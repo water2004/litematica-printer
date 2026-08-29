@@ -1,5 +1,9 @@
 package me.aleksilassila.litematica.printer.gametest;
 
+import org.edtp.networkchaos.api.ChaosConfig;
+import org.edtp.networkchaos.api.ExactDropRule;
+import org.edtp.networkchaos.api.NetworkChaos;
+import org.edtp.networkchaos.api.TrafficDirection;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.data.EntityDataManager;
 import fi.dy.masa.litematica.selection.AreaSelection;
@@ -17,6 +21,7 @@ import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerContext;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -38,9 +43,11 @@ public final class ServuxHandConfirmationGameTest implements FabricClientGameTes
 
     @Override
     public void runTest(ClientGameTestContext context) {
+        if (GameTestMode.isBedrockIntegration()) return;
+        if (Boolean.getBoolean("litematica-printer.gametest.quickshulkerStress")) return;
         if (!Boolean.getBoolean("litematica-printer.gametest.servux")) return;
 
-        NetworkFaultController.reset();
+        NetworkChaos.reset();
         TestServuxProtocol.resetCounters();
         TestServuxProtocol.register();
         try (TestDedicatedServerContext server = context.worldBuilder().createServer();
@@ -57,12 +64,16 @@ public final class ServuxHandConfirmationGameTest implements FabricClientGameTes
             context.waitFor(client -> EntityDataManager.getInstance().hasServuxServer(), 200);
 
             context.runOnClient(client -> {
-                NetworkFaultController.armCarriedItemBurst(CARRIED_PACKET_DROPS);
+                NetworkChaos.enable(ChaosConfig.clear().withExactDropRules(
+                        ExactDropRule.forPacketClass(
+                                TrafficDirection.CLIENT_TO_SERVER,
+                                ServerboundSetCarriedItemPacket.class,
+                                CARRIED_PACKET_DROPS)));
                 configurePrinter();
             });
 
             context.waitFor(client ->
-                    NetworkFaultController.droppedCarriedItemPackets()
+                    exactDroppedPackets()
                             == CARRIED_PACKET_DROPS, 200);
             context.waitTicks(80);
             context.runOnClient(client -> disablePrinter());
@@ -79,14 +90,13 @@ public final class ServuxHandConfirmationGameTest implements FabricClientGameTes
 
             System.out.println("[Litematica Printer GameTest] Servux hand confirmation: "
                     + "droppedCarriedItemPackets="
-                    + NetworkFaultController.droppedCarriedItemPackets()
+                    + exactDroppedPackets()
                     + ", protocol=" + protocol + ", server=" + state);
 
-            if (NetworkFaultController.droppedCarriedItemPackets()
-                    != CARRIED_PACKET_DROPS) {
+            if (exactDroppedPackets() != CARRIED_PACKET_DROPS) {
                 throw new AssertionError("Expected exactly " + CARRIED_PACKET_DROPS
                         + " dropped carried-item packets, got "
-                        + NetworkFaultController.droppedCarriedItemPackets());
+                        + exactDroppedPackets());
             }
             if (protocol.metadataRequests() < 1
                     || protocol.entityRequests() < 2
@@ -114,7 +124,7 @@ public final class ServuxHandConfirmationGameTest implements FabricClientGameTes
                 Configs.Print.SERVUX_HAND_CONFIRMATION.setBooleanValue(false);
                 ServuxHandItemConfirmation.reset();
             });
-            NetworkFaultController.reset();
+            NetworkChaos.reset();
             TestServuxProtocol.resetCounters();
         }
     }
@@ -211,6 +221,12 @@ public final class ServuxHandConfirmationGameTest implements FabricClientGameTes
         return stacks.stream()
                 .filter(stack -> stack.is(item))
                 .mapToInt(ItemStack::getCount)
+                .sum();
+    }
+
+    private static long exactDroppedPackets() {
+        return NetworkChaos.stats().exactDropRules().stream()
+                .mapToLong(rule -> rule.dropped())
                 .sum();
     }
 

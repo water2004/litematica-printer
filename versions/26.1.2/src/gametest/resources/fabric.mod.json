@@ -7,8 +7,11 @@
   "entrypoints": {
     "fabric-client-gametest": [
       "me.aleksilassila.litematica.printer.gametest.PrinterIntegrationGameTest",
+      "me.aleksilassila.litematica.printer.gametest.QuickShulkerLifecycleGameTest",
       "me.aleksilassila.litematica.printer.gametest.FluidRemovalGameTest",
-      "me.aleksilassila.litematica.printer.gametest.PacketLossReproductionGameTest"
+      "me.aleksilassila.litematica.printer.gametest.PacketLossReproductionGameTest",
+      "me.aleksilassila.litematica.printer.gametest.QuickShulkerStressGameTest",
+      "me.aleksilassila.litematica.printer.gametest.LitematicaCompatibilityGameTest"
     ]
   },
   "mixins": [

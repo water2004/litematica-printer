@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import me.aleksilassila.litematica.printer.I18n;
 import me.aleksilassila.litematica.printer.config.Configs;
+import me.aleksilassila.litematica.printer.core.status.PrinterWaitReason;
 import me.aleksilassila.litematica.printer.enums.BlockMatchingType;
 import me.aleksilassila.litematica.printer.enums.HighlightType;
 import me.aleksilassila.litematica.printer.handler.AsyncSearchCoordinator;
@@ -309,7 +310,7 @@ public class Print extends Module {
                 if (BlockUtils.isPureWaterSource(ctx.currentState))
                     watingForWaterList.remove(blockPos);
                 else {
-                    enterWaiting(blockPos);
+                    enterWaiting(blockPos, PrinterWaitReason.WORLD_UPDATE);
                     skipIteration.set(true);
                     return;
                 }
@@ -318,7 +319,7 @@ public class Print extends Module {
             if (ctx.currentState.getBlock() instanceof IceBlock) {
                 if (ChainVeinCompat.queueBreaks(List.of(blockPos)) > 0) {
                     watingForWaterList.add(blockPos);
-                    enterWaiting(blockPos);
+                    enterWaiting(blockPos, PrinterWaitReason.WORLD_UPDATE);
                     skipIteration.set(true);
                 } else {
                     setCooldown(blockPos, ConfigUtils.getBreakCooldown());

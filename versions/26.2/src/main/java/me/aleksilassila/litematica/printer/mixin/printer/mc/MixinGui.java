@@ -1,6 +1,7 @@
 package me.aleksilassila.litematica.printer.mixin.printer.mc;
 
 import me.aleksilassila.litematica.printer.handler.ModuleManager;
+import me.aleksilassila.litematica.printer.core.status.PrinterStatus;
 import me.aleksilassila.litematica.printer.utils.RenderUtils;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.ScanState;
@@ -69,6 +70,8 @@ public abstract class MixinGui {
     private static final String KEY_NO_CURRENT_JOB = "litematica-printer.hud.debug.noCurrentJob";
     @Unique
     private static final String KEY_LAG_PAUSED = "litematica-printer.hud.lagPaused";
+    @Unique
+    private static final String KEY_STATUS = "litematica-printer.hud.status";
 
     @Unique
     private static final int DEBUG_PADDING = 4;
@@ -361,7 +364,17 @@ public abstract class MixinGui {
         RenderUtils.drawString((int) (progress * 100) + "%", centerX, centerY + 22, Color.WHITE, true, true);
         drawProgressBar(centerX, centerY + 36, 40, 6, progress, new Color(0, 0, 0, 150), new Color(0, 255, 0, 255));
 
-        int infoY = centerY + 52;
+        PrinterStatus status = ModuleManager.getPrinterStatus();
+        String statusName = MessageUtils.translatable(status.translationKey()).getString();
+        String statusText = MessageUtils.translatable(KEY_STATUS, statusName).getString();
+        Color statusColor = switch (status.kind()) {
+            case ACTIVE -> Color.GREEN;
+            case SEARCH -> Color.CYAN;
+            case WAITING -> Color.ORANGE;
+        };
+        RenderUtils.drawString(statusText, centerX, centerY + 52, statusColor, true, true);
+
+        int infoY = centerY + 66;
 
         HashSet<String> modeNames = new HashSet<>();
         for (Module module : ModuleManager.VALUES) {

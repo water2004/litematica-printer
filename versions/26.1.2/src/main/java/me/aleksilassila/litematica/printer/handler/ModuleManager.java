@@ -4,6 +4,9 @@ import com.google.common.collect.ImmutableList;
 import lombok.Getter;
 import lombok.Setter;
 import me.aleksilassila.litematica.printer.config.Configs;
+import me.aleksilassila.litematica.printer.core.status.PrinterStatus;
+import me.aleksilassila.litematica.printer.core.status.PrinterWaitReason;
+import me.aleksilassila.litematica.printer.enums.ScanState;
 import me.aleksilassila.litematica.printer.handler.handlers.*;
 import me.aleksilassila.litematica.printer.printer.ActionManager;
 import me.aleksilassila.litematica.printer.printer.MissingMaterialTracker;
@@ -91,5 +94,71 @@ public class ModuleManager {
 
     public static void updateTickHandlerTime() {
         currentHandlerTime++;
+    }
+
+    /**
+     * Resolves the scheduler's effective state in the same priority order as
+     * {@link #tick()}. This remains a read-only view: rendering the HUD never
+     * advances either the producer or the consumer.
+     */
+    public static PrinterStatus getPrinterStatus() {
+        if (TakeItOutCompat.isAwaitingItem()) {
+            return PrinterStatus.WAITING_FOR_SHULKER;
+        }
+        if (mc.player == null) {
+            return PrinterStatus.WAITING_FOR_SEARCH;
+        }
+
+        boolean shulkerPending = QuickShulkerCompat.isBusy()
+                || QuickShulkerCompat.getCooldown() > 0
+                || QuickShulkerCompat.isLegacyOpenHandler();
+        if (mc.player.containerMenu != mc.player.inventoryMenu) {
+            return shulkerPending
+                    ? PrinterStatus.WAITING_FOR_SHULKER
+                    : PrinterStatus.WAITING_FOR_CONTAINER;
+        }
+        if (ActionManager.INSTANCE.needWaitModifyLook) {
+            return PrinterStatus.WAITING_FOR_LOOK;
+        }
+        if (Configs.Core.LAG_CHECK.getBooleanValue()
+                && packetTick > Configs.Core.LAG_CHECK_MAX.getIntegerValue()) {
+            return PrinterStatus.PAUSED_BY_LAG;
+        }
+
+        for (Module module : VALUES) {
+            if (!isActiveWorkModule(module) || module.getScanState() != ScanState.WAITING) {
+                continue;
+            }
+            if (module.getWaitingReason() == PrinterWaitReason.WORLD_UPDATE) {
+                return PrinterStatus.WAITING_FOR_WORLD;
+            }
+            return shulkerPending
+                    ? PrinterStatus.WAITING_FOR_SHULKER
+                    : PrinterStatus.WAITING_FOR_HAND;
+        }
+
+        for (Module module : VALUES) {
+            if (!isActiveWorkModule(module)) continue;
+            if (module.getQueuedJobCount() > 0 || module.wasJobActiveOnTick(currentHandlerTime)) {
+                return statusFor(module);
+            }
+        }
+
+        return AsyncSearchCoordinator.INSTANCE.isBusy()
+                ? PrinterStatus.SEARCHING
+                : PrinterStatus.WAITING_FOR_SEARCH;
+    }
+
+    private static boolean isActiveWorkModule(Module module) {
+        return module.getEnableConfig() != null
+                && module.getEnableConfig().getBooleanValue();
+    }
+
+    private static PrinterStatus statusFor(Module module) {
+        if (module == PRINT) return PrinterStatus.PRINTING;
+        if (module == FILL) return PrinterStatus.FILLING;
+        if (module == FLUID_REMOVAL) return PrinterStatus.REMOVING_FLUID;
+        if (module == BEDROCK) return PrinterStatus.BREAKING_BEDROCK;
+        return PrinterStatus.WAITING_FOR_SEARCH;
     }
 }

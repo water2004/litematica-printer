@@ -32,9 +32,12 @@ public final class PrinterIntegrationGameTest implements FabricClientGameTest {
     private static final BlockPos PLACE_TARGET = new BlockPos(2, 64, 0);
     private static final BlockPos BREAK_TARGET = new BlockPos(3, 64, 0);
     private static final int MATERIAL_COUNT = 4;
+    private static final int MAIN_INVENTORY_SHULKER_SLOT = 9;
+    private static final int HOTBAR_SHULKER_SLOT = 0;
 
     @Override
     public void runTest(ClientGameTestContext context) {
+        if (Boolean.getBoolean("litematica-printer.gametest.quickshulkerStress")) return;
         boolean expectChainVein = Boolean.parseBoolean(
                 System.getProperty("litematica-printer.gametest.chainvein", "false"));
         String expectedQuickShulker = System.getProperty(
@@ -45,7 +48,7 @@ public final class PrinterIntegrationGameTest implements FabricClientGameTest {
                 assertOptionalMods(expectChainVein, expectedQuickShulker, expectQuickShulker));
 
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
-            prepareWorld(singleplayer, expectQuickShulker);
+            prepareWorld(singleplayer, expectQuickShulker, MAIN_INVENTORY_SHULKER_SLOT);
             singleplayer.getServer().runCommand("gamemode survival @p");
             singleplayer.getServer().runCommand("tp @p 2.5 65 -3.5");
 
@@ -56,7 +59,8 @@ public final class PrinterIntegrationGameTest implements FabricClientGameTest {
                     && client.level != null
                     && client.level.getBlockState(PLACE_TARGET).isAir()
                     && client.level.getBlockState(PLACE_TARGET.below()).is(Blocks.COBBLESTONE)
-                    && inventoryArrived(client.player.getInventory().getItem(9), expectQuickShulker));
+                    && inventoryArrived(client.player.getInventory().getItem(
+                            MAIN_INVENTORY_SHULKER_SLOT), expectQuickShulker));
             context.runOnClient(client ->
                     assertQuickStorageCapability(expectedQuickShulker));
 
@@ -65,28 +69,23 @@ public final class PrinterIntegrationGameTest implements FabricClientGameTest {
                     && client.level.getBlockState(PLACE_TARGET).is(Blocks.STONE));
             context.waitTicks(5);
 
-            PlacementResult placement = singleplayer.getServer().computeOnServer(server -> {
-                var player = server.getPlayerList().getPlayers().getFirst();
-                int directStone = player.getInventory().getNonEquipmentItems().stream()
-                        .filter(stack -> stack.is(Items.STONE))
-                        .mapToInt(ItemStack::getCount)
-                        .sum();
-                int boxedStone = countStoredStone(player.getInventory().getItem(9));
-                return new PlacementResult(
-                        server.overworld().getBlockState(PLACE_TARGET).is(Blocks.STONE),
-                        directStone,
-                        boxedStone);
-            });
+            PlacementResult placement = readPlacementResult(
+                    singleplayer, MAIN_INVENTORY_SHULKER_SLOT);
 
             if (!placement.placed()
                     || placement.directStone() != MATERIAL_COUNT - 1
-                    || (expectQuickShulker && placement.boxedStone() != 0)) {
+                    || (expectQuickShulker && (placement.boxedStone() != 0
+                        || !placement.boxInOriginalSlot()))) {
                 throw new AssertionError("Printer did not complete material retrieval and placement: "
                         + placement + ", QuickShulker=" + expectedQuickShulker);
             }
 
             context.runOnClient(client -> disablePrinter());
-            testReturnToOriginalShulker(context, singleplayer, expectedQuickShulker);
+            testReturnToOriginalShulker(context, singleplayer, expectedQuickShulker,
+                    MAIN_INVENTORY_SHULKER_SLOT);
+            if (expectQuickShulker) {
+                testHotbarShulker(context, singleplayer, expectedQuickShulker);
+            }
             testChainVein(context, singleplayer, expectChainVein);
         } finally {
             context.runOnClient(client -> disablePrinter());
@@ -111,7 +110,7 @@ public final class PrinterIntegrationGameTest implements FabricClientGameTest {
                 .getMetadata().getVersion().getFriendlyString();
         boolean versionMatches = switch (expectedQuickShulker) {
             case "current", "direct", "direct-fallback" ->
-                    actualVersion.equals("4.0.0-26.1");
+                    actualVersion.equals("4.0.0-alpha.1-26.1");
             case "legacy" -> actualVersion.equals("3.0.4-26.1");
             default -> false;
         };
@@ -127,7 +126,8 @@ public final class PrinterIntegrationGameTest implements FabricClientGameTest {
                 || expectedQuickShulker.equals("direct-fallback");
         boolean apiPresent;
         try {
-            Class.forName("net.kyrptonaught.quickshulker.client.api.QuickStorageClient");
+            Class.forName(
+                    "net.kyrptonaught.quickshulker.api.shulker.client.ShulkerTransferClient");
             apiPresent = true;
         } catch (ClassNotFoundException error) {
             apiPresent = false;
@@ -159,7 +159,8 @@ public final class PrinterIntegrationGameTest implements FabricClientGameTest {
     }
 
     private static void prepareWorld(TestSingleplayerContext singleplayer,
-                                     boolean useQuickShulker) {
+                                     boolean useQuickShulker,
+                                     int materialSlot) {
         singleplayer.getServer().runOnServer(server -> {
             var level = server.overworld();
             var player = server.getPlayerList().getPlayers().getFirst();
@@ -180,20 +181,62 @@ public final class PrinterIntegrationGameTest implements FabricClientGameTest {
                 ItemStack box = new ItemStack(Items.SHULKER_BOX);
                 box.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(
                         List.of(new ItemStack(Items.STONE, MATERIAL_COUNT))));
-                player.getInventory().setItem(9, box);
+                player.getInventory().setItem(materialSlot, box);
             } else {
-                player.getInventory().setItem(9, new ItemStack(Items.STONE, MATERIAL_COUNT));
+                player.getInventory().setItem(materialSlot,
+                        new ItemStack(Items.STONE, MATERIAL_COUNT));
             }
             player.inventoryMenu.sendAllDataToRemote();
         });
     }
 
-    private static boolean inventoryArrived(ItemStack slotNine, boolean useQuickShulker) {
+    private static boolean inventoryArrived(ItemStack materialStack, boolean useQuickShulker) {
         if (useQuickShulker) {
-            return slotNine.is(Items.SHULKER_BOX)
-                    && countStoredStone(slotNine) == MATERIAL_COUNT;
+            return materialStack.is(Items.SHULKER_BOX)
+                    && countStoredStone(materialStack) == MATERIAL_COUNT;
         }
-        return slotNine.is(Items.STONE) && slotNine.getCount() == MATERIAL_COUNT;
+        return materialStack.is(Items.STONE) && materialStack.getCount() == MATERIAL_COUNT;
+    }
+
+    private static void testHotbarShulker(ClientGameTestContext context,
+                                          TestSingleplayerContext singleplayer,
+                                          String quickShulkerMode) {
+        prepareHotbarShulker(singleplayer);
+        context.waitFor(client -> client.player != null
+                && client.level != null
+                && client.level.getBlockState(PLACE_TARGET).isAir()
+                && inventoryArrived(client.player.getInventory().getItem(
+                        HOTBAR_SHULKER_SLOT), true));
+
+        context.runOnClient(client -> configureFillPrinter());
+        context.waitFor(client -> client.level != null
+                && client.level.getBlockState(PLACE_TARGET).is(Blocks.STONE));
+        context.waitTicks(5);
+
+        PlacementResult placement = readPlacementResult(singleplayer, HOTBAR_SHULKER_SLOT);
+        if (!placement.placed() || placement.directStone() != MATERIAL_COUNT - 1
+                || placement.boxedStone() != 0 || !placement.boxInOriginalSlot()) {
+            throw new AssertionError("Printer did not use the in-place hotbar shulker: "
+                    + placement + ", QuickShulker=" + quickShulkerMode);
+        }
+
+        context.runOnClient(client -> disablePrinter());
+        testReturnToOriginalShulker(
+                context, singleplayer, quickShulkerMode, HOTBAR_SHULKER_SLOT);
+    }
+
+    private static void prepareHotbarShulker(TestSingleplayerContext singleplayer) {
+        singleplayer.getServer().runOnServer(server -> {
+            var player = server.getPlayerList().getPlayers().getFirst();
+            player.getInventory().clearContent();
+            server.overworld().setBlockAndUpdate(
+                    PLACE_TARGET, Blocks.AIR.defaultBlockState());
+            ItemStack box = new ItemStack(Items.SHULKER_BOX);
+            box.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(
+                    List.of(new ItemStack(Items.STONE, MATERIAL_COUNT))));
+            player.getInventory().setItem(HOTBAR_SHULKER_SLOT, box);
+            player.inventoryMenu.sendAllDataToRemote();
+        });
     }
 
     private static int countStoredStone(ItemStack stack) {
@@ -250,7 +293,8 @@ public final class PrinterIntegrationGameTest implements FabricClientGameTest {
 
     private static void testReturnToOriginalShulker(ClientGameTestContext context,
                                                      TestSingleplayerContext singleplayer,
-                                                     String quickShulkerMode) {
+                                                     String quickShulkerMode,
+                                                     int shulkerSlot) {
         if (quickShulkerMode.equals("none")) return;
 
         singleplayer.getServer().runOnServer(server -> {
@@ -274,20 +318,23 @@ public final class PrinterIntegrationGameTest implements FabricClientGameTest {
         }
 
         context.waitFor(client -> !QuickShulkerCompat.isBusy());
-        PlacementResult returned = readPlacementResult(singleplayer);
+        PlacementResult returned = readPlacementResult(singleplayer, shulkerSlot);
         for (int tick = 0; tick < 200
                 && (returned.directStone() != 0
                     || returned.boxedStone() != MATERIAL_COUNT - 1); tick++) {
             context.waitTicks(1);
-            returned = readPlacementResult(singleplayer);
+            returned = readPlacementResult(singleplayer, shulkerSlot);
         }
         ReturnClientState clientState = context.computeOnClient(client ->
                 new ReturnClientState(
                         QuickShulkerCompat.isBusy(),
                         countLooseStone(client.player.getInventory()),
-                        countStoredStone(client.player.getInventory().getItem(9))));
+                        countStoredStone(client.player.getInventory().getItem(shulkerSlot)),
+                        client.player.getInventory().getItem(shulkerSlot).is(Items.SHULKER_BOX)));
         if (!returned.placed() || returned.directStone() != 0
-                || returned.boxedStone() != MATERIAL_COUNT - 1 || clientState.busy()
+                || returned.boxedStone() != MATERIAL_COUNT - 1
+                || !returned.boxInOriginalSlot() || clientState.busy()
+                || !clientState.boxInOriginalSlot()
                 || ((quickShulkerMode.equals("current")
                     || quickShulkerMode.equals("direct"))
                     && (clientState.directStone() != 0
@@ -297,13 +344,15 @@ public final class PrinterIntegrationGameTest implements FabricClientGameTest {
         }
     }
 
-    private static PlacementResult readPlacementResult(TestSingleplayerContext singleplayer) {
+    private static PlacementResult readPlacementResult(TestSingleplayerContext singleplayer,
+                                                       int shulkerSlot) {
         return singleplayer.getServer().computeOnServer(server -> {
             var inventory = server.getPlayerList().getPlayers().getFirst().getInventory();
             return new PlacementResult(
                     server.overworld().getBlockState(PLACE_TARGET).is(Blocks.STONE),
                     countLooseStone(inventory),
-                    countStoredStone(inventory.getItem(9)));
+                    countStoredStone(inventory.getItem(shulkerSlot)),
+                    inventory.getItem(shulkerSlot).is(Items.SHULKER_BOX));
         });
     }
 
@@ -352,9 +401,11 @@ public final class PrinterIntegrationGameTest implements FabricClientGameTest {
         }
     }
 
-    private record PlacementResult(boolean placed, int directStone, int boxedStone) {
+    private record PlacementResult(boolean placed, int directStone, int boxedStone,
+                                   boolean boxInOriginalSlot) {
     }
 
-    private record ReturnClientState(boolean busy, int directStone, int boxedStone) {
+    private record ReturnClientState(boolean busy, int directStone, int boxedStone,
+                                     boolean boxInOriginalSlot) {
     }
 }

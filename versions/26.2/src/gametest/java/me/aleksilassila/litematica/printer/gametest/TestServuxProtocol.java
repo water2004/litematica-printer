@@ -7,6 +7,8 @@ import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.storage.TagValueOutput;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -42,7 +44,7 @@ public final class TestServuxProtocol {
             metadata.putString("id", "servux:litematics");
             metadata.putInt("version", ServuxLitematicaPacket.PROTOCOL_VERSION);
             metadata.putString("servux", "gametest-minimal");
-            send(context, ServuxLitematicaPacket.MetadataResponse(metadata));
+            send(context, packetWithCompound("MetadataResponse", metadata));
             return;
         }
 
@@ -65,8 +67,68 @@ public final class TestServuxProtocol {
         player.saveWithoutId(output);
         CompoundTag entityData = output.buildResult();
         entityData.putString("id", "minecraft:player");
-        send(context, ServuxLitematicaPacket.SimpleEntityResponse(
-                packet.getEntityId(), entityData));
+        send(context, entityResponse(packet.getEntityId(), entityData));
+    }
+
+    /**
+     * Litematica 0.28.5 migrated the Servux payload from vanilla CompoundTag to
+     * MaLiLib's CompoundData. Keep the test server compatible with both packet
+     * signatures so the compatibility matrix tests the printer instead of pinning
+     * the test fixture to one Litematica release.
+     */
+    private static ServuxLitematicaPacket packetWithCompound(
+            String factoryName, CompoundTag data) {
+        Method factory = findFactory(factoryName, 1);
+        return invokeFactory(factory, convertCompound(factory.getParameterTypes()[0], data));
+    }
+
+    private static ServuxLitematicaPacket entityResponse(
+            int entityId, CompoundTag data) {
+        Method factory = findFactory("SimpleEntityResponse", 2);
+        Object converted = convertCompound(factory.getParameterTypes()[1], data);
+        return invokeFactory(factory, entityId, converted);
+    }
+
+    private static Method findFactory(String name, int parameterCount) {
+        for (Method method : ServuxLitematicaPacket.class.getMethods()) {
+            if (method.getName().equals(name)
+                    && method.getParameterCount() == parameterCount) {
+                return method;
+            }
+        }
+        throw new IllegalStateException("Missing Servux packet factory: " + name);
+    }
+
+    private static Object convertCompound(Class<?> targetType, CompoundTag data) {
+        if (targetType.isInstance(data)) {
+            return data;
+        }
+        try {
+            Class<?> converter = Class.forName(
+                    "fi.dy.masa.malilib.util.data.tag.converter.DataConverterNbt");
+            Object converted = converter
+                    .getMethod("fromVanillaCompound", CompoundTag.class)
+                    .invoke(null, data);
+            if (!targetType.isInstance(converted)) {
+                throw new IllegalStateException(
+                        "Unsupported Servux compound type: " + targetType.getName());
+            }
+            return converted;
+        } catch (ClassNotFoundException | NoSuchMethodException
+                 | IllegalAccessException | InvocationTargetException exception) {
+            throw new IllegalStateException(
+                    "Unable to adapt Servux compound payload", exception);
+        }
+    }
+
+    private static ServuxLitematicaPacket invokeFactory(
+            Method factory, Object... arguments) {
+        try {
+            return (ServuxLitematicaPacket) factory.invoke(null, arguments);
+        } catch (IllegalAccessException | InvocationTargetException exception) {
+            throw new IllegalStateException(
+                    "Unable to create Servux packet via " + factory.getName(), exception);
+        }
     }
 
     private static void send(

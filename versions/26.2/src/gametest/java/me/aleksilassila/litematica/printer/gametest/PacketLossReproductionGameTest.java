@@ -1,5 +1,11 @@
 package me.aleksilassila.litematica.printer.gametest;
 
+import org.edtp.networkchaos.api.ChaosConfig;
+import org.edtp.networkchaos.api.ChaosStats;
+import org.edtp.networkchaos.api.ExactDropRule;
+import org.edtp.networkchaos.api.LinkProfile;
+import org.edtp.networkchaos.api.NetworkChaos;
+import org.edtp.networkchaos.api.TrafficDirection;
 import fi.dy.masa.malilib.util.LayerMode;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.selection.AreaSelection;
@@ -19,6 +25,9 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContex
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
+import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
+import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -30,7 +39,6 @@ import net.minecraft.world.level.block.Blocks;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -50,14 +58,17 @@ public final class PacketLossReproductionGameTest implements FabricClientGameTes
             Blocks.POLISHED_ANDESITE,
             Blocks.TERRACOTTA);
     private static final int MATERIAL_COUNT = 16;
+    private static final int WRONG_PLACEMENT_CARRIED_PACKET_DROPS = 2;
     private static final int RANDOM_LOSS_MATERIAL_COUNT = 64;
     private static final int MULTI_MATERIAL_STACK_COUNT = 48;
 
     @Override
     public void runTest(ClientGameTestContext context) {
+        if (GameTestMode.isBedrockIntegration()) return;
+        if (Boolean.getBoolean("litematica-printer.gametest.quickshulkerStress")) return;
         if (!Boolean.getBoolean("litematica-printer.gametest.networkFaults")) return;
 
-        NetworkFaultController.reset();
+        NetworkChaos.reset();
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
             prepareWorld(singleplayer);
             singleplayer.getServer().runCommand("gamemode survival @p");
@@ -84,7 +95,7 @@ public final class PacketLossReproductionGameTest implements FabricClientGameTes
         } finally {
             context.runOnClient(client -> disablePrinter());
             TestSchematicRegion.clear();
-            NetworkFaultController.reset();
+            NetworkChaos.reset();
         }
     }
 
@@ -148,16 +159,18 @@ public final class PacketLossReproductionGameTest implements FabricClientGameTes
             ClientGameTestContext context,
             TestSingleplayerContext singleplayer) {
         context.runOnClient(client -> {
-            NetworkFaultController.arm(
-                    NetworkFaultController.Fault.DROP_CARRIED_ITEM_UNTIL_USE_ITEM_ON);
+            NetworkChaos.reset();
+            NetworkChaos.enable(ChaosConfig.clear().withExactDropRules(
+                    ExactDropRule.forPacketClass(
+                            TrafficDirection.CLIENT_TO_SERVER,
+                            ServerboundSetCarriedItemPacket.class,
+                            WRONG_PLACEMENT_CARRIED_PACKET_DROPS)));
             configureFillPrinter(WRONG_BLOCK_TARGETS, true);
         });
 
-        context.waitFor(client -> NetworkFaultController.droppedCarriedItemPackets() > 0);
-        context.waitFor(client -> client.level != null
-                && countBlocks(client.level, WRONG_BLOCK_TARGETS, Blocks.DIRT)
-                == WRONG_BLOCK_TARGETS.size());
-        context.waitTicks(5);
+        context.waitFor(client -> exactDroppedPackets()
+                == WRONG_PLACEMENT_CARRIED_PACKET_DROPS);
+        context.waitTicks(40);
         context.runOnClient(client -> disablePrinter());
 
         WorldState serverState = singleplayer.getServer().computeOnServer(server -> {
@@ -175,7 +188,7 @@ public final class PacketLossReproductionGameTest implements FabricClientGameTes
         System.out.println("[Litematica Printer GameTest] Wrong-placement observation: server="
                 + serverState + ", client=" + clientState
                 + ", droppedCarriedItemPackets="
-                + NetworkFaultController.droppedCarriedItemPackets());
+                + exactDroppedPackets());
 
         if (serverState.matchingTargets() != WRONG_BLOCK_TARGETS.size()
                 || clientState.matchingTargets() != WRONG_BLOCK_TARGETS.size()
@@ -213,11 +226,16 @@ public final class PacketLossReproductionGameTest implements FabricClientGameTes
                 == GHOST_BLOCK_TARGETS.size());
 
         context.runOnClient(client -> {
-            NetworkFaultController.armUseItemOnBurst(GHOST_BLOCK_TARGETS.size());
+            NetworkChaos.reset();
+            NetworkChaos.enable(ChaosConfig.clear().withExactDropRules(
+                    ExactDropRule.forPacketClass(
+                            TrafficDirection.CLIENT_TO_SERVER,
+                            ServerboundUseItemOnPacket.class,
+                            GHOST_BLOCK_TARGETS.size())));
             configureFillPrinter(GHOST_BLOCK_TARGETS, false);
         });
 
-        context.waitFor(client -> NetworkFaultController.droppedUseItemOnPackets()
+        context.waitFor(client -> exactDroppedPackets()
                 == GHOST_BLOCK_TARGETS.size()
                 && client.level != null
                 && countBlocks(client.level, GHOST_BLOCK_TARGETS, Blocks.STONE)
@@ -280,14 +298,15 @@ public final class PacketLossReproductionGameTest implements FabricClientGameTes
                 && client.player.getMainHandItem().getCount() == RANDOM_LOSS_MATERIAL_COUNT);
 
         context.runOnClient(client -> {
-            NetworkFaultController.reset();
-            NetworkFaultController.startRandomLoss(0x4C4954454D415449L, 35);
+            NetworkChaos.reset();
+            NetworkChaos.enable(randomLossConfig(0x4C4954454D415449L, 35));
             configureFillPrinter(RANDOM_LOSS_TARGETS, false);
         });
         context.waitTicks(80);
-        NetworkFaultController.RandomLossSnapshot loss = context.computeOnClient(client -> {
+        ChaosStats loss = context.computeOnClient(client -> {
             disablePrinter();
-            return NetworkFaultController.stopRandomLoss();
+            NetworkChaos.disable();
+            return NetworkChaos.stats();
         });
         context.waitTicks(40);
 
@@ -318,8 +337,9 @@ public final class PacketLossReproductionGameTest implements FabricClientGameTes
                 + loss + ", wrongBlocks=" + wrongBlocks + ", ghostBlocks=" + ghostBlocks
                 + ", clientServerMismatches=" + mismatches + ", server=" + serverState
                 + ", client=" + clientState);
-        if (loss.droppedPackets() < 2
-                || loss.droppedByClass().size() < 2
+        if (droppedPackets(loss) < 2
+                || loss.clientToServer().dropped() == 0
+                || loss.serverToClient().dropped() == 0
                 || (wrongBlocks == 0 && ghostBlocks == 0 && mismatches == 0)) {
             throw new AssertionError("General packet loss did not reproduce a placement anomaly: "
                     + "loss=" + loss + ", wrongBlocks=" + wrongBlocks
@@ -376,14 +396,19 @@ public final class PacketLossReproductionGameTest implements FabricClientGameTes
                 && countBlocks(client.level, MULTI_MATERIAL_TARGETS, Blocks.AIR)
                 == MULTI_MATERIAL_TARGETS.size());
         context.runOnClient(client -> {
-            NetworkFaultController.reset();
-            NetworkFaultController.startRandomLoss(6L, 15);
+            NetworkChaos.reset();
+            NetworkChaos.enable(randomLossConfig(6L, 15)
+                    .withExactDropRules(ExactDropRule.forPacketClass(
+                            TrafficDirection.CLIENT_TO_SERVER,
+                            ServerboundContainerClickPacket.class,
+                            2)));
             configurePrintPrinter(MULTI_MATERIAL_TARGETS);
         });
         context.waitTicks(320);
-        NetworkFaultController.RandomLossSnapshot loss = context.computeOnClient(client -> {
+        ChaosStats loss = context.computeOnClient(client -> {
             disablePrinter();
-            return NetworkFaultController.stopRandomLoss();
+            NetworkChaos.disable();
+            return NetworkChaos.stats();
         });
         context.waitTicks(40);
 
@@ -397,18 +422,18 @@ public final class PacketLossReproductionGameTest implements FabricClientGameTes
                         client.player.getInventory().getNonEquipmentItems()));
         MultiMaterialComparison comparison = compareMultiMaterialWorlds(
                 serverState.blocks(), clientState.blocks());
-        long containerClicks = packetCount(
-                loss.seenByClass(), "ServerboundContainerClickPacket");
+        long containerClicks = loss.exactDropRules().getFirst().matched();
+        long exactContainerClickDrops = loss.exactDropRules().getFirst().dropped();
 
         System.out.println("[Litematica Printer GameTest] QuickShulker 3.0.4 multi-material "
                 + "15% all-packet loss: loss=" + loss
                 + ", containerClicks=" + containerClicks
+                + ", exactContainerClickDrops=" + exactContainerClickDrops
                 + ", comparison=" + comparison
                 + ", server=" + serverState + ", client=" + clientState);
-        if (loss.droppedPackets() < 2
-                || loss.maxConsecutiveDrops() < 2
-                || loss.droppedByClass().size() < 2
+        if (droppedPackets(loss) < 2
                 || containerClicks == 0
+                || exactContainerClickDrops != 2
                 || serverState.distinctCorrectMaterials() < 2
                 || (comparison.wrongBlocks() == 0
                     && comparison.ghostBlocks() == 0
@@ -575,10 +600,27 @@ public final class PacketLossReproductionGameTest implements FabricClientGameTes
         return count;
     }
 
-    private static long packetCount(Map<String, Long> packets, String simpleName) {
-        return packets.entrySet().stream()
-                .filter(entry -> entry.getKey().endsWith('.' + simpleName))
-                .mapToLong(Map.Entry::getValue)
+    private static ChaosConfig randomLossConfig(long seed, int lossPercent) {
+        double lossRate = lossPercent / 100.0D;
+        LinkProfile lossy = new LinkProfile(
+                lossRate, 0L, 0L, 0.0D, 0.0D, 0L);
+        return new ChaosConfig(
+                lossy,
+                lossy,
+                seed,
+                true,
+                ChaosConfig.ALL_PACKETS,
+                ChaosConfig.NO_PACKETS);
+    }
+
+    private static long droppedPackets(ChaosStats stats) {
+        return stats.clientToServer().dropped()
+                + stats.serverToClient().dropped();
+    }
+
+    private static long exactDroppedPackets() {
+        return NetworkChaos.stats().exactDropRules().stream()
+                .mapToLong(rule -> rule.dropped())
                 .sum();
     }
 

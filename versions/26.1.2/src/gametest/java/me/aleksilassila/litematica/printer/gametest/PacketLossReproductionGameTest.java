@@ -34,6 +34,7 @@ public final class PacketLossReproductionGameTest implements FabricClientGameTes
 
     @Override
     public void runTest(ClientGameTestContext context) {
+        if (Boolean.getBoolean("litematica-printer.gametest.quickshulkerStress")) return;
         if (!Boolean.getBoolean("litematica-printer.gametest.networkFaults")) return;
 
         NetworkFaultController.reset();

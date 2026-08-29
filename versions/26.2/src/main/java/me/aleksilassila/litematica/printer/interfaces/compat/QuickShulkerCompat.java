@@ -2,10 +2,8 @@ package me.aleksilassila.litematica.printer.interfaces.compat;
 
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.ShulkerSource;
-import me.aleksilassila.litematica.printer.utils.QuickShulkerUtils;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 
 /**
  * Single optional-dependency boundary for all Quick Shulker material access.
@@ -20,6 +18,7 @@ public final class QuickShulkerCompat {
     /** Selects one Quick Shulker implementation for the lifetime of this play connection. */
     public static void onPlayJoin() {
         QuickShulkerDirectBridge.reset();
+        QuickShulkerLegacySession.reset();
         selectedPath = QuickShulkerDirectBridge.isAvailable()
                 ? Path.DIRECT
                 : Path.LEGACY;
@@ -28,45 +27,48 @@ public final class QuickShulkerCompat {
     public static void onDisconnect() {
         selectedPath = Path.UNRESOLVED;
         QuickShulkerDirectBridge.reset();
+        QuickShulkerLegacySession.reset();
     }
 
     public static boolean requestShulkerItem(LocalPlayer player, Item[] items) {
-        if (!Configs.Print.USE_QUICK_SHULKER.getBooleanValue()) return false;
+        if (!Configs.Print.USE_QUICK_SHULKER.getBooleanValue()
+                || player == null || items == null || items.length == 0
+                || isBusy() || getCooldown() > 0) {
+            return false;
+        }
+
         ShulkerSource source = (ShulkerSource) Configs.Print.SHULKER_SOURCE.getOptionListValue();
-        if (source == ShulkerSource.MOD) {
-            return switch (selectedPath()) {
+        return switch (source) {
+            case TAKE_IT_OUT -> TakeItOutCompat.tryExtract(player, items);
+            case PLUGIN -> QuickShulkerLegacySession.request(player, items, source);
+            case MOD -> switch (selectedPath()) {
                 case DIRECT -> QuickShulkerDirectBridge.request(player, items);
-                case LEGACY -> QuickShulkerUtils.requestLegacyShulkerItem(player, items);
+                case LEGACY -> QuickShulkerLegacySession.request(player, items, source);
                 case UNRESOLVED -> false;
             };
-        }
-        return QuickShulkerUtils.requestLegacyShulkerItem(player, items);
+        };
     }
 
     public static void tick() {
         QuickShulkerDirectBridge.tick();
-        QuickShulkerUtils.tick();
+        QuickShulkerLegacySession.tick();
     }
 
     public static boolean isBusy() {
-        return QuickShulkerDirectBridge.isBusy() || QuickShulkerUtils.isBusy();
+        return QuickShulkerDirectBridge.isBusy() || QuickShulkerLegacySession.isBusy();
     }
 
     public static int getCooldown() {
         return Math.max(QuickShulkerDirectBridge.cooldown(),
-                QuickShulkerUtils.getShulkerCooldown());
+                QuickShulkerLegacySession.cooldown());
     }
 
     public static boolean isLegacyOpenHandler() {
-        return QuickShulkerUtils.isOpenHandler();
+        return QuickShulkerLegacySession.isOpenHandler();
     }
 
     public static void handleLegacyContainerContent() {
-        QuickShulkerUtils.switchFromShulker();
-    }
-
-    public static boolean openLegacyShulker(ItemStack stack, int inventorySlot) {
-        return QuickShulkerLegacyBridge.open(stack, inventorySlot);
+        QuickShulkerLegacySession.handleContainerContent();
     }
 
     private static Path selectedPath() {

@@ -24,6 +24,15 @@ public final class FluidRemovalGameTest implements FabricClientGameTest {
 
     @Override
     public void runTest(ClientGameTestContext context) {
+        if (GameTestMode.isBedrockIntegration()) return;
+        if (Boolean.getBoolean("litematica-printer.gametest.quickshulkerStress")) return;
+        if (Boolean.getBoolean("litematica-printer.gametest.networkFaults")) return;
+        if (Boolean.getBoolean(
+                "litematica-printer.gametest.quickshulkerIntegrationOnly")) return;
+        if (Boolean.getBoolean("litematica-printer.gametest.quickshulkerPacketLoss")
+                || Boolean.getBoolean("litematica-printer.gametest.quickshulkerLegacyPacketLoss")) {
+            return;
+        }
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
             prepareWorld(singleplayer);
             singleplayer.getServer().runCommand("gamemode survival @p");
@@ -105,9 +114,13 @@ public final class FluidRemovalGameTest implements FabricClientGameTest {
 
         Configs.Core.LAG_CHECK.setBooleanValue(false);
         Configs.Core.WORK_RANGE.setDoubleValue(6.0D);
+        Configs.Placement.PRINT_USE_PACKET.setBooleanValue(false);
         Configs.Placement.PLACE_INTERVAL.setIntegerValue(0);
         Configs.Placement.PLACE_BLOCKS_PER_TICK.setIntegerValue(1);
         Configs.Placement.PLACE_COOLDOWN.setIntegerValue(3);
+        // Exercise supported placement. Fluid removal must click the block
+        // below the target instead of placing a falling block above it.
+        Configs.Print.PLACE_IN_AIR.setBooleanValue(false);
         Configs.Print.ENABLED.setBooleanValue(false);
         Configs.Fill.ENABLED.setBooleanValue(false);
         Configs.Bedrock.ENABLED.setBooleanValue(false);
