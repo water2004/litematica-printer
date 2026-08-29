@@ -21,7 +21,8 @@ jobs:
         with:
           fetch-depth: '0'
 
-      - name: Verify release tag
+      - name: Verify release metadata
+        id: release-metadata
         shell: bash
         run: |
           git fetch origin main
@@ -36,6 +37,14 @@ jobs:
           if [[ "$GITHUB_REF_NAME" != "$expected_tag" ]]; then
             echo "Tag $GITHUB_REF_NAME does not match project version $project_version (expected $expected_tag)." >&2
             exit 1
+          fi
+
+          if [[ "$project_version" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+            echo "make_latest=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+            echo "make_latest=true" >> "$GITHUB_OUTPUT"
           fi
 
           notes_file=".github/release-notes/${GITHUB_REF_NAME}.md"
@@ -128,8 +137,8 @@ jobs:
           body_path: .github/release-notes/${{ github.ref_name }}.md
           files: mod-jars/*.jar
           draft: false
-          prerelease: false
-          make_latest: true
+          prerelease: ${{ steps.release-metadata.outputs.prerelease }}
+          make_latest: ${{ steps.release-metadata.outputs.make_latest }}
           overwrite_files: true
           fail_on_unmatched_files: true
           token: ${{ secrets.GITHUB_TOKEN }}
