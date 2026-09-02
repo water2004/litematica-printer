@@ -7,6 +7,7 @@ import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.SelectionType;
 import me.aleksilassila.litematica.printer.handler.ModuleManager;
 import me.aleksilassila.litematica.printer.printer.ActionManager;
+import me.aleksilassila.litematica.printer.utils.ServuxHandItemConfirmation;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
@@ -35,6 +36,8 @@ public final class StaleProducerJobGameTest implements FabricClientGameTest {
 
             context.waitTicks(5);
             singleplayer.getClientLevel().waitForChunksDownload();
+            context.runOnClient(client ->
+                    client.player.getInventory().setSelectedSlot(0));
             context.waitFor(client -> client.player != null
                     && !client.player.getAbilities().instabuild
                     && client.level != null
@@ -153,6 +156,8 @@ public final class StaleProducerJobGameTest implements FabricClientGameTest {
         Configs.Print.BREAK_WRONG_BLOCK.setBooleanValue(false);
         Configs.Print.BREAK_EXTRA_BLOCK.setBooleanValue(false);
         Configs.Print.USE_QUICK_SHULKER.setBooleanValue(false);
+        Configs.Print.SERVUX_HAND_CONFIRMATION.setBooleanValue(false);
+        ServuxHandItemConfirmation.reset();
         Configs.Fill.ENABLED.setBooleanValue(false);
         Configs.Fluid.ENABLED.setBooleanValue(false);
         Configs.Bedrock.ENABLED.setBooleanValue(false);
