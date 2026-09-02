@@ -33,6 +33,7 @@ public final class BedrockIntegrationGameTest implements FabricClientGameTest {
 
     @Override
     public void runTest(ClientGameTestContext context) {
+        if (GameTestMode.isScanPerformance()) return;
         String miner = GameTestMode.bedrockMiner();
         if (miner.equals("none")) return;
         if (!miner.equals("bedrockminer") && !miner.equals("blockminer")) {

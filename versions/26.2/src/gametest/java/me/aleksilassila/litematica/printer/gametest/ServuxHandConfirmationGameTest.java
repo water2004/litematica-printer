@@ -43,6 +43,7 @@ public final class ServuxHandConfirmationGameTest implements FabricClientGameTes
 
     @Override
     public void runTest(ClientGameTestContext context) {
+        if (GameTestMode.isScanPerformance()) return;
         if (GameTestMode.isBedrockIntegration()) return;
         if (Boolean.getBoolean("litematica-printer.gametest.quickshulkerStress")) return;
         if (!Boolean.getBoolean("litematica-printer.gametest.servux")) return;

@@ -30,6 +30,7 @@ public final class LitematicaCompatibilityGameTest implements FabricClientGameTe
 
     @Override
     public void runTest(ClientGameTestContext context) {
+        if (GameTestMode.isScanPerformance()) return;
         String expectedLitematica = System.getProperty(LITEMATICA_PROPERTY, "default");
         if (expectedLitematica.equals("default")) return;
         String expectedMalilib = System.getProperty(MALILIB_PROPERTY, "default");

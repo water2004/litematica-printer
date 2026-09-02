@@ -82,6 +82,13 @@ public class Print extends Module {
     }
 
     @Override
+    protected int snapshotHalo() {
+        // PlacementGuide reads direct neighbors and, for comparator/door safety,
+        // positions up to two blocks away. Keep the full semantic boundary here.
+        return 2;
+    }
+
+    @Override
     public boolean canProcessPos(BlockPos blockPos) {
         WorldSchematic schematic = SchematicWorldHandler.getSchematicWorld();
         if (schematic == null) return false;
@@ -95,6 +102,15 @@ public class Print extends Module {
         }
 
         this.ctx = new SchematicBlockContext(client, level, schematic, blockPos, current, required);
+
+        // Ice-to-water phase two is a scheduler-owned marker. It must not fall into
+        // the generic wrong-block ChainBreak bucket, because executeIteration owns
+        // the break-and-wait-for-water transaction.
+        if (isIceBreakAndWaitJob()) {
+            if (!ChainVeinCompat.canBreakBlock(blockPos)) return false;
+            this.action = new Action().setItem(Items.ICE);
+            return true;
+        }
 
         if (Configs.Print.PRINT_SKIP.getBooleanValue()) {
             List<String> currentConfig = Configs.Print.PRINT_SKIP_LIST.getStrings();
@@ -165,6 +181,14 @@ public class Print extends Module {
         BlockMatchingType matching = getSnapshotMatchingType(required, current, search);
         if (matching == BlockMatchingType.CORRECT) return null;
         if (required.isAir() && !search.breakExtra()) return null;
+
+        if (search.iceForWater()
+                && BlockUtils.isNeedsWater(required)
+                && current.getBlock() instanceof IceBlock) {
+            return search.chainVeinAvailable()
+                    ? new TransactionKey(TransactionKey.Category.ICE_WATER, Items.ICE)
+                    : null;
+        }
 
         SchematicBlockContext snapshotContext = new SchematicBlockContext(
                 client,

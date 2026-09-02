@@ -518,6 +518,7 @@ public abstract class Module extends ConfigUtils {
                 ConfigUtils.getEffectiveRange(),
                 shape,
                 includeSchematicSnapshot(),
+                snapshotHalo(),
                 context,
                 moduleGeneration,
                 jobPool.generation());
@@ -633,6 +634,11 @@ public abstract class Module extends ConfigUtils {
 
     protected boolean includeSchematicSnapshot() {
         return needSchematic;
+    }
+
+    /** Number of neighboring blocks needed by this module's pure search predicate. */
+    protected int snapshotHalo() {
+        return 0;
     }
 
     protected AsyncSearchCoordinator.WorkspaceFilter workspaceFilter() {

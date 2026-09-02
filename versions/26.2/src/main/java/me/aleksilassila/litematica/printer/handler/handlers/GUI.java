@@ -145,30 +145,40 @@ public class GUI extends Module {
         fillProgress.publish(totals.fillTotal, totals.fillFinished);
     }
 
-    @Getter
     public static class Progress {
         private final ConfigBase<?> config;
-        private volatile long total;
-        private volatile long finished;
-        private volatile double progress;
-        private volatile double lastProgress;
+        private final AtomicReference<ProgressSnapshot> published =
+                new AtomicReference<>(new ProgressSnapshot(0L, 0L, 0.0D));
 
         public Progress(ConfigBase<?> config) {
             this.config = config;
-            this.total = 0;
-            this.finished = 0;
-            this.progress = 0.0;
+        }
+
+        public ConfigBase<?> getConfig() {
+            return config;
+        }
+
+        public long getTotal() {
+            return published.get().total();
+        }
+
+        public long getFinished() {
+            return published.get().finished();
         }
 
         public double getProgress() {
-            return progress <= 0 ? lastProgress : progress;
+            return published.get().progress();
         }
 
         public void publish(long total, long finished) {
-            this.total = total;
-            this.finished = finished;
-            progress = total < 1 ? lastProgress : (double) finished / total;
-            lastProgress = progress;
+            ProgressSnapshot previous = published.get();
+            double progress = total < 1
+                    ? previous.progress()
+                    : (double) finished / total;
+            published.set(new ProgressSnapshot(total, finished, progress));
+        }
+
+        private record ProgressSnapshot(long total, long finished, double progress) {
         }
     }
 

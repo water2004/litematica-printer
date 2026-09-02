@@ -41,6 +41,15 @@ def gameTestQuickShulkerStress = providers.gradleProperty(
         .map { it.toBoolean() }
         .orElse(false)
         .get()
+def gameTestScanPerformance = providers.gradleProperty(
+        'printerGameTestScanPerformance')
+        .map { it.toBoolean() }
+        .orElse(false)
+        .get()
+def gameTestScanProfileLabel = providers.gradleProperty(
+        'printerGameTestScanProfileLabel')
+        .orElse('unspecified')
+        .get()
 def gameTestQuickShulkerStressLossPercent = providers.gradleProperty(
         'printerGameTestQuickShulkerStressLossPercent')
         .orElse('15')
@@ -227,6 +236,8 @@ tasks.named('runClientGameTest') {
     jvmArgs "-Dlitematica-printer.gametest.quickshulkerPacketLoss=${gameTestQuickShulkerPacketLoss}"
     jvmArgs "-Dlitematica-printer.gametest.quickshulkerLegacyPacketLoss=${gameTestQuickShulkerLegacyPacketLoss}"
     jvmArgs "-Dlitematica-printer.gametest.quickshulkerStress=${gameTestQuickShulkerStress}"
+    jvmArgs "-Dlitematica-printer.gametest.scanPerformance=${gameTestScanPerformance}"
+    jvmArgs "-Dlitematica-printer.gametest.scanProfileLabel=${gameTestScanProfileLabel}"
     jvmArgs "-Dlitematica-printer.gametest.quickshulkerStressLossPercent=${gameTestQuickShulkerStressLossPercent}"
     jvmArgs "-Dlitematica-printer.gametest.quickshulkerIntegrationOnly=${gameTestQuickShulkerIntegrationOnly}"
     jvmArgs "-Dlitematica-printer.gametest.networkFaults=${gameTestNetworkFaults}"

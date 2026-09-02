@@ -14,4 +14,8 @@ final class GameTestMode {
     static boolean isBedrockIntegration() {
         return !bedrockMiner().equals("none");
     }
+
+    static boolean isScanPerformance() {
+        return Boolean.getBoolean("litematica-printer.gametest.scanPerformance");
+    }
 }
