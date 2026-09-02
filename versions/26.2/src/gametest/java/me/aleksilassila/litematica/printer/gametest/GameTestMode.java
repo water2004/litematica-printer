@@ -18,4 +18,18 @@ final class GameTestMode {
     static boolean isScanPerformance() {
         return Boolean.getBoolean("litematica-printer.gametest.scanPerformance");
     }
+
+    static boolean isFullPrintPerformance() {
+        return Boolean.getBoolean(
+                "litematica-printer.gametest.fullPrintPerformance");
+    }
+
+    static boolean isFullPrintPacketMode() {
+        return Boolean.getBoolean(
+                "litematica-printer.gametest.fullPrintPacketMode");
+    }
+
+    static boolean isAnyPerformance() {
+        return isScanPerformance() || isFullPrintPerformance();
+    }
 }

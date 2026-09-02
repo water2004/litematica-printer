@@ -29,6 +29,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -42,8 +43,12 @@ public final class AsyncSearchCoordinator {
     public static final AsyncSearchCoordinator INSTANCE = new AsyncSearchCoordinator();
 
     private static final boolean PROFILE_SCAN = Boolean.getBoolean(
-            "litematica-printer.gametest.scanPerformance");
+            "litematica-printer.gametest.scanPerformance")
+            || Boolean.getBoolean(
+                    "litematica-printer.gametest.fullPrintPerformance");
     private static final AtomicLong PROFILE_SEQUENCE = new AtomicLong();
+    private static final ConcurrentLinkedQueue<RoundProfile> ROUND_PROFILES =
+            new ConcurrentLinkedQueue<>();
     @Nullable
     private static volatile RoundProfile lastRoundProfile;
 
@@ -79,11 +84,21 @@ public final class AsyncSearchCoordinator {
 
     public static void resetRoundProfileForTesting() {
         lastRoundProfile = null;
+        ROUND_PROFILES.clear();
     }
 
     @Nullable
     public static RoundProfile getLastRoundProfileForTesting() {
         return lastRoundProfile;
+    }
+
+    public static List<RoundProfile> drainRoundProfilesForTesting() {
+        List<RoundProfile> profiles = new ArrayList<>();
+        RoundProfile profile;
+        while ((profile = ROUND_PROFILES.poll()) != null) {
+            profiles.add(profile);
+        }
+        return List.copyOf(profiles);
     }
 
     private static SnapshotCapture captureSmallSnapshot(WorkUnit unit) {
@@ -1319,6 +1334,10 @@ public final class AsyncSearchCoordinator {
         private List<RequestWork> requestWork = List.of();
         private long startedNanos;
         private long planNanos;
+        private long captureNanos;
+        private final AtomicLong searchNanos = new AtomicLong();
+        private long completionNanos;
+        private long publishNanos;
         private long capturedTileSnapshots;
 
         private SearchRound(List<SearchRequest> requests) {
@@ -1404,6 +1423,7 @@ public final class AsyncSearchCoordinator {
 
         @Override
         public CapturedSearch capture(WorkUnit unit) {
+            long profileStarted = PROFILE_SCAN ? System.nanoTime() : 0L;
             SearchRequest request = unit.work().request();
             SnapshotCapture capture = captureSmallSnapshot(unit);
             if (PROFILE_SCAN) {
@@ -1411,19 +1431,28 @@ public final class AsyncSearchCoordinator {
                 unit.work().captured(
                         capture.snapshot(), capture.newlyCreated());
             }
-            return new CapturedSearch(
+            CapturedSearch result = new CapturedSearch(
                     request.owner(),
                     request.context(),
                     capture.snapshot(),
                     unit.work().targetBit());
+            if (PROFILE_SCAN) captureNanos += System.nanoTime() - profileStarted;
+            return result;
         }
 
         @Override
         public SearchTileResult search(CapturedSearch captured) {
-            return captured.owner().searchSnapshotTile(
-                    captured.context(),
-                    captured.snapshot(),
-                    captured.targetBit());
+            long profileStarted = PROFILE_SCAN ? System.nanoTime() : 0L;
+            try {
+                return captured.owner().searchSnapshotTile(
+                        captured.context(),
+                        captured.snapshot(),
+                        captured.targetBit());
+            } finally {
+                if (PROFILE_SCAN) {
+                    searchNanos.addAndGet(System.nanoTime() - profileStarted);
+                }
+            }
         }
 
         @Override
@@ -1457,6 +1486,7 @@ public final class AsyncSearchCoordinator {
 
         @Override
         public void completed(WorkUnit unit, SearchTileResult result) {
+            long profileStarted = PROFILE_SCAN ? System.nanoTime() : 0L;
             unit.releasePages();
             RequestWork work = unit.work();
             work.results().add(result);
@@ -1464,6 +1494,9 @@ public final class AsyncSearchCoordinator {
                     result.scannedPositions());
             work.request().owner().searchRoundProgress(
                     work.request(), scanned, work.plannedPositions());
+            if (PROFILE_SCAN) {
+                completionNanos += System.nanoTime() - profileStarted;
+            }
         }
 
         @Override
@@ -1477,15 +1510,21 @@ public final class AsyncSearchCoordinator {
                     ? requestWork.stream().map(SearchRound::profile).toList()
                     : List.of();
 
+            long publishStarted = PROFILE_SCAN ? System.nanoTime() : 0L;
             for (RequestWork work : requestWork) {
                 work.request().owner().publishSearchRound(
                         work.request(), List.copyOf(work.results()));
             }
+            if (PROFILE_SCAN) publishNanos = System.nanoTime() - publishStarted;
 
             if (PROFILE_SCAN) {
-                lastRoundProfile = new RoundProfile(
+                RoundProfile profile = new RoundProfile(
                         PROFILE_SEQUENCE.incrementAndGet(), scanNanos, planNanos,
+                        captureNanos, searchNanos.get(), completionNanos,
+                        publishNanos,
                         capturedTileSnapshots, profiles);
+                lastRoundProfile = profile;
+                ROUND_PROFILES.add(profile);
             }
         }
 
@@ -1550,8 +1589,17 @@ public final class AsyncSearchCoordinator {
             long sequence,
             long scanNanos,
             long planNanos,
+            long captureNanos,
+            long searchNanos,
+            long completionNanos,
+            long publishNanos,
             long capturedTileSnapshots,
             List<RequestProfile> requests) {
+
+        public long activeWorkNanos() {
+            return planNanos + captureNanos + searchNanos
+                    + completionNanos + publishNanos;
+        }
     }
 
     public record RequestProfile(

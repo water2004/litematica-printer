@@ -20,7 +20,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class Action {
-    protected Map<Direction, Vec3> sides;
+    /**
+     * 普通放置动作都使用相同的六面零偏移表。该表只会被读取；需要特殊面的动作会
+     * 通过 setSides() 替换整个引用，因此无需为每个候选动作重复创建 Map 和 Vec3。
+     */
+    private static final Map<Direction, Vec3> DEFAULT_SIDES = createDefaultSides();
+
+    protected Map<Direction, Vec3> sides = DEFAULT_SIDES;
 
     @Nullable
     @Getter
@@ -37,11 +43,15 @@ public class Action {
     @Getter
     protected Boolean needWaitModifyLook = false;
 
-    public Action() {
-        this.sides = new HashMap<>();
+    private static Map<Direction, Vec3> createDefaultSides() {
+        Map<Direction, Vec3> sides = new HashMap<>();
         for (Direction direction : Direction.values()) {
             sides.put(direction, new Vec3(0, 0, 0));
         }
+        return Collections.unmodifiableMap(sides);
+    }
+
+    public Action() {
     }
 
     public Action setLookRotation(int lookRotation) {
@@ -74,10 +84,7 @@ public class Action {
 
     public @NotNull Map<Direction, Vec3> getSides() {
         if (this.sides == null) {
-            this.sides = new HashMap<>();
-            for (Direction d : Direction.values()) {
-                this.sides.put(d, new Vec3(0, 0, 0));
-            }
+            this.sides = DEFAULT_SIDES;
         }
         return this.sides;
     }

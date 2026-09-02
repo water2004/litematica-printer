@@ -4,6 +4,9 @@
   "package": "me.aleksilassila.litematica.printer.gametest.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
+    "BlockItemPlacementProfileMixin",
+    "ClientPacketProfileMixin",
+    "ModuleConsumerProfileMixin",
     "LitematicaUtilsMixin",
     "QuickStorageCapabilityMixin"
   ],

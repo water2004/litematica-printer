@@ -93,7 +93,7 @@ public final class IceForWaterChainVeinGameTest implements FabricClientGameTest 
     }
 
     private static boolean shouldSkip() {
-        return GameTestMode.isScanPerformance()
+        return GameTestMode.isAnyPerformance()
                 || GameTestMode.isBedrockIntegration()
                 || !System.getProperty(
                         "litematica-printer.gametest.quickshulker", "none").equals("none")

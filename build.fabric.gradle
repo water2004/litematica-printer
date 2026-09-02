@@ -62,6 +62,20 @@ def gameTestScanBenchmarkOnly = providers.gradleProperty(
         .map { it.toBoolean() }
         .orElse(false)
         .get()
+def gameTestFullPrintPerformance = providers.gradleProperty(
+        'printerGameTestFullPrintPerformance')
+        .map { it.toBoolean() }
+        .orElse(false)
+        .get()
+def gameTestFullPrintJfr = providers.gradleProperty(
+        'printerGameTestFullPrintJfr')
+        .orElse('')
+        .get()
+def gameTestFullPrintPacketMode = providers.gradleProperty(
+        'printerGameTestFullPrintPacketMode')
+        .map { it.toBoolean() }
+        .orElse(false)
+        .get()
 def gameTestQuickShulkerStressLossPercent = providers.gradleProperty(
         'printerGameTestQuickShulkerStressLossPercent')
         .orElse('15')
@@ -257,6 +271,9 @@ tasks.named('runClientGameTest') {
     jvmArgs "-Dlitematica-printer.gametest.scanProfileLabel=${gameTestScanProfileLabel}"
     jvmArgs "-Dlitematica-printer.gametest.scanIterations=${gameTestScanIterations}"
     jvmArgs "-Dlitematica-printer.gametest.scanBenchmarkOnly=${gameTestScanBenchmarkOnly}"
+    jvmArgs "-Dlitematica-printer.gametest.fullPrintPerformance=${gameTestFullPrintPerformance}"
+    jvmArgs "-Dlitematica-printer.gametest.fullPrintJfr=${gameTestFullPrintJfr}"
+    jvmArgs "-Dlitematica-printer.gametest.fullPrintPacketMode=${gameTestFullPrintPacketMode}"
     if (!gameTestScanJfr.isEmpty()) {
         jvmArgs "-XX:StartFlightRecording=filename=${gameTestScanJfr},settings=profile,dumponexit=true"
     }

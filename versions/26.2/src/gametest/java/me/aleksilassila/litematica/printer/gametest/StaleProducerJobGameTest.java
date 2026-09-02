@@ -97,7 +97,7 @@ public final class StaleProducerJobGameTest implements FabricClientGameTest {
     }
 
     private static boolean shouldSkip() {
-        return GameTestMode.isScanPerformance()
+        return GameTestMode.isAnyPerformance()
                 || GameTestMode.isBedrockIntegration()
                 || Boolean.getBoolean("litematica-printer.gametest.quickshulkerStress")
                 || Boolean.getBoolean("litematica-printer.gametest.networkFaults")

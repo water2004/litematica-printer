@@ -47,7 +47,7 @@ public final class PrinterIntegrationGameTest implements FabricClientGameTest {
 
     @Override
     public void runTest(ClientGameTestContext context) {
-        if (GameTestMode.isScanPerformance()) return;
+        if (GameTestMode.isAnyPerformance()) return;
         if (GameTestMode.isBedrockIntegration()) return;
         if (Boolean.getBoolean("litematica-printer.gametest.quickshulkerStress")) return;
         boolean expectChainVein = Boolean.parseBoolean(
