@@ -127,6 +127,7 @@ public class GUI extends Module {
         return new AsyncSearchCoordinator.SearchTileResult(
                 snapshot.ordinal(),
                 snapshot.scannedPositions(),
+                block.acceptedPositions(),
                 List.of(),
                 stats.freeze());
     }

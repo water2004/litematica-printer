@@ -551,6 +551,7 @@ public abstract class Module extends ConfigUtils {
         return new AsyncSearchCoordinator.SearchTileResult(
                 snapshot.ordinal(),
                 snapshot.scannedPositions(),
+                block.acceptedPositions(),
                 List.copyOf(jobs),
                 lastCandidate);
     }

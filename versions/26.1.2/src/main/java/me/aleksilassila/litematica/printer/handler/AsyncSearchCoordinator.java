@@ -1,6 +1,7 @@
 package me.aleksilassila.litematica.printer.handler;
 
 import fi.dy.masa.litematica.world.WorldSchematic;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import me.aleksilassila.litematica.printer.Reference;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.core.concurrent.AsyncRoundCoordinator;
@@ -23,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +43,7 @@ public final class AsyncSearchCoordinator {
     static final int MASK_TILE_MAX_VOLUME = 128;
     /** 世界与投影按互不重叠的小页读取，每个位置在一轮内最多读取一次。 */
     static final int SNAPSHOT_PAGE_EDGE = 8;
+    private static final int SNAPSHOT_PAGE_SHIFT = 3;
     private static final Map<ShapeMaskKey, CompiledShapeMask> SHAPE_MASKS =
             new ConcurrentHashMap<>();
 
@@ -73,65 +74,29 @@ public final class AsyncSearchCoordinator {
         SearchTileSnapshot cached = unit.shared().snapshot();
         if (cached != null) return cached;
 
-        CaptureGroup group = unit.shared().group();
-        SearchRequest request = group.representative();
+        SearchRequest request = unit.shared().group().representative();
         TileSpec spec = unit.shared().spec();
         SnapshotBlockView currentView = unit.shared().currentPages()
-                .capture(unit.shared().pageRange());
+                .capture(unit.shared().currentWindow());
         SnapshotBlockView requiredView = unit.shared().requiredPages() == null
                 ? emptyView(Blocks.AIR.defaultBlockState(), request.level())
-                : unit.shared().requiredPages().capture(unit.shared().pageRange());
-        int capacity = Math.toIntExact(Math.min(spec.volume(), Integer.MAX_VALUE));
-        long[] positions = new long[capacity];
-        BlockState[] currentStates = new BlockState[capacity];
-        BlockState[] requiredStates = unit.shared().requiredPages() != null
-                ? new BlockState[capacity] : null;
-        long[] targetMasks = new long[capacity];
-        int[] acceptedCounts = new int[group.targets().size()];
-        int[] size = {0};
-
-        forEachPosition(spec, request.bounds(), pos -> {
-            if (!unit.shared().shapeFull()
-                    && !unit.shared().shapeMask().containsWorld(
-                            pos.getX(), pos.getY(), pos.getZ(),
-                            unit.shared().originX(),
-                            unit.shared().originY(),
-                            unit.shared().originZ())) return;
-
-            long targetMask = 0L;
-            for (int targetIndex = 0;
-                    targetIndex < group.targets().size(); targetIndex++) {
-                RequestWork target = group.targets().get(targetIndex);
-                CoverageMode mode = unit.shared().mode(targetIndex);
-                if (mode == CoverageMode.FULL
-                        || (mode == CoverageMode.PARTIAL
-                        && target.workspace().contains(pos))) {
-                    targetMask |= target.targetBit();
-                    acceptedCounts[targetIndex]++;
-                }
-            }
-            if (targetMask == 0L) return;
-
-            int index = size[0]++;
-            positions[index] = pos.asLong();
-            currentStates[index] = currentView.getBlockState(pos);
-            targetMasks[index] = targetMask;
-            if (requiredStates != null) {
-                requiredStates[index] = requiredView.getBlockState(pos);
-            }
-        });
+                : unit.shared().requiredPages()
+                        .capture(unit.shared().requiredWindow());
 
         SearchTileSnapshot snapshot = new SearchTileSnapshot(
-                spec.ordinal(),
-                spec.volume(),
-                positions,
-                currentStates,
-                requiredStates,
-                targetMasks,
-                acceptedCounts,
-                size[0],
+                spec,
+                request.bounds(),
                 currentView,
-                requiredView);
+                requiredView,
+                unit.shared().requiredPages() != null,
+                unit.shared().shapeMask(),
+                unit.shared().shapeFull(),
+                unit.shared().originX(),
+                unit.shared().originY(),
+                unit.shared().originZ(),
+                unit.shared().modes(),
+                unit.shared().workspaces(),
+                false);
         unit.shared().setSnapshot(snapshot);
         return snapshot;
     }
@@ -145,16 +110,17 @@ public final class AsyncSearchCoordinator {
         SnapshotBlockView required = emptyView(
                 Blocks.AIR.defaultBlockState(), request.level());
         return new SearchTileSnapshot(
-                spec.ordinal(), spec.volume(),
-                new long[0], new BlockState[0], null,
-                new long[0], new int[unit.shared().group().targets().size()], 0,
-                current, required);
+                spec, request.bounds(), current, required, false,
+                unit.shared().shapeMask(), unit.shared().shapeFull(),
+                unit.shared().originX(), unit.shared().originY(),
+                unit.shared().originZ(), unit.shared().modes(),
+                unit.shared().workspaces(), true);
     }
 
     private static SnapshotBlockView emptyView(
             BlockState fallback, ClientLevel level) {
         return new SnapshotBlockView(
-                new SnapshotPage[0], 0, 0, 0, 0, 0, 0,
+                new PageSlot[0], 0, 0, 0, 0, 0, 0,
                 fallback, level.getMinY(), level.getHeight());
     }
 
@@ -164,59 +130,6 @@ public final class AsyncSearchCoordinator {
         return SHAPE_MASKS.computeIfAbsent(
                 key, ignored -> CompiledShapeMask.compile(
                         request.shape(), request.range()));
-    }
-
-    private static void forEachPosition(
-            TileSpec spec, SearchBounds bounds, PositionConsumer consumer) {
-        int xStart = bounds.xIncrement() ? spec.minX() : spec.maxX();
-        int xEnd = bounds.xIncrement() ? spec.maxX() : spec.minX();
-        int yStart = bounds.yIncrement() ? spec.minY() : spec.maxY();
-        int yEnd = bounds.yIncrement() ? spec.maxY() : spec.minY();
-        int zStart = bounds.zIncrement() ? spec.minZ() : spec.maxZ();
-        int zEnd = bounds.zIncrement() ? spec.maxZ() : spec.minZ();
-        int xStep = bounds.xIncrement() ? 1 : -1;
-        int yStep = bounds.yIncrement() ? 1 : -1;
-        int zStep = bounds.zIncrement() ? 1 : -1;
-        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
-
-        switch (bounds.iterationOrder()) {
-            case XYZ -> {
-                for (int z = zStart; continuing(z, zEnd, zStep); z += zStep)
-                    for (int y = yStart; continuing(y, yEnd, yStep); y += yStep)
-                        for (int x = xStart; continuing(x, xEnd, xStep); x += xStep)
-                            consumer.accept(mutable.set(x, y, z));
-            }
-            case XZY -> {
-                for (int y = yStart; continuing(y, yEnd, yStep); y += yStep)
-                    for (int z = zStart; continuing(z, zEnd, zStep); z += zStep)
-                        for (int x = xStart; continuing(x, xEnd, xStep); x += xStep)
-                            consumer.accept(mutable.set(x, y, z));
-            }
-            case YXZ -> {
-                for (int z = zStart; continuing(z, zEnd, zStep); z += zStep)
-                    for (int x = xStart; continuing(x, xEnd, xStep); x += xStep)
-                        for (int y = yStart; continuing(y, yEnd, yStep); y += yStep)
-                            consumer.accept(mutable.set(x, y, z));
-            }
-            case YZX -> {
-                for (int x = xStart; continuing(x, xEnd, xStep); x += xStep)
-                    for (int z = zStart; continuing(z, zEnd, zStep); z += zStep)
-                        for (int y = yStart; continuing(y, yEnd, yStep); y += yStep)
-                            consumer.accept(mutable.set(x, y, z));
-            }
-            case ZXY -> {
-                for (int y = yStart; continuing(y, yEnd, yStep); y += yStep)
-                    for (int x = xStart; continuing(x, xEnd, xStep); x += xStep)
-                        for (int z = zStart; continuing(z, zEnd, zStep); z += zStep)
-                            consumer.accept(mutable.set(x, y, z));
-            }
-            case ZYX -> {
-                for (int x = xStart; continuing(x, xEnd, xStep); x += xStep)
-                    for (int y = yStart; continuing(y, yEnd, yStep); y += yStep)
-                        for (int z = zStart; continuing(z, zEnd, zStep); z += zStep)
-                            consumer.accept(mutable.set(x, y, z));
-            }
-        }
     }
 
     private static boolean continuing(int value, int end, int step) {
@@ -248,9 +161,13 @@ public final class AsyncSearchCoordinator {
             boolean yIncrement,
             boolean zIncrement) {
         public boolean contains(BlockPos pos) {
-            return pos.getX() >= minX && pos.getX() <= maxX
-                    && pos.getY() >= minY && pos.getY() <= maxY
-                    && pos.getZ() >= minZ && pos.getZ() <= maxZ;
+            return contains(pos.getX(), pos.getY(), pos.getZ());
+        }
+
+        private boolean contains(int x, int y, int z) {
+            return x >= minX && x <= maxX
+                    && y >= minY && y <= maxY
+                    && z >= minZ && z <= maxZ;
         }
 
         private boolean contains(TileSpec tile) {
@@ -275,38 +192,171 @@ public final class AsyncSearchCoordinator {
     /** A single reusable cursor over one immutable tile snapshot. */
     public static final class SearchBlockSnapshot {
         private final SearchTileSnapshot tile;
-        private final long targetBit;
-        private int index = -1;
+        private final int targetIndex;
+        private final int xStart;
+        private final int xEnd;
+        private final int yStart;
+        private final int yEnd;
+        private final int zStart;
+        private final int zEnd;
+        private final int xStep;
+        private final int yStep;
+        private final int zStep;
+        private int x;
+        private int y;
+        private int z;
+        private int acceptedPositions;
+        private boolean started;
         @Nullable
         private BlockPos pos;
+        private BlockState currentState;
+        @Nullable
+        private BlockState requiredState;
 
         private SearchBlockSnapshot(SearchTileSnapshot tile, long targetBit) {
             this.tile = tile;
-            this.targetBit = targetBit;
+            this.targetIndex = Long.numberOfTrailingZeros(targetBit);
+            SearchBounds bounds = tile.bounds;
+            TileSpec spec = tile.spec;
+            this.xStart = bounds.xIncrement() ? spec.minX() : spec.maxX();
+            this.xEnd = bounds.xIncrement() ? spec.maxX() : spec.minX();
+            this.yStart = bounds.yIncrement() ? spec.minY() : spec.maxY();
+            this.yEnd = bounds.yIncrement() ? spec.maxY() : spec.minY();
+            this.zStart = bounds.zIncrement() ? spec.minZ() : spec.maxZ();
+            this.zEnd = bounds.zIncrement() ? spec.maxZ() : spec.minZ();
+            this.xStep = bounds.xIncrement() ? 1 : -1;
+            this.yStep = bounds.yIncrement() ? 1 : -1;
+            this.zStep = bounds.zIncrement() ? 1 : -1;
         }
 
         public boolean advance() {
-            while (++index < tile.blockCount) {
-                if ((tile.targetMasks[index] & targetBit) == 0L) continue;
+            if (tile.empty || targetIndex >= tile.modes.length) return false;
+            CoverageMode mode = tile.modes[targetIndex];
+            if (mode == CoverageMode.EMPTY) return false;
+            while (advanceCoordinate()) {
+                if (!tile.shapeFull
+                        && !tile.shapeMask.containsWorld(
+                                x, y, z,
+                                tile.originX, tile.originY, tile.originZ)) {
+                    continue;
+                }
+                if (mode == CoverageMode.PARTIAL
+                        && !tile.workspaces[targetIndex].contains(x, y, z)) {
+                    continue;
+                }
                 pos = null;
+                int pageIndex = tile.currentView.pageIndex(x, y, z);
+                currentState = tile.currentView.getBlockState(
+                        pageIndex, x, y, z);
+                requiredState = tile.includeRequired
+                        ? tile.requiredView.getBlockState(
+                                pageIndex, x, y, z) : null;
+                acceptedPositions++;
                 return true;
             }
             return false;
         }
 
+        private boolean advanceCoordinate() {
+            if (!started) {
+                started = true;
+                x = xStart;
+                y = yStart;
+                z = zStart;
+                return true;
+            }
+            return switch (tile.bounds.iterationOrder()) {
+                case XYZ -> advanceXyz();
+                case XZY -> advanceXzy();
+                case YXZ -> advanceYxz();
+                case YZX -> advanceYzx();
+                case ZXY -> advanceZxy();
+                case ZYX -> advanceZyx();
+            };
+        }
+
+        private boolean advanceXyz() {
+            x += xStep;
+            if (continuing(x, xEnd, xStep)) return true;
+            x = xStart;
+            y += yStep;
+            if (continuing(y, yEnd, yStep)) return true;
+            y = yStart;
+            z += zStep;
+            return continuing(z, zEnd, zStep);
+        }
+
+        private boolean advanceXzy() {
+            x += xStep;
+            if (continuing(x, xEnd, xStep)) return true;
+            x = xStart;
+            z += zStep;
+            if (continuing(z, zEnd, zStep)) return true;
+            z = zStart;
+            y += yStep;
+            return continuing(y, yEnd, yStep);
+        }
+
+        private boolean advanceYxz() {
+            y += yStep;
+            if (continuing(y, yEnd, yStep)) return true;
+            y = yStart;
+            x += xStep;
+            if (continuing(x, xEnd, xStep)) return true;
+            x = xStart;
+            z += zStep;
+            return continuing(z, zEnd, zStep);
+        }
+
+        private boolean advanceYzx() {
+            y += yStep;
+            if (continuing(y, yEnd, yStep)) return true;
+            y = yStart;
+            z += zStep;
+            if (continuing(z, zEnd, zStep)) return true;
+            z = zStart;
+            x += xStep;
+            return continuing(x, xEnd, xStep);
+        }
+
+        private boolean advanceZxy() {
+            z += zStep;
+            if (continuing(z, zEnd, zStep)) return true;
+            z = zStart;
+            x += xStep;
+            if (continuing(x, xEnd, xStep)) return true;
+            x = xStart;
+            y += yStep;
+            return continuing(y, yEnd, yStep);
+        }
+
+        private boolean advanceZyx() {
+            z += zStep;
+            if (continuing(z, zEnd, zStep)) return true;
+            z = zStart;
+            y += yStep;
+            if (continuing(y, yEnd, yStep)) return true;
+            y = yStart;
+            x += xStep;
+            return continuing(x, xEnd, xStep);
+        }
+
         public BlockPos pos() {
-            if (pos == null) pos = BlockPos.of(tile.positions[index]);
+            if (pos == null) pos = new BlockPos(x, y, z);
             return pos;
         }
 
         public BlockState currentState() {
-            return tile.currentStates[index];
+            return currentState;
         }
 
         @Nullable
         public BlockState requiredState() {
-            BlockState[] states = tile.requiredStates;
-            return states == null ? null : states[index];
+            return requiredState;
+        }
+
+        public int acceptedPositions() {
+            return acceptedPositions;
         }
 
         public SnapshotBlockView currentView() {
@@ -319,52 +369,55 @@ public final class AsyncSearchCoordinator {
     }
 
     public static final class SearchTileSnapshot {
-        private final int ordinal;
-        private final long scannedPositions;
-        private final long[] positions;
-        private final BlockState[] currentStates;
-        @Nullable
-        private final BlockState[] requiredStates;
-        private final long[] targetMasks;
-        private final int[] acceptedCounts;
-        private final int blockCount;
+        private final TileSpec spec;
+        private final SearchBounds bounds;
         private final SnapshotBlockView currentView;
         private final SnapshotBlockView requiredView;
+        private final boolean includeRequired;
+        private final CompiledShapeMask shapeMask;
+        private final boolean shapeFull;
+        private final int originX;
+        private final int originY;
+        private final int originZ;
+        private final CoverageMode[] modes;
+        private final CompiledWorkspace[] workspaces;
+        private final boolean empty;
 
         private SearchTileSnapshot(
-                int ordinal,
-                long scannedPositions,
-                long[] positions,
-                BlockState[] currentStates,
-                @Nullable BlockState[] requiredStates,
-                long[] targetMasks,
-                int[] acceptedCounts,
-                int blockCount,
+                TileSpec spec,
+                SearchBounds bounds,
                 SnapshotBlockView currentView,
-                SnapshotBlockView requiredView) {
-            this.ordinal = ordinal;
-            this.scannedPositions = scannedPositions;
-            this.positions = positions;
-            this.currentStates = currentStates;
-            this.requiredStates = requiredStates;
-            this.targetMasks = targetMasks;
-            this.acceptedCounts = acceptedCounts;
-            this.blockCount = blockCount;
+                SnapshotBlockView requiredView,
+                boolean includeRequired,
+                CompiledShapeMask shapeMask,
+                boolean shapeFull,
+                int originX,
+                int originY,
+                int originZ,
+                CoverageMode[] modes,
+                CompiledWorkspace[] workspaces,
+                boolean empty) {
+            this.spec = spec;
+            this.bounds = bounds;
             this.currentView = currentView;
             this.requiredView = requiredView;
+            this.includeRequired = includeRequired;
+            this.shapeMask = shapeMask;
+            this.shapeFull = shapeFull;
+            this.originX = originX;
+            this.originY = originY;
+            this.originZ = originZ;
+            this.modes = modes;
+            this.workspaces = workspaces;
+            this.empty = empty;
         }
 
         public int ordinal() {
-            return ordinal;
+            return spec.ordinal();
         }
 
         public long scannedPositions() {
-            return scannedPositions;
-        }
-
-        public int blockCount(long targetBit) {
-            int index = Long.numberOfTrailingZeros(targetBit);
-            return index < acceptedCounts.length ? acceptedCounts[index] : 0;
+            return spec.volume();
         }
 
         public SnapshotBlockView currentView() {
@@ -382,7 +435,7 @@ public final class AsyncSearchCoordinator {
 
     /** 搜索线程可见的只读分页视图。页对象不可变，同轮任务可以安全共享。 */
     public static final class SnapshotBlockView implements SignalGetter {
-        private final SnapshotPage[] pages;
+        private final PageSlot[] slots;
         private final int minPageX;
         private final int minPageY;
         private final int minPageZ;
@@ -392,6 +445,29 @@ public final class AsyncSearchCoordinator {
         private final BlockState fallback;
         private final int worldMinY;
         private final int height;
+
+        SnapshotBlockView(
+                PageSlot[] slots,
+                int minPageX,
+                int minPageY,
+                int minPageZ,
+                int pageCountX,
+                int pageCountY,
+                int pageCountZ,
+                BlockState fallback,
+                int worldMinY,
+                int height) {
+            this.slots = slots;
+            this.minPageX = minPageX;
+            this.minPageY = minPageY;
+            this.minPageZ = minPageZ;
+            this.pageCountX = pageCountX;
+            this.pageCountY = pageCountY;
+            this.pageCountZ = pageCountZ;
+            this.fallback = fallback;
+            this.worldMinY = worldMinY;
+            this.height = height;
+        }
 
         SnapshotBlockView(
                 SnapshotPage[] pages,
@@ -404,16 +480,43 @@ public final class AsyncSearchCoordinator {
                 BlockState fallback,
                 int worldMinY,
                 int height) {
-            this.pages = pages;
-            this.minPageX = minPageX;
-            this.minPageY = minPageY;
-            this.minPageZ = minPageZ;
-            this.pageCountX = pageCountX;
-            this.pageCountY = pageCountY;
-            this.pageCountZ = pageCountZ;
-            this.fallback = fallback;
-            this.worldMinY = worldMinY;
-            this.height = height;
+            this(wrapPages(
+                            pages, minPageX, minPageY, minPageZ,
+                            pageCountX, pageCountY, pageCountZ),
+                    minPageX, minPageY, minPageZ,
+                    pageCountX, pageCountY, pageCountZ,
+                    fallback, worldMinY, height);
+        }
+
+        private static PageSlot[] wrapPages(
+                SnapshotPage[] pages,
+                int minPageX,
+                int minPageY,
+                int minPageZ,
+                int pageCountX,
+                int pageCountY,
+                int pageCountZ) {
+            PageSlot[] slots = new PageSlot[pages.length];
+            int index = 0;
+            for (int pageX = minPageX;
+                    pageX < minPageX + pageCountX; pageX++) {
+                for (int pageY = minPageY;
+                        pageY < minPageY + pageCountY; pageY++) {
+                    for (int pageZ = minPageZ;
+                            pageZ < minPageZ + pageCountZ; pageZ++) {
+                        SnapshotPage page = pages[index];
+                        if (page != null) {
+                            PageSlot slot = new PageSlot(
+                                    BlockPos.asLong(pageX, pageY, pageZ),
+                                    pageX, pageY, pageZ);
+                            slot.page = page;
+                            slots[index] = slot;
+                        }
+                        index++;
+                    }
+                }
+            }
+            return slots;
         }
 
         @Override
@@ -423,17 +526,31 @@ public final class AsyncSearchCoordinator {
 
         @Override
         public BlockState getBlockState(BlockPos pos) {
-            int pageX = Math.floorDiv(pos.getX(), SNAPSHOT_PAGE_EDGE) - minPageX;
-            int pageY = Math.floorDiv(pos.getY(), SNAPSHOT_PAGE_EDGE) - minPageY;
-            int pageZ = Math.floorDiv(pos.getZ(), SNAPSHOT_PAGE_EDGE) - minPageZ;
+            return getBlockState(pos.getX(), pos.getY(), pos.getZ());
+        }
+
+        BlockState getBlockState(int x, int y, int z) {
+            return getBlockState(pageIndex(x, y, z), x, y, z);
+        }
+
+        private int pageIndex(int x, int y, int z) {
+            int pageX = (x >> SNAPSHOT_PAGE_SHIFT) - minPageX;
+            int pageY = (y >> SNAPSHOT_PAGE_SHIFT) - minPageY;
+            int pageZ = (z >> SNAPSHOT_PAGE_SHIFT) - minPageZ;
             if (pageX < 0 || pageX >= pageCountX
                     || pageY < 0 || pageY >= pageCountY
                     || pageZ < 0 || pageZ >= pageCountZ) {
-                return fallback;
+                return -1;
             }
-            SnapshotPage page = pages[
-                    (pageX * pageCountY + pageY) * pageCountZ + pageZ];
-            return page == null ? fallback : page.get(pos, fallback);
+            return (pageX * pageCountY + pageY) * pageCountZ + pageZ;
+        }
+
+        private BlockState getBlockState(
+                int pageIndex, int x, int y, int z) {
+            if (pageIndex < 0 || pageIndex >= slots.length) return fallback;
+            PageSlot slot = slots[pageIndex];
+            SnapshotPage page = slot == null ? null : slot.page;
+            return page == null ? fallback : page.get(x, y, z, fallback);
         }
 
         @Override
@@ -479,12 +596,11 @@ public final class AsyncSearchCoordinator {
             this.sizeZ = sizeZ;
         }
 
-        BlockState get(BlockPos pos, BlockState fallback) {
-            int x = pos.getX() - minX;
-            int y = pos.getY() - minY;
-            int z = pos.getZ() - minZ;
-            if (x < 0 || x >= sizeX
-                    || y < 0 || y >= sizeY
+        BlockState get(int worldX, int worldY, int worldZ, BlockState fallback) {
+            int x = worldX - minX;
+            int y = worldY - minY;
+            int z = worldZ - minZ;
+            if (x < 0 || x >= sizeX || y < 0 || y >= sizeY
                     || z < 0 || z >= sizeZ) {
                 return fallback;
             }
@@ -770,9 +886,13 @@ public final class AsyncSearchCoordinator {
         }
 
         boolean contains(BlockPos pos) {
+            return contains(pos.getX(), pos.getY(), pos.getZ());
+        }
+
+        boolean contains(int x, int y, int z) {
             if (unrestricted) return true;
             for (SearchBounds box : boxes) {
-                if (box.contains(pos)) return true;
+                if (box.contains(x, y, z)) return true;
             }
             return false;
         }
@@ -787,9 +907,6 @@ public final class AsyncSearchCoordinator {
                     * ((long) maxY - minY + 1L)
                     * ((long) maxZ - minZ + 1L);
         }
-    }
-
-    private record PageKey(int x, int y, int z) {
     }
 
     private record PageRange(
@@ -826,6 +943,25 @@ public final class AsyncSearchCoordinator {
         }
     }
 
+    private record PageWindow(PageRange range, PageSlot[] slots) {
+    }
+
+    private static final class PageSlot {
+        private final long key;
+        private final int pageX;
+        private final int pageY;
+        private final int pageZ;
+        private SnapshotPage page;
+        private int remainingUses;
+
+        private PageSlot(long key, int pageX, int pageY, int pageZ) {
+            this.key = key;
+            this.pageX = pageX;
+            this.pageY = pageY;
+            this.pageZ = pageZ;
+        }
+    }
+
     /**
      * Scheduler-owned page cache. Pages are captured lazily, shared by every
      * request using the same source, and released after their last dependent
@@ -836,8 +972,8 @@ public final class AsyncSearchCoordinator {
         private final BlockState fallback;
         private final int worldMinY;
         private final int height;
-        private final Map<PageKey, SnapshotPage> pages = new HashMap<>();
-        private final Map<PageKey, Integer> remainingUses = new HashMap<>();
+        private final Long2ObjectOpenHashMap<PageSlot> slots =
+                new Long2ObjectOpenHashMap<>();
         private int coverageMinX = Integer.MAX_VALUE;
         private int coverageMinY = Integer.MAX_VALUE;
         private int coverageMinZ = Integer.MAX_VALUE;
@@ -868,52 +1004,59 @@ public final class AsyncSearchCoordinator {
             coverageMaxZ = Math.max(coverageMaxZ, bounds.maxZ() + safeHalo);
         }
 
-        void retain(PageRange range) {
-            forEachPage(range, key -> remainingUses.merge(key, 1, Integer::sum));
-        }
-
-        SnapshotBlockView capture(PageRange range) {
-            SnapshotPage[] viewPages = new SnapshotPage[
+        PageWindow register(PageRange range, int uses) {
+            if (uses <= 0) {
+                throw new IllegalArgumentException("page window needs a consumer");
+            }
+            PageSlot[] windowSlots = new PageSlot[
                     Math.multiplyExact(Math.multiplyExact(
                             range.countX(), range.countY()), range.countZ())];
             int index = 0;
-            for (int pageX = range.minPageX(); pageX <= range.maxPageX(); pageX++) {
-                for (int pageY = range.minPageY(); pageY <= range.maxPageY(); pageY++) {
-                    for (int pageZ = range.minPageZ(); pageZ <= range.maxPageZ(); pageZ++) {
-                        PageKey key = new PageKey(pageX, pageY, pageZ);
-                        SnapshotPage page = pages.get(key);
-                        if (page == null) {
-                            page = capturePage(key);
-                            pages.put(key, page);
+            for (int pageX = range.minPageX();
+                    pageX <= range.maxPageX(); pageX++) {
+                for (int pageY = range.minPageY();
+                        pageY <= range.maxPageY(); pageY++) {
+                    for (int pageZ = range.minPageZ();
+                            pageZ <= range.maxPageZ(); pageZ++) {
+                        long key = pageKey(pageX, pageY, pageZ);
+                        PageSlot slot = slots.get(key);
+                        if (slot == null) {
+                            slot = new PageSlot(key, pageX, pageY, pageZ);
+                            slots.put(key, slot);
                         }
-                        viewPages[index++] = page;
+                        slot.remainingUses += uses;
+                        windowSlots[index++] = slot;
                     }
                 }
             }
+            return new PageWindow(range, windowSlots);
+        }
+
+        SnapshotBlockView capture(PageWindow window) {
+            for (PageSlot slot : window.slots()) {
+                if (slot.page == null) {
+                    slot.page = capturePage(
+                            slot.pageX, slot.pageY, slot.pageZ);
+                }
+            }
+            PageRange range = window.range();
             return new SnapshotBlockView(
-                    viewPages,
+                    window.slots(),
                     range.minPageX(), range.minPageY(), range.minPageZ(),
                     range.countX(), range.countY(), range.countZ(),
                     fallback, worldMinY, height);
         }
 
-        void release(PageRange range) {
-            forEachPage(range, key -> {
-                Integer remaining = remainingUses.get(key);
-                if (remaining == null) return;
-                if (remaining <= 1) {
-                    remainingUses.remove(key);
-                    pages.remove(key);
-                } else {
-                    remainingUses.put(key, remaining - 1);
-                }
-            });
+        void release(PageWindow window) {
+            for (PageSlot slot : window.slots()) {
+                if (--slot.remainingUses == 0) slots.remove(slot.key);
+            }
         }
 
-        private SnapshotPage capturePage(PageKey key) {
-            int pageMinX = key.x() * SNAPSHOT_PAGE_EDGE;
-            int pageMinY = key.y() * SNAPSHOT_PAGE_EDGE;
-            int pageMinZ = key.z() * SNAPSHOT_PAGE_EDGE;
+        private SnapshotPage capturePage(int pageX, int pageY, int pageZ) {
+            int pageMinX = pageX * SNAPSHOT_PAGE_EDGE;
+            int pageMinY = pageY * SNAPSHOT_PAGE_EDGE;
+            int pageMinZ = pageZ * SNAPSHOT_PAGE_EDGE;
             int minX = Math.max(pageMinX, coverageMinX);
             int minY = Math.max(pageMinY, coverageMinY);
             int minZ = Math.max(pageMinZ, coverageMinZ);
@@ -941,15 +1084,8 @@ public final class AsyncSearchCoordinator {
                     states, minX, minY, minZ, sizeX, sizeY, sizeZ);
         }
 
-        private static void forEachPage(
-                PageRange range, java.util.function.Consumer<PageKey> consumer) {
-            for (int pageX = range.minPageX(); pageX <= range.maxPageX(); pageX++) {
-                for (int pageY = range.minPageY(); pageY <= range.maxPageY(); pageY++) {
-                    for (int pageZ = range.minPageZ(); pageZ <= range.maxPageZ(); pageZ++) {
-                        consumer.accept(new PageKey(pageX, pageY, pageZ));
-                    }
-                }
-            }
+        private static long pageKey(int pageX, int pageY, int pageZ) {
+            return BlockPos.asLong(pageX, pageY, pageZ);
         }
     }
 
@@ -974,6 +1110,7 @@ public final class AsyncSearchCoordinator {
         @Nullable
         private WorldSchematic schematic;
         private int maxHalo;
+        private CompiledWorkspace[] workspaces = new CompiledWorkspace[0];
         private ArrayDeque<SharedTile> pendingTiles = new ArrayDeque<>();
 
         private CaptureGroup(RequestWork first) {
@@ -1015,6 +1152,9 @@ public final class AsyncSearchCoordinator {
             int originZ = (int) Math.round(geometry.eyePos().z);
             List<RelativeTile> relativeTiles =
                     mask.orderedTiles(geometry.bounds());
+            workspaces = targets.stream()
+                    .map(RequestWork::workspace)
+                    .toArray(CompiledWorkspace[]::new);
             pendingTiles = new ArrayDeque<>(relativeTiles.size());
             int ordinal = 0;
             for (RelativeTile relative : relativeTiles) {
@@ -1023,24 +1163,29 @@ public final class AsyncSearchCoordinator {
                         geometry.bounds());
                 if (spec == null) continue;
                 CoverageMode[] modes = new CoverageMode[targets.size()];
-                boolean needed = false;
+                int consumers = 0;
                 for (int targetIndex = 0;
                         targetIndex < targets.size(); targetIndex++) {
                     CoverageMode mode = targets.get(targetIndex)
                             .workspace().classify(spec);
                     modes[targetIndex] = mode;
-                    needed |= mode != CoverageMode.EMPTY;
+                    if (mode != CoverageMode.EMPTY) consumers++;
                 }
-                if (!needed) continue;
+                if (consumers == 0) continue;
                 PageRange pageRange = PageRange.around(
                         spec,
                         maxHalo,
                         geometry.level().getMinY(),
                         geometry.level().getMaxY());
+                PageWindow currentWindow = currentPages.register(
+                        pageRange, consumers);
+                PageWindow requiredWindow = requiredPages == null
+                        ? null : requiredPages.register(pageRange, consumers);
                 pendingTiles.addLast(new SharedTile(
-                        this, spec, currentPages, requiredPages, pageRange,
+                        this, spec, currentPages, requiredPages,
+                        currentWindow, requiredWindow,
                         mask, relative.shapeFull(),
-                        originX, originY, originZ, modes));
+                        originX, originY, originZ, modes, workspaces));
             }
         }
 
@@ -1073,13 +1218,16 @@ public final class AsyncSearchCoordinator {
         private final SnapshotPageCache currentPages;
         @Nullable
         private final SnapshotPageCache requiredPages;
-        private final PageRange pageRange;
+        private final PageWindow currentWindow;
+        @Nullable
+        private final PageWindow requiredWindow;
         private final CompiledShapeMask shapeMask;
         private final boolean shapeFull;
         private final int originX;
         private final int originY;
         private final int originZ;
         private final CoverageMode[] modes;
+        private final CompiledWorkspace[] workspaces;
         @Nullable
         private SearchTileSnapshot snapshot;
 
@@ -1088,34 +1236,33 @@ public final class AsyncSearchCoordinator {
                 TileSpec spec,
                 SnapshotPageCache currentPages,
                 @Nullable SnapshotPageCache requiredPages,
-                PageRange pageRange,
+                PageWindow currentWindow,
+                @Nullable PageWindow requiredWindow,
                 CompiledShapeMask shapeMask,
                 boolean shapeFull,
                 int originX,
                 int originY,
                 int originZ,
-                CoverageMode[] modes) {
+                CoverageMode[] modes,
+                CompiledWorkspace[] workspaces) {
             this.group = group;
             this.spec = spec;
             this.currentPages = currentPages;
             this.requiredPages = requiredPages;
-            this.pageRange = pageRange;
+            this.currentWindow = currentWindow;
+            this.requiredWindow = requiredWindow;
             this.shapeMask = shapeMask;
             this.shapeFull = shapeFull;
             this.originX = originX;
             this.originY = originY;
             this.originZ = originZ;
             this.modes = modes;
-        }
-
-        void retainPages() {
-            currentPages.retain(pageRange);
-            if (requiredPages != null) requiredPages.retain(pageRange);
+            this.workspaces = workspaces;
         }
 
         void releasePages() {
-            currentPages.release(pageRange);
-            if (requiredPages != null) requiredPages.release(pageRange);
+            currentPages.release(currentWindow);
+            if (requiredPages != null) requiredPages.release(requiredWindow);
         }
 
         CaptureGroup group() {
@@ -1135,8 +1282,13 @@ public final class AsyncSearchCoordinator {
             return requiredPages;
         }
 
-        PageRange pageRange() {
-            return pageRange;
+        PageWindow currentWindow() {
+            return currentWindow;
+        }
+
+        @Nullable
+        PageWindow requiredWindow() {
+            return requiredWindow;
         }
 
         CompiledShapeMask shapeMask() {
@@ -1159,8 +1311,12 @@ public final class AsyncSearchCoordinator {
             return originZ;
         }
 
-        CoverageMode mode(int targetIndex) {
-            return modes[targetIndex];
+        CoverageMode[] modes() {
+            return modes;
+        }
+
+        CompiledWorkspace[] workspaces() {
+            return workspaces;
         }
 
         boolean includes(RequestWork target) {
@@ -1308,7 +1464,6 @@ public final class AsyncSearchCoordinator {
                     if (shared == null) continue;
                     for (RequestWork target : group.targets()) {
                         if (!shared.includes(target)) continue;
-                        shared.retainPages();
                         pending.addLast(new WorkUnit(target, shared));
                         target.addPlannedPositions(shared.spec().volume());
                     }
@@ -1395,8 +1550,4 @@ public final class AsyncSearchCoordinator {
         }
     }
 
-    @FunctionalInterface
-    private interface PositionConsumer {
-        void accept(BlockPos pos);
-    }
 }
