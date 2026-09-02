@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings("IfCanBeSwitch")
 public class PlacementGuide {
@@ -41,6 +40,25 @@ public class PlacementGuide {
     protected static final Map<Block, Block> STRIPPED_LOGS = AxeItemAccessor.getStrippables();
     protected static List<String> compostWhitelistCache = new ArrayList<>();      // 缓存堆肥桶白名单的字符串列表（用于判断是否修改）
     protected static Item[] whitelistItemsCache = new Item[0];    // 缓存过滤后的可堆肥物品列表（避免重复计算）
+    /**
+     * 方块处理器只取决于运行时类型。ClassValue 既能支持模组方块子类，
+     * 又避免扫描时为每个坐标重复遍历整张 ClassHook 类型表。
+     */
+    private static final ClassHook[] CLASS_HOOKS = ClassHook.values();
+    private static final ClassValue<ClassHook> CLASS_HOOK_CACHE = new ClassValue<>() {
+        @Override
+        protected ClassHook computeValue(Class<?> blockClass) {
+            for (ClassHook hook : CLASS_HOOKS) {
+                if (hook == ClassHook.DEFAULT) continue;
+                for (Class<?> candidate : hook.classes) {
+                    if (candidate != null && candidate.isAssignableFrom(blockClass)) {
+                        return hook;
+                    }
+                }
+            }
+            return ClassHook.DEFAULT;
+        }
+    };
     protected final @NotNull Minecraft mc;
     public PlacementGuide(@NotNull Minecraft client) {
         this.mc = client;
@@ -57,24 +75,13 @@ public class PlacementGuide {
                 && ctx.requiredState.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER) {
             return null;
         }
-        AtomicReference<Boolean> skip = new AtomicReference<>(false);
-        for (ClassHook hook : ClassHook.values()) {
-            for (Class<?> clazz : hook.classes) {
-                if (clazz != null && clazz.isInstance(ctx.requiredState.getBlock())) {
-                    skip.set(false);
-                    @Nullable Action action = buildAction(ctx, hook, state, skip);
-                    if (action == null && skip.get()) {   // hook 不处理该方块, 继续尝试下一个
-                        continue;
-                    }
-                    return action;
-                }
-            }
-        }
-        return buildAction(ctx, ClassHook.DEFAULT, state, skip);    // 兜底处理
+        ClassHook hook = CLASS_HOOK_CACHE.get(
+                ctx.requiredState.getBlock().getClass());
+        return buildAction(ctx, hook, state);
     }
 
     @SuppressWarnings("EnhancedSwitchMigration")
-    private @Nullable Action buildAction(SchematicBlockContext ctx, ClassHook requiredType, BlockMatchingType state, AtomicReference<Boolean> skip) {
+    private @Nullable Action buildAction(SchematicBlockContext ctx, ClassHook requiredType, BlockMatchingType state) {
         // 跳过含水方块
         if (Configs.Print.SKIP_WATERLOGGED_BLOCK.getBooleanValue() && BlockUtils.isNeedsWater(ctx.requiredState)) {
             return null;
@@ -99,13 +106,13 @@ public class PlacementGuide {
         Action action;
         switch (state) {
             case MISSING_BLOCK:
-                action = buildActionMissingBlock(ctx, requiredType, skip);
+                action = buildActionMissingBlock(ctx, requiredType);
                 break;
             case ERROR_BLOCK:
-                action = buildActionErrorBlock(ctx, requiredType, skip);
+                action = buildActionErrorBlock(ctx, requiredType);
                 break;
             case ERROR_BLOCK_STATE:
-                action = buildActionErrorBlockState(ctx, requiredType, skip);
+                action = buildActionErrorBlockState(ctx, requiredType);
                 break;
             default:
                 action = null;
@@ -115,7 +122,7 @@ public class PlacementGuide {
     }
 
     /*** 缺失方块：实际位置为空，或当前方块在可替换列表中且启用了替换功能 ***/
-    private @Nullable Action buildActionMissingBlock(SchematicBlockContext ctx, ClassHook requiredType, AtomicReference<Boolean> skip) {
+    private @Nullable Action buildActionMissingBlock(SchematicBlockContext ctx, ClassHook requiredType) {
         switch (requiredType) {
             case TORCH -> {
                 Direction lookDirection = ctx.getRequiredStateProperty(WallTorchBlock.FACING).orElse(Direction.UP).getOpposite();
@@ -668,7 +675,7 @@ public class PlacementGuide {
     }
 
     /*** 状态错误：方块类型相同，但方块状态（如朝向、亮度等）不一致 ***/
-    private @Nullable Action buildActionErrorBlockState(SchematicBlockContext ctx, ClassHook requiredType, AtomicReference<Boolean> skip) {
+    private @Nullable Action buildActionErrorBlockState(SchematicBlockContext ctx, ClassHook requiredType) {
         boolean printBreakWrongStateBlock = Configs.Print.BREAK_WRONG_STATE_BLOCK.getBooleanValue();
 
         switch (requiredType) {
@@ -986,7 +993,7 @@ public class PlacementGuide {
     }
 
     /*** 方块错误：方块类型完全不同，且不满足缺失/状态错误的条件 ***/
-    private @Nullable Action buildActionErrorBlock(SchematicBlockContext ctx, ClassHook requiredType, AtomicReference<Boolean> skip) {
+    private @Nullable Action buildActionErrorBlock(SchematicBlockContext ctx, ClassHook requiredType) {
         switch (requiredType) {
             case FARMLAND -> {
                 Block[] soilBlocks = new Block[]{Blocks.GRASS_BLOCK, Blocks.DIRT, Blocks.DIRT_PATH, Blocks.COARSE_DIRT};

@@ -14,6 +14,8 @@
       "me.aleksilassila.litematica.printer.gametest.QuickShulkerStressGameTest",
       "me.aleksilassila.litematica.printer.gametest.BedrockIntegrationGameTest",
       "me.aleksilassila.litematica.printer.gametest.LitematicaCompatibilityGameTest",
+      "me.aleksilassila.litematica.printer.gametest.StaleProducerJobGameTest",
+      "me.aleksilassila.litematica.printer.gametest.IceForWaterChainVeinGameTest",
       "me.aleksilassila.litematica.printer.gametest.PrinterBehaviorBaselineGameTest",
       "me.aleksilassila.litematica.printer.gametest.ScanPerformanceGameTest"
     ]

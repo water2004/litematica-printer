@@ -50,6 +50,18 @@ def gameTestScanProfileLabel = providers.gradleProperty(
         'printerGameTestScanProfileLabel')
         .orElse('unspecified')
         .get()
+def gameTestScanJfr = providers.gradleProperty('printerGameTestScanJfr')
+        .orElse('')
+        .get()
+def gameTestScanIterations = providers.gradleProperty(
+        'printerGameTestScanIterations')
+        .orElse('1')
+        .get()
+def gameTestScanBenchmarkOnly = providers.gradleProperty(
+        'printerGameTestScanBenchmarkOnly')
+        .map { it.toBoolean() }
+        .orElse(false)
+        .get()
 def gameTestQuickShulkerStressLossPercent = providers.gradleProperty(
         'printerGameTestQuickShulkerStressLossPercent')
         .orElse('15')
@@ -139,7 +151,12 @@ dependencies {
     if (printerGameTest && gameTestChainVein) {
         def gameTestChainVeinJar = project.findProperty('printerGameTestChainVeinJar')?.toString()
         if (gameTestChainVeinJar == null || gameTestChainVeinJar.isEmpty()) {
-            gametestImplementation files(chainVeinFile)
+            def gameTestChainVeinFile = modConfig.downloadDependencyMod(
+                    modConfig.prop('chainvein_gametest').toString())
+            if (gameTestChainVeinFile == null || !gameTestChainVeinFile.exists()) {
+                throw new GradleException("无法下载 ChainVeinFabric GameTest 依赖")
+            }
+            gametestImplementation files(gameTestChainVeinFile)
         } else if (file(gameTestChainVeinJar).exists()) {
             gametestImplementation files(gameTestChainVeinJar)
         } else {
@@ -238,6 +255,11 @@ tasks.named('runClientGameTest') {
     jvmArgs "-Dlitematica-printer.gametest.quickshulkerStress=${gameTestQuickShulkerStress}"
     jvmArgs "-Dlitematica-printer.gametest.scanPerformance=${gameTestScanPerformance}"
     jvmArgs "-Dlitematica-printer.gametest.scanProfileLabel=${gameTestScanProfileLabel}"
+    jvmArgs "-Dlitematica-printer.gametest.scanIterations=${gameTestScanIterations}"
+    jvmArgs "-Dlitematica-printer.gametest.scanBenchmarkOnly=${gameTestScanBenchmarkOnly}"
+    if (!gameTestScanJfr.isEmpty()) {
+        jvmArgs "-XX:StartFlightRecording=filename=${gameTestScanJfr},settings=profile,dumponexit=true"
+    }
     jvmArgs "-Dlitematica-printer.gametest.quickshulkerStressLossPercent=${gameTestQuickShulkerStressLossPercent}"
     jvmArgs "-Dlitematica-printer.gametest.quickshulkerIntegrationOnly=${gameTestQuickShulkerIntegrationOnly}"
     jvmArgs "-Dlitematica-printer.gametest.networkFaults=${gameTestNetworkFaults}"

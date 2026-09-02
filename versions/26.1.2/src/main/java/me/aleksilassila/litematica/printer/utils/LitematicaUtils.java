@@ -65,6 +65,47 @@ public class LitematicaUtils {
         return false;
     }
 
+    /**
+     * Captures the enabled placement geometry intersecting {@code limit}.
+     * Litematica already indexes placement parts by chunk, so this performs one
+     * lookup per relevant chunk instead of one lookup per scanned block.
+     */
+    public static List<PrinterBox> getSchematicBoxesSnapshot(PrinterBox limit) {
+        if (limit == null) return List.of();
+        SchematicPlacementManager manager = DataManager.getSchematicPlacementManager();
+        List<PrinterBox> result = new ArrayList<>();
+        int minChunkX = Math.floorDiv(limit.minX, 16);
+        int maxChunkX = Math.floorDiv(limit.maxX, 16);
+        int minChunkZ = Math.floorDiv(limit.minZ, 16);
+        int maxChunkZ = Math.floorDiv(limit.maxZ, 16);
+
+        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
+                for (SchematicPlacementManager.PlacementPart part
+                        : manager.getPlacementPartsInChunk(chunkX, chunkZ)) {
+                    SchematicPlacement placement = part.getPlacement();
+                    if (placement == null || !placement.isEnabled()) continue;
+                    SubRegionPlacement subRegion =
+                            getSubRegionForPlacementPart(part);
+                    if (subRegion != null && !subRegion.isEnabled()) continue;
+
+                    var box = part.getBox();
+                    int minX = Math.max(limit.minX, box.minX());
+                    int minY = Math.max(limit.minY, box.minY());
+                    int minZ = Math.max(limit.minZ, box.minZ());
+                    int maxX = Math.min(limit.maxX, box.maxX());
+                    int maxY = Math.min(limit.maxY, box.maxY());
+                    int maxZ = Math.min(limit.maxZ, box.maxZ());
+                    if (minX <= maxX && minY <= maxY && minZ <= maxZ) {
+                        result.add(new PrinterBox(
+                                minX, minY, minZ, maxX, maxY, maxZ));
+                    }
+                }
+            }
+        }
+        return List.copyOf(result);
+    }
+
     @Nullable
     private static SubRegionPlacement getSubRegionForPlacementPart(SchematicPlacementManager.PlacementPart part) {
         SchematicPlacement placement = part.getPlacement();

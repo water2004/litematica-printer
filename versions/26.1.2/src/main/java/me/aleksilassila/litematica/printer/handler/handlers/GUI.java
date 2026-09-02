@@ -86,11 +86,13 @@ public class GUI extends Module {
     @Override
     protected AsyncSearchCoordinator.SearchTileResult searchTile(
             Object searchContext,
-            AsyncSearchCoordinator.SearchTileSnapshot snapshot) {
+            AsyncSearchCoordinator.SearchTileSnapshot snapshot,
+            long targetBit) {
         GuiSearchContext context = (GuiSearchContext) searchContext;
         MutableStats stats = new MutableStats();
 
-        for (AsyncSearchCoordinator.SearchBlockSnapshot block : snapshot.blocks()) {
+        AsyncSearchCoordinator.SearchBlockSnapshot block = snapshot.cursor(targetBit);
+        while (block.advance()) {
             if (context.printEnabled()
                     && block.requiredState() != null
                     && !block.requiredState().isAir()) {

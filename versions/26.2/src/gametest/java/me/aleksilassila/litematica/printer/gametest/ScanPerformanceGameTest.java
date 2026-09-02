@@ -16,6 +16,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -28,9 +30,9 @@ public final class ScanPerformanceGameTest implements FabricClientGameTest {
     private static final int MIN_Z = -48;
     private static final int MAX_Z = 48;
     private static final double WORK_RANGE = 40.0D;
-    private static final long EXPECTED_BOUNDS = 551_368L;
+    private static final long EXPECTED_BOUNDS = 531_441L;
     private static final long EXPECTED_ACCEPTED = 531_441L;
-    private static final int EXPECTED_SEARCH_TILES = 1_331;
+    private static final int EXPECTED_SEARCH_TILES = 4_817;
     private static final long MAX_SHARED_STATE_READS = 1_300_000L;
     private static final long EXPECTED_PRINT_JOBS = 65_229L;
     private static final long EXPECTED_PRINT_JOB_XOR = 8_994_597_566_184_131_034L;
@@ -56,20 +58,36 @@ public final class ScanPerformanceGameTest implements FabricClientGameTest {
                 configureScanner();
             });
 
-            context.waitFor(client -> {
+            int iterations = Math.max(1, Integer.getInteger(
+                    "litematica-printer.gametest.scanIterations", 1));
+            List<Long> samples = new ArrayList<>(iterations);
+            for (int iteration = 0; iteration < iterations; iteration++) {
+                if (iteration > 0) {
+                    context.waitFor(client ->
+                            !AsyncSearchCoordinator.INSTANCE.isBusy(), 1200);
+                    context.runOnClient(client -> {
+                        ModuleManager.GUI.resetScanState();
+                        ModuleManager.PRINT.resetScanState();
+                        AsyncSearchCoordinator.resetRoundProfileForTesting();
+                        Configs.Core.WORK_SWITCH.setBooleanValue(true);
+                    });
+                }
+                context.waitFor(client -> completedPrintProfile() != null, 1200);
                 AsyncSearchCoordinator.RoundProfile profile =
-                        AsyncSearchCoordinator.getLastRoundProfileForTesting();
-                return profile != null
-                        && profile.requests().stream()
-                        .anyMatch(request -> request.moduleId().equals("print"));
-            }, 1200);
+                        context.computeOnClient(client -> {
+                            Configs.Core.WORK_SWITCH.setBooleanValue(false);
+                            return completedPrintProfile();
+                        });
+                assertProfile(profile);
+                printProfile(profile, iteration + 1);
+                samples.add(profile.scanNanos());
+            }
+            printBenchmarkSummary(samples);
 
-            AsyncSearchCoordinator.RoundProfile profile = context.computeOnClient(client -> {
-                Configs.Core.WORK_SWITCH.setBooleanValue(false);
-                return AsyncSearchCoordinator.getLastRoundProfileForTesting();
-            });
-            assertProfile(profile);
-            printProfile(profile);
+            if (Boolean.getBoolean(
+                    "litematica-printer.gametest.scanBenchmarkOnly")) {
+                return;
+            }
 
             context.waitFor(client -> !AsyncSearchCoordinator.INSTANCE.isBusy(), 1200);
             double publishedProgress = context.computeOnClient(client ->
@@ -206,8 +224,13 @@ public final class ScanPerformanceGameTest implements FabricClientGameTest {
         if (gui.tileCount() != EXPECTED_SEARCH_TILES
                 || print.tileCount() != EXPECTED_SEARCH_TILES) {
             throw new AssertionError(
-                    "The scanner no longer preserves 8x8x8 worker granularity: "
+                    "The scanner no longer preserves the compiled mask partition: "
                             + profile.requests());
+        }
+        if (profile.capturedTileSnapshots() != EXPECTED_SEARCH_TILES) {
+            throw new AssertionError(
+                    "GUI and printer did not share exactly one snapshot per tile: "
+                            + profile.capturedTileSnapshots());
         }
         long sharedStateReads = gui.stateReads() + print.stateReads();
         if (sharedStateReads > MAX_SHARED_STATE_READS) {
@@ -241,11 +264,24 @@ public final class ScanPerformanceGameTest implements FabricClientGameTest {
                 .orElseThrow(() -> new AssertionError("Missing scan request " + id));
     }
 
-    private static void printProfile(AsyncSearchCoordinator.RoundProfile profile) {
+    private static AsyncSearchCoordinator.RoundProfile completedPrintProfile() {
+        AsyncSearchCoordinator.RoundProfile profile =
+                AsyncSearchCoordinator.getLastRoundProfileForTesting();
+        if (profile == null) return null;
+        return profile.requests().stream()
+                .anyMatch(request -> request.moduleId().equals("print"))
+                ? profile : null;
+    }
+
+    private static void printProfile(
+            AsyncSearchCoordinator.RoundProfile profile, int iteration) {
         String label = System.getProperty(
                 "litematica-printer.gametest.scanProfileLabel", "unspecified");
         System.out.println("[ScanProfile] label=" + label
+                + " iteration=" + iteration
                 + " sequence=" + profile.sequence()
+                + " snapshots=" + profile.capturedTileSnapshots()
+                + " planMs=" + profile.planNanos() / 1_000_000.0D
                 + " scanMs=" + profile.scanNanos() / 1_000_000.0D);
         for (AsyncSearchCoordinator.RequestProfile request : profile.requests()) {
             System.out.println("[ScanProfile] module=" + request.moduleId()
@@ -259,6 +295,26 @@ public final class ScanPerformanceGameTest implements FabricClientGameTest {
                     + " jobSum=" + Long.toUnsignedString(request.jobSum())
                     + " iceWaterJobs=" + request.iceWaterJobs());
         }
+    }
+
+    private static void printBenchmarkSummary(List<Long> samples) {
+        List<Long> sorted = new ArrayList<>(samples);
+        Collections.sort(sorted);
+        double medianNanos;
+        int middle = sorted.size() / 2;
+        if ((sorted.size() & 1) == 0) {
+            medianNanos = (sorted.get(middle - 1) + sorted.get(middle)) / 2.0D;
+        } else {
+            medianNanos = sorted.get(middle);
+        }
+        String label = System.getProperty(
+                "litematica-printer.gametest.scanProfileLabel", "unspecified");
+        System.out.println("[ScanBenchmark] label=" + label
+                + " iterations=" + samples.size()
+                + " medianMs=" + medianNanos / 1_000_000.0D
+                + " samplesMs=" + samples.stream()
+                .map(nanos -> Double.toString(nanos / 1_000_000.0D))
+                .toList());
     }
 
     private static void cleanup() {

@@ -72,7 +72,7 @@ public class IteratorManager {
                 || this.box == null
                 || !this.box.equals(lastBox)
                 || lastEyePos == null
-                || !lastEyePos.closerThan(eyeBP, effectiveRange * 0.4)
+                || !lastEyePos.equals(eyeBP)
                 || lastExpandRange != currentRange
                 || layerMin != lastLayerMin
                 || layerMax != lastLayerMax
@@ -95,12 +95,13 @@ public class IteratorManager {
             lastLayerMode = layerMode;
             lastSelectionType = selectionType;
 
-            int minX = (int) Math.floor(player.getX() - effectiveRange);
-            int maxX = (int) Math.ceil(player.getX() + effectiveRange);
-            int minY = (int) Math.floor(player.getEyeY() - effectiveRange);
-            int maxY = (int) Math.ceil(player.getEyeY() + effectiveRange);
-            int minZ = (int) Math.floor(player.getZ() - effectiveRange);
-            int maxZ = (int) Math.ceil(player.getZ() + effectiveRange);
+            int discreteExtent = Math.max(0, (int) Math.floor(effectiveRange));
+            int minX = eyeBP.getX() - discreteExtent;
+            int maxX = eyeBP.getX() + discreteExtent;
+            int minY = eyeBP.getY() - discreteExtent;
+            int maxY = eyeBP.getY() + discreteExtent;
+            int minZ = eyeBP.getZ() - discreteExtent;
+            int maxZ = eyeBP.getZ() + discreteExtent;
 
             // 层范围裁剪应对所有选区模式生效，而非仅限"可见层"模式
             if (layerMode != LayerMode.ALL) {

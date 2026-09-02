@@ -1,6 +1,9 @@
 package me.aleksilassila.litematica.printer.gametest;
 
+import me.aleksilassila.litematica.printer.printer.PrinterBox;
 import net.minecraft.core.BlockPos;
+
+import java.util.List;
 
 public final class TestSchematicRegion {
     private static volatile Bounds bounds;
@@ -28,6 +31,24 @@ public final class TestSchematicRegion {
                 && pos.getX() >= current.minX && pos.getX() <= current.maxX
                 && pos.getY() >= current.minY && pos.getY() <= current.maxY
                 && pos.getZ() >= current.minZ && pos.getZ() <= current.maxZ;
+    }
+
+    public static boolean isActive() {
+        return bounds != null;
+    }
+
+    public static List<PrinterBox> snapshotIntersection(PrinterBox limit) {
+        Bounds current = bounds;
+        if (current == null || limit == null) return List.of();
+        int minX = Math.max(current.minX, limit.minX);
+        int minY = Math.max(current.minY, limit.minY);
+        int minZ = Math.max(current.minZ, limit.minZ);
+        int maxX = Math.min(current.maxX, limit.maxX);
+        int maxY = Math.min(current.maxY, limit.maxY);
+        int maxZ = Math.min(current.maxZ, limit.maxZ);
+        return minX <= maxX && minY <= maxY && minZ <= maxZ
+                ? List.of(new PrinterBox(minX, minY, minZ, maxX, maxY, maxZ))
+                : List.of();
     }
 
     private record Bounds(

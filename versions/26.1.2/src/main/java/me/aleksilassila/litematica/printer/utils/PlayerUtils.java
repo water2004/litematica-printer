@@ -60,15 +60,13 @@ public class PlayerUtils {
         return dx * dx + dy * dy + dz * dz < distance * distance;
     }
 
-    // 球面（碰撞箱最近点距离，与 Minecraft 实际交互距离检查一致）
+    // 离散球面：与预编译工作范围掩码使用完全相同的整数坐标语义。
     public static boolean isWithinWorkInteractedEuclideanRange(BlockPos blockPos, double range) {
         LocalPlayer player = client.player;
         if (player == null || blockPos == null) return false;
-        Vec3 eyePos = player.getEyePosition();
-        double dx = Math.max(Math.max(blockPos.getX() - eyePos.x, eyePos.x - (blockPos.getX() + 1)), 0);
-        double dy = Math.max(Math.max(blockPos.getY() - eyePos.y, eyePos.y - (blockPos.getY() + 1)), 0);
-        double dz = Math.max(Math.max(blockPos.getZ() - eyePos.z, eyePos.z - (blockPos.getZ() + 1)), 0);
-        return dx * dx + dy * dy + dz * dz <= range * range;
+        return isWithinWorkInteractedEuclideanRange(
+                blockPos.getX(), blockPos.getY(), blockPos.getZ(),
+                player.getEyePosition(), range);
     }
 
     /** 快速路径：调用方已缓存 eyePos，消除 getEyePosition() 分配 */
@@ -78,10 +76,13 @@ public class PlayerUtils {
 
     /** 最内层：原始 int 参数，消除所有 getter 调用 */
     public static boolean isWithinWorkInteractedEuclideanRange(int x, int y, int z, Vec3 eyePos, double range) {
+        int ex = (int) Math.round(eyePos.x);
+        int ey = (int) Math.round(eyePos.y);
+        int ez = (int) Math.round(eyePos.z);
+        long dx = (long) x - ex;
+        long dy = (long) y - ey;
+        long dz = (long) z - ez;
         double rangeSq = range * range;
-        double dx = Math.max(Math.max(x - eyePos.x, eyePos.x - (x + 1)), 0);
-        double dy = Math.max(Math.max(y - eyePos.y, eyePos.y - (y + 1)), 0);
-        double dz = Math.max(Math.max(z - eyePos.z, eyePos.z - (z + 1)), 0);
         return dx * dx + dy * dy + dz * dz <= rangeSq;
     }
 

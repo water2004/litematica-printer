@@ -11,7 +11,9 @@
       "me.aleksilassila.litematica.printer.gametest.FluidRemovalGameTest",
       "me.aleksilassila.litematica.printer.gametest.PacketLossReproductionGameTest",
       "me.aleksilassila.litematica.printer.gametest.QuickShulkerStressGameTest",
-      "me.aleksilassila.litematica.printer.gametest.LitematicaCompatibilityGameTest"
+      "me.aleksilassila.litematica.printer.gametest.LitematicaCompatibilityGameTest",
+      "me.aleksilassila.litematica.printer.gametest.StaleProducerJobGameTest",
+      "me.aleksilassila.litematica.printer.gametest.IceForWaterChainVeinGameTest"
     ]
   },
   "mixins": [

@@ -529,16 +529,19 @@ public abstract class Module extends ConfigUtils {
      */
     final AsyncSearchCoordinator.SearchTileResult searchSnapshotTile(
             Object searchContext,
-            AsyncSearchCoordinator.SearchTileSnapshot snapshot) {
-        return searchTile(searchContext, snapshot);
+            AsyncSearchCoordinator.SearchTileSnapshot snapshot,
+            long targetBit) {
+        return searchTile(searchContext, snapshot, targetBit);
     }
 
     protected AsyncSearchCoordinator.SearchTileResult searchTile(
             Object searchContext,
-            AsyncSearchCoordinator.SearchTileSnapshot snapshot) {
+            AsyncSearchCoordinator.SearchTileSnapshot snapshot,
+            long targetBit) {
         List<JobPool.Job<BlockPos, TransactionKey>> jobs = new ArrayList<>();
         SearchCandidateInfo lastCandidate = null;
-        for (AsyncSearchCoordinator.SearchBlockSnapshot block : snapshot.blocks()) {
+        AsyncSearchCoordinator.SearchBlockSnapshot block = snapshot.cursor(targetBit);
+        while (block.advance()) {
             TransactionKey key = getSearchTransactionKey(block, searchContext);
             if (key == null) continue;
             jobs.add(new JobPool.Job<>(block.pos(), key));
