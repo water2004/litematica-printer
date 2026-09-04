@@ -110,7 +110,7 @@ public final class PrinterIntegrationGameTest implements FabricClientGameTest {
                 .getMetadata().getVersion().getFriendlyString();
         boolean versionMatches = switch (expectedQuickShulker) {
             case "current", "direct", "direct-fallback" ->
-                    actualVersion.equals("4.0.0-alpha.1-26.1");
+                    actualVersion.equals("4.0.0-26.1");
             case "legacy" -> actualVersion.equals("3.0.4-26.1");
             default -> false;
         };
