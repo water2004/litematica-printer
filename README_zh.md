@@ -2,239 +2,178 @@
 
 [English](README.md)
 
-![GitHub stars](https://img.shields.io/github/stars/water2004/litematica-printer)
-![GitHub release](https://img.shields.io/github/v/release/water2004/litematica-printer)
-![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2%20%7C%2026.2-blue)
+[![GitHub release](https://img.shields.io/github/v/release/water2004/litematica-printer?include_prereleases)](https://github.com/water2004/litematica-printer/releases)
+[![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2%20%7C%2026.2-blue)](#下载)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-green)](LICENSE.md)
 
 > [!IMPORTANT]
-> **本仓库 fork 自 [BiliXWhite/litematica-printer](https://github.com/BiliXWhite/litematica-printer)，即投影打印机三改版。** 本项目在其基础上作为**投影打印机四改版**继续维护。
->
-> 项目演进关系：[aleksilassila 原版](https://github.com/aleksilassila/litematica-printer) → [zhaixianyu 二改版](https://github.com/zhaixianyu/litematica-printer) → [BiliXWhite 三改版](https://github.com/BiliXWhite/litematica-printer) → 本项目四改版。
->
-> 四改版当前正式版本为 [1.0.1](https://github.com/water2004/litematica-printer/releases/tag/v1.0.1)，**仅支持 Minecraft 26.1.2 和 26.2**。下方保留的版本支持和下载信息属于上游项目，不代表本 fork 的当前情况。
+> 本项目是 [BiliXWhite/litematica-printer](https://github.com/BiliXWhite/litematica-printer) 三改版的四改分支。本仓库拥有独立的发布、兼容范围、问题追踪和文档；请只从 [water2004/litematica-printer Releases](https://github.com/water2004/litematica-printer/releases) 下载本四改版。
 
-## 相比三改版的变化
-
-- 用持续扫描的生产者和有界作业池消费者替换旧的往返搜索调度。
-- 消费者公平遍历事务桶，并批量处理同类的放置、使用/调整和破坏作业。跳过、失败、过期及已经提交的作业都会立即消费；尚未完成的位置由后续扫描重新发现。
-- 搜索基于已经切分好的世界快照异步并发执行，避免阻塞客户端主线程，同时遵循 Litematica 可见层设置。
-- 所有物品切换（包括远程容器取物）都会等待客户端确认完成后再继续打印。
-- 错误方块、多余方块和破冰统一通过可选的 [ChainVeinFabric 3.0.0](https://github.com/water2004/ChainVeinFabric/releases/tag/v3.0.0) 客户端作业 API 处理；未安装时不启用这些破坏功能。
-- 调试 HUD 增加生产者扫描进度、作业池长度、消费者状态和当前作业；关闭打印开关不再清空调度状态。
-- 保留已有的具体方块操作语义，包括原木放置后去皮、放水、破冰、方块状态调整、填充和破基岩。
-- 删除旧挖掘模式、内置远程大仓和多版本包装器；发布物改为 Minecraft 26.1.2 与 26.2 的独立 jar。
-- 工程调整为纯 Java、与 Minecraft 无关的 `core` 调度层和彼此隔离的版本适配层，不再使用源码预处理或版本 mapping。
-
----
-
-## 上游原 README
-
-> 以下内容原样保留自直接上游仓库。
-
-# Litematica Printer
-
-![GitHub stars](https://img.shields.io/github/stars/BiliXWhite/litematica-printer)
-![GitHub release](https://img.shields.io/github/v/release/BiliXWhite/litematica-printer)
-![Minecraft](https://img.shields.io/badge/Minecraft-1.18.2%20~%2026.2-blue)
-
-为 [Litematica](https://modrinth.com/mod/litematica) 投影添加自动建造功能的 Minecraft Fabric 模组。支持 1.18.2 ~ 26.2 版本。
-
-该分支基于[宅咸鱼二改版](https://github.com/zhaixianyu/litematica-printer)修改，添加了更多实用功能。
-
-如果你觉得好用，欢迎给项目点个 Star ⭐️
-
-> [!TIP]
-> 该分支始终保持开源免费，不会存在任何收费内容。条件允许的话可以给作者[买瓶脉动](https://ifdian.net/a/BlinkWhite)支持一下！
-
----
+Litematica Printer 四改版是 [Litematica](https://modrinth.com/mod/litematica) 的客户端 Fabric 扩展。它持续发现尚未完成的投影位置，并通过有界、多线程的生产者—消费者调度器处理作业。打印、填充、排流体和破基岩是彼此独立的工作模式。
 
 ## 下载
 
-| 渠道              | 链接                                                                |
-|-----------------|-------------------------------------------------------------------|
-| GitHub Releases | [点击下载](https://github.com/BiliXWhite/litematica-printer/releases) |
-| 蓝奏云分流（密码: cgxw） | [点击下载](https://xeno.lanzoue.com/b00l1v20vi)                       |
+请在 [GitHub Releases](https://github.com/water2004/litematica-printer/releases) 下载与 Minecraft 版本对应的 jar：
 
----
+| Minecraft | 发布文件 |
+| --- | --- |
+| 26.1.2 | `litematica-printer-mc26.1.2-<版本>+26.1.2.jar` |
+| 26.2 | `litematica-printer-mc26.2-<版本>+26.2.jar` |
 
-## 支持的游戏版本
+目前只构建和测试这两个版本。上游项目与本项目使用相同的模组 ID `litematica-printer`，请勿同时安装。
 
-| 版本支持                                                |
-|-----------------------------------------------------|
-| 1.18.2 · 1.19.4 · 1.20.1 · 1.20.2 · 1.20.4 · 1.20.6 |
-| 1.21.1 ~ 1.21.11 · 26.1 · 26.2                      |
+预发布版本用于测试。使用前请备份重要世界和物品。
 
-> [!NOTE]
-> 1.18.2 以下版本暂不接受更新，小版本是否可用请自行尝试
+## 必需前置
 
----
+请在客户端安装与 Minecraft 版本匹配的：
 
-## 前置模组
-
-### 必需
+- [Fabric Loader](https://fabricmc.net/use/installer/)
 - [Fabric API](https://modrinth.com/mod/fabric-api)
 - [MaLiLib](https://modrinth.com/mod/malilib)
 - [Litematica](https://modrinth.com/mod/litematica)
 
-### 可选
-- [ChainVeinFabric](https://github.com/water2004/ChainVeinFabric) - 打印时破坏错误、多余方块及破冰所需；未安装时这些破坏功能不会启用
-- [Quick Shulker](https://modrinth.com/mod/quick-shulker) 或 [AxShulkers](https://modrinth.com/mod/axshulkers) - 快捷潜影盒（双模式兼容）
-- [Fabric-Bedrock-Miner](https://github.com/bunnyi116/fabric-bedrock-miner) - 破基岩所需前置
+Minecraft 26.1.2 的测试基线是 MaLiLib `0.28.8` 与 Litematica `0.27.9`；Minecraft 26.2 的测试基线是 MaLiLib `0.29.2` 与 Litematica `0.28.3`。在声明的 Minecraft 范围内，兼容的较新 Litematica 版本也可能正常工作。
 
----
+## 可选集成
 
-## 特性
+基础放置、填充和排流体功能不依赖下列集成。
 
-### 性能优化
-- 更流畅的打印体验
-- 数据包打印模式（速度更快，避免幽灵方块）
-- 延迟卡顿检测，防止因延迟导致的大量方块放置错误
+| 集成 | 提供的能力 |
+| --- | --- |
+| [ChainVeinFabric](https://github.com/water2004/ChainVeinFabric) | 破坏错误或多余方块，以及执行破冰放水作业。基础破坏只需客户端安装；ChainVein 的服务端专用功能仍需服务端支持。 |
+| [Quick Shulker](https://github.com/water2004/quickshulker) | 从玩家携带的潜影盒中取出所需材料。支持时使用不打开界面的直接协议；兼容旧版时使用被隔离的旧界面路径。Quick Shulker 客户端与服务端应使用相互匹配的版本。 |
+| AxShulkers 或 TakeItOut | 可在打印机设置中选择的服务端潜影盒材料来源。 |
+| [Servux](https://modrinth.com/mod/servux) | Litematica 轻松放置协议，以及可选的服务端权威手持物品确认。 |
+| [Fabric-Bedrock-Miner](https://github.com/bunnyi116/fabric-bedrock-miner) 或 [Block-Miner](https://github.com/z7087/blockminer) | 执行破基岩模式发现的作业。 |
 
-### 新功能
-- 可视化工作进度条 - 一目明了范围内是否完工
-- 区域内缺失材料显示 - 快速感知缺失材料，方便及时补充
-- 高亮处理中方块 — 多种高亮类型与样式，支持自定义颜色、透明度
-- 双兼容快捷潜影盒 — 重写支持Mod/服务器插件双模式
-- 填充功能（使用投影选区范围）
-- 珊瑚替换（用活珊瑚打印投影内的死珊瑚）
-- 48 种范围迭代逻辑
-- 破坏错误额外方块和错误状态方块
-- 农作物催熟 - 方便打印大片稻田类原理图
-- 有界作业池 - 以最早作业为锚点，向后选择同类放置、使用或破坏作业批量处理
-- ChainVein 作业接口 - 错误方块、多余方块和破冰统一批量提交给 ChainVein 客户端作业队列
-- 多语言支持 - **中文（简体）** · **中文（繁体）** · **文言文** · **English** · **Русский**
+所有集成都通过能力探测启用。缺少集成时，对应功能会保持关闭或跳过，普通打印不受影响。
 
-### 方块放置修复
-- 合成器、拉杆、红石粉（非连接模式）
-- 枯叶、各种花簇的方向
-- 发光浆果、带花的花盆
-- 楼梯、藤蔓、缠怨藤、垂泪藤
-- 砂轮、门、活版门、漏斗、箱子
-- 旗帜、头颅（16 朝向支持）
-- 告示牌悬挂状态修正
-- 以及更多
+## 四改版的主要变化
 
----
+### 持续生产者—消费者调度
 
-## 使用方法
+- 生产者持续扫描不可变的世界与投影快照，不再交替进行“一轮完整搜索”和“一轮打印”。
+- 搜索范围被切分为小任务，由可配置线程池并发处理；工作线程不会直接读取实时世界。
+- 有界作业池按事务种类组织放置、状态调整、使用和破坏作业。
+- 消费者公平遍历作业桶并批量处理兼容作业，减少频繁换手，也不会让一个跳过位置阻塞其他作业。
+- 已处理、失败、跳过、过期和缺少材料的作业都视为已经消费；位置若仍未完成，会被后续扫描重新发现。
+- 消费者执行前会再次校验实时世界，因此过时快照不会强制执行已经失效的动作。
 
-1. 在世界中加载一个原理图
-2. 移动到可以接触到原理图方块的位置
-3. 按下 `Caps Lock` 键开启打印机
-4. 等待自动建造完成 🎉
+### 更低的扫描开销
 
-> [!TIP]
-> 大部分功能都含有游戏内注释可供参考使用
+- 将工作范围形状、投影范围和选区编译为可复用的空间掩码。
+- GUI 统计与打印生产者复用兼容的搜索计划和共享快照页。
+- 搜索游标直接读取紧凑的分页数据，只为真正成为作业的位置创建 `BlockPos`。
+- HUD 只发布完整统计结果，不会跟随生产者尚未完成的本轮进度来回跳动。
 
----
+当前扫描基准和正确性验证见 [alpha.3 Release Note](https://github.com/water2004/litematica-printer/releases/tag/v1.1.0-alpha.3)。
 
-## 未支持方块
+### 可预期的物品与动作处理
 
-以下方块由于特殊原因暂未实现，打印时会自动跳过或呈现错误状态：
+- 所有物品栏或快捷栏切换都会等待所配置的确认路径完成，再继续打印。
+- 远程潜影盒取料拥有明确的等待状态，不会让消费者抢在材料到达前继续执行。
+- 同种作业会在每 tick 配置上限内批量处理。
+- 关闭全局工作开关只会暂停，不会清空生产者和消费者状态。
+- 轮换模式只改变当前模式，绝不会自动打开全局工作开关。
 
-- 装有液体的炼药锅
-- 睡莲
-- 实体方块（物品展示框、盔甲架、画等）
-- 非原版游戏内容
+## 功能
 
-> [!TIP]
-> 如发现其他方块放置错误，请尝试降低建造速度。若问题依旧存在，请提交 [Issue](https://github.com/BiliXWhite/litematica-printer/issues)
+### 工作模式
 
----
+- **打印：**放置缺失方块、调整受支持的方块状态，并可选破坏错误或多余方块。
+- **填充：**根据方块与方向过滤设置，在当前 Litematica 选区内填充。
+- **排流体：**清除所选工作范围内配置的静止或流动流体。
+- **破基岩：**发现破基岩作业并提交给受支持的破基岩模组。
 
-## 🔨 编译
+旧的通用挖掘模式和内置远程大仓已经移除。
 
-> [!WARNING]
-> 部分模组使用 Github Maven 源，从 pkg.github.com 下载需要认证。本地构建时需要在系统环境中设置 `GH_USERNAME` 和 `GH_TOKEN`，否则会构建失败。
+### 特殊打印动作
 
-### 命令行编译
+已有的具体方块操作语义继续保留，包括：
+
+- 需要去皮原木时，先放置原木再去皮；
+- 放置冰并破冰生成水；
+- 直接放水和含水方块处理；
+- 侦测器、活塞、楼梯、门、活板门、告示牌、头颅、旗帜、红石元件等受支持方块的方向与状态放置；
+- 音符盒调音、侦测器安全放置、珊瑚替换、作物催熟和堆肥桶填充；
+- 可配置的跳过列表和覆盖列表；
+- 普通交互放置和数据包放置路径。
+
+### 反馈与控制
+
+- 稳定的完成比例与缺失材料 HUD。
+- 当前消费者动作、等待原因、作业位置和作业池长度。
+- 生产者当前轮扫描进度。
+- 可分别配置放置、调整、破坏和失败动作的高亮。
+- 工作范围形状、遍历顺序、坐标轴方向、搜索线程数和每 tick 动作上限。
+- 生产者发现与消费者执行都会遵循 Litematica 可见层设置。
+
+## 快速开始
+
+1. 安装正确版本的打印机 jar 和必需前置。
+2. 使用 Litematica 加载并放置一个投影。
+3. 默认依次按下 `Z`、`Y` 打开打印机设置。
+4. 启用**打印**模块，或启用需要使用的其他工作模式。
+5. 移动到目标方块的交互范围内。
+6. 按 `Caps Lock` 打开全局**工作开关**。
+
+全局工作开关与具体工作模式开关必须同时启用。默认工作范围 `0` 表示自动使用当前可用交互距离。
+
+## 重要设置
+
+- **每 tick 方块数 / 工作间隔：**控制吞吐量。存在限速或反作弊的服务器可能需要降低数量或增加间隔。
+- **凭空放置：**服务端允许时，无需已有相邻支撑方块也可尝试放置。
+- **数据包放置：**使用另一条直接发送数据包的放置路径；它不会绕过服务端校验，也不能消除网络丢包。
+- **Servux 手持确认：**换手后等待服务端权威主手与目标一致。若开启但服务器没有兼容 Servux，打印机会主动暂停并显示等待原因。
+- **破坏错误/多余方块：**需要 ChainVeinFabric；未安装时不会启用破坏类打印作业。
+- **潜影盒来源：**应根据实际环境选择 Quick Shulker、AxShulkers 或 TakeItOut。
+
+## 常见问题
+
+### 打印机完全没有动作
+
+请确认：
+
+- jar 与 Minecraft 版本完全对应；
+- Fabric API、MaLiLib 和 Litematica 均已加载；
+- 投影已经放置，且相关图层可见；
+- 具体工作模式和全局工作开关都已启用；
+- 玩家位于配置的工作范围内；
+- 所需物品可用，HUD 没有显示正在等待换手或潜影盒；
+- 服务器反作弊或放置限速没有拒绝当前速度。
+
+### 破坏类作业始终不执行
+
+错误方块、多余方块和破冰作业需要 ChainVeinFabric。破基岩作业还需要一个受支持的破基岩模组。
+
+### HUD 显示正在等待 Servux
+
+你开启了服务端权威手持确认，但当前服务器没有提供兼容的 Servux 通道。请在服务端安装并配置 Servux，或关闭该确认选项。
+
+### 快捷潜影盒一直等待或不可用
+
+确认设置中的潜影盒来源与实际安装的集成一致。使用 Quick Shulker 直接协议时，客户端与服务端应使用同一个兼容版本。HUD 会区分正在等待容器操作还是等待物品切换。
+
+遇到可复现问题时，请在[本仓库 Issues](https://github.com/water2004/litematica-printer/issues)提交，并尽量附上客户端与服务端日志、Minecraft/模组版本、相关设置以及最小复现投影。
+
+## 从源码构建
+
+项目需要 JDK 25，并已包含 Gradle Wrapper。
 
 ```bash
-git clone https://github.com/BiliXWhite/litematica-printer.git
+git clone https://github.com/water2004/litematica-printer.git
 cd litematica-printer
 ./gradlew build
 ```
 
-### IDEA 编译
+Windows 使用 `gradlew.bat build`。各版本 jar 输出到：
 
-1. 用 IDEA 打开项目
-2. 在 Gradle 面板中找到 `Tasks → build`，双击 `build`
-3. 等待编译完成
+- `versions/26.1.2/build/libs/`
+- `versions/26.2/build/libs/`
 
-### 构建产物位置
+与 Minecraft 无关的调度代码位于 `core/`；`versions/` 下各目录包含独立的 Minecraft 适配。`main` 上带标签的提交会自动运行 GameTest、构建两个 jar 并发布对应 GitHub Release。
 
-| 类型      | 位置                                                |
-|---------|---------------------------------------------------|
-| 多版本 jar | `./fabricWrapper/build/libs/`                     |
-| 单版本 jar | `./fabricWrapper/build/tmp/submods/META-INF/jars` |
+## 许可证
 
----
-
-## ❓ 常见问题
-
-### 加入QQ群（适用于中国大陆用户）
-
-如果你喜欢跟进体验最新的功能，持续提供可复现的Bug，那么推荐你加入QQ群聊以便直接和开发者沟通！
-
-[点击加入 QQ 群聊](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=ttinzrJB3jYRLSTJM8R2YfwYdCm4Zo90&authKey=vfwF)
-
----
-
-### Q: 开启打印后，打印机不工作？
-
-**可能原因：**
-1. 服务器反作弊检测 — 投影打印机基于静默看向方式放置方块，可能被检测
-2. 打印机工作间隔设置过小 — 有放置速率限制的服务器（如 Luminol）无法及时响应
-
-**解决方案：**
-- 请求你的服主关掉反作弊或者是换一个服务器玩
-- 开启「使用数据包打印」模式
-- 调大「打印机工作间隔」
-
-如仍无法解决，请提交 [Issue](https://github.com/BiliXWhite/litematica-printer/issues/new?template=bug%E6%8A%A5%E5%91%8A.yml)
-
----
-
-### Q: 打印机放置的方块是错的？
-
-**可能原因：**
-1. 服务器反作弊插件干扰
-2. 打印机工作间隔过小，服务器响应不及时
-3. 识别算法未考虑该方块特性
-
-**解决方案：**
-- 增大「打印机工作间隔」
-- 降低建造速度
-
-如问题持续，请提交 [Issue](https://github.com/BiliXWhite/litematica-printer/issues/new?template=%E6%89%93%E5%8D%A0%E6%96%B9%E5%9D%97%E8%AF%B7%E6%B1%82.yml)
-
----
-
-### Q: 快捷潜影盒功能无法使用？
-
-**可能原因：**
-1. 服务器未安装 AxShulkers 等支持在背包右键打开潜影盒的插件
-2. 投影打印机设置与实际支持模式不符
-3. 预选栏位被潜影盒填满
-
-**解决方案：**
-- 在 Litematica 设置中调整 `pickBlockableSlots`（快捷选择栏位）值
-- 确认所选择的工作模式是正确的
-
-> [!NOTE]
-> 快捷潜影盒功能现已重写。如遇问题请提交 [Issue](https://github.com/BiliXWhite/litematica-printer/issues)
-
----
-
-## 🙏 感谢
-
-- [bunny_i](https://github.com/bunnyi116) - 开发者之一
-- [aleksilassila](https://github.com/aleksilassila/litematica-printer) - 原创基础
-- [zhaixianyu](https://github.com/zhaixianyu/litematica-printer) - 二改版本
-- [MoRanpcy](https://github.com/MoRanpcy/quickshulker) - 快捷潜影盒支持
-- [bunnyi116](https://github.com/bunnyi116/fabric-bedrock-miner) - 新的破基岩
-- [Rofumer](https://github.com/Rofumer) - 俄语本地化、性能优化、Bug 修复
-- [Cjsah](https://github.com/Cjsah) - 选区内容器材料识别功能
-- [EnderPhantomWing](https://github.com/EnderPhantomWing-Fork) 适配新版本、Bug 修复
-
-以及所有支持开发的朋友，包括你！💖
+本项目使用 [GNU Affero General Public License v3.0](LICENSE.md) 发布。
