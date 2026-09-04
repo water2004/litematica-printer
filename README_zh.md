@@ -17,12 +17,12 @@ Litematica Printer 四改版是 [Litematica](https://modrinth.com/mod/litematica
 
 | Minecraft | 发布文件 |
 | --- | --- |
-| 26.1.2 | `litematica-printer-mc26.1.2-<版本>+26.1.2.jar` |
-| 26.2 | `litematica-printer-mc26.2-<版本>+26.2.jar` |
+| 26.1.2 | `litematica-printer-<版本>+26.1.2.jar` |
+| 26.2 | `litematica-printer-<版本>+26.2.jar` |
 
 目前只构建和测试这两个版本。上游项目与本项目使用相同的模组 ID `litematica-printer`，请勿同时安装。
 
-预发布版本用于测试。使用前请备份重要世界和物品。
+使用自动放置或破坏功能前，请备份重要世界和物品。
 
 ## 必需前置
 
@@ -67,7 +67,7 @@ Minecraft 26.1.2 的测试基线是 MaLiLib `0.28.8` 与 Litematica `0.27.9`；M
 - 搜索游标直接读取紧凑的分页数据，只为真正成为作业的位置创建 `BlockPos`。
 - HUD 只发布完整统计结果，不会跟随生产者尚未完成的本轮进度来回跳动。
 
-当前扫描基准和正确性验证见 [alpha.3 Release Note](https://github.com/water2004/litematica-printer/releases/tag/v1.1.0-alpha.3)。
+在 Minecraft 26.2 上重新进行的同条件 A/B 基准中，使用相同的 531,441 坐标夹具、4 个搜索线程、2 轮预热和 7 轮测量，完整 GUI + 打印扫描的中位耗时从 1.0.0 的 `457.45 ms` 降至 1.1.0 的 `45.59 ms`，在开发机器上约快 `10.0 倍`。测试方法、正确性校验与注意事项见 [1.1.0 Release Note](https://github.com/water2004/litematica-printer/releases/tag/v1.1.0)。
 
 ### 可预期的物品与动作处理
 

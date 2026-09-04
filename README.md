@@ -17,12 +17,12 @@ Download the jar matching your Minecraft version from [GitHub Releases](https://
 
 | Minecraft | Release artifact |
 | --- | --- |
-| 26.1.2 | `litematica-printer-mc26.1.2-<version>+26.1.2.jar` |
-| 26.2 | `litematica-printer-mc26.2-<version>+26.2.jar` |
+| 26.1.2 | `litematica-printer-<version>+26.1.2.jar` |
+| 26.2 | `litematica-printer-<version>+26.2.jar` |
 
 Only these two artifacts are built and tested. The upstream project and this fork use the same mod id, `litematica-printer`, so do not install both at the same time.
 
-Prerelease builds are intended for testing. Back up important worlds and inventories before using them.
+Back up important worlds and inventories before using automated placement or breaking features.
 
 ## Requirements
 
@@ -67,7 +67,7 @@ All integrations are capability-detected. Features that depend on a missing inte
 - Search cursors read packed page data directly and create `BlockPos` objects only for positions that become jobs.
 - The HUD publishes completed statistics rather than displaying a producer's partial in-flight pass.
 
-See the [alpha.3 release notes](https://github.com/water2004/litematica-printer/releases/tag/v1.1.0-alpha.3) for the current scan benchmark and correctness results.
+In a fresh Minecraft 26.2 A/B benchmark using the same 531,441-position fixture, four search threads, two warm-up rounds, and seven measured rounds, median complete GUI + printer scan time fell from `457.45 ms` in 1.0.0 to `45.59 ms` in 1.1.0—about `10.0x` faster on the development system. See the [1.1.0 release notes](https://github.com/water2004/litematica-printer/releases/tag/v1.1.0) for methodology, correctness checks, and caveats.
 
 ### Predictable item and action handling
 

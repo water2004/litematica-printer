@@ -86,18 +86,11 @@ jobs:
       - name: Build version projects
         run: ./gradlew clean build --stacktrace
 
-      - name: Capture version artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: litematica-printer-${{ github.ref_name }}
-          path: versions/*/build/libs/litematica-printer-mc*.jar
-          if-no-files-found: error
-
       - name: Collect mod jars
         shell: bash
         run: |
           mkdir mod-jars
-          mapfile -t jars < <(find versions -type f -path '*/build/libs/litematica-printer-mc*.jar' | sort)
+          mapfile -t jars < <(find versions -type f -path '*/build/libs/litematica-printer-*.jar' ! -name '*-sources.jar' ! -name '*-dev.jar' | sort)
           if [[ "${#jars[@]}" -ne 2 ]]; then
             echo "Expected exactly 2 release jars, found ${#jars[@]}." >&2
             printf '%s\n' "${jars[@]}"
@@ -107,6 +100,13 @@ jobs:
               cp -p "$jar" mod-jars/
           done
           ls -l mod-jars
+
+      - name: Capture version artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: litematica-printer-${{ github.ref_name }}
+          path: mod-jars/*.jar
+          if-no-files-found: error
 
       - name: Remove previous jar assets
         uses: actions/github-script@v8
