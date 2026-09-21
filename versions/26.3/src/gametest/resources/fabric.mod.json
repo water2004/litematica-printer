@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "litematica-printer-gametest",
+  "version": "1.0.0",
+  "name": "Litematica Printer Game Tests",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-client-gametest": [
+      "me.aleksilassila.litematica.printer.gametest.PrinterIntegrationGameTest",
+      "me.aleksilassila.litematica.printer.gametest.QuickShulkerLifecycleGameTest",
+      "me.aleksilassila.litematica.printer.gametest.FluidRemovalGameTest",
+      "me.aleksilassila.litematica.printer.gametest.PacketLossReproductionGameTest",
+      "me.aleksilassila.litematica.printer.gametest.ServuxHandConfirmationGameTest",
+      "me.aleksilassila.litematica.printer.gametest.QuickShulkerStressGameTest",
+      "me.aleksilassila.litematica.printer.gametest.BedrockIntegrationGameTest",
+      "me.aleksilassila.litematica.printer.gametest.LitematicaCompatibilityGameTest",
+      "me.aleksilassila.litematica.printer.gametest.StaleProducerJobGameTest",
+      "me.aleksilassila.litematica.printer.gametest.IceForWaterChainVeinGameTest",
+      "me.aleksilassila.litematica.printer.gametest.PrinterBehaviorBaselineGameTest",
+      "me.aleksilassila.litematica.printer.gametest.ScanPerformanceGameTest",
+      "me.aleksilassila.litematica.printer.gametest.FullPrintPerformanceGameTest"
+    ]
+  },
+  "mixins": [
+    "litematica-printer-gametest.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": "*",
+    "fabric-api": "*",
+    "minecraft": "*",
+    "litematica-printer": "*",
+    "network_chaos_fabric": "*"
+  }
+}

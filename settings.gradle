@@ -9,7 +9,7 @@ pluginManagement {
     }
 }
 
-['26.1.2', '26.2'].each { version ->
+['26.1.2', '26.2', '26.3'].each { version ->
     include(":${version}")
     project(":${version}").with {
         projectDir = file("versions/${version}")

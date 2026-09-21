@@ -95,6 +95,46 @@ jobs:
             packetloss: false
             servux: false
             bedrockminer: blockminer
+          - minecraft: 26.3
+            chainvein: false
+            quickshulker: none
+            packetloss: false
+            servux: false
+          - minecraft: 26.3
+            chainvein: true
+            quickshulker: none
+            packetloss: false
+            servux: false
+          - minecraft: 26.3
+            chainvein: false
+            quickshulker: direct
+            packetloss: false
+            servux: false
+          - minecraft: 26.3
+            chainvein: true
+            quickshulker: direct
+            packetloss: false
+            servux: false
+          - minecraft: 26.3
+            chainvein: false
+            quickshulker: legacy
+            packetloss: false
+            servux: false
+          - minecraft: 26.3
+            chainvein: true
+            quickshulker: legacy
+            packetloss: false
+            servux: false
+          - minecraft: 26.3
+            chainvein: false
+            quickshulker: direct
+            packetloss: true
+            servux: false
+          - minecraft: 26.3
+            chainvein: false
+            quickshulker: none
+            packetloss: false
+            servux: true
           - minecraft: 26.1.2
             chainvein: false
             quickshulker: none

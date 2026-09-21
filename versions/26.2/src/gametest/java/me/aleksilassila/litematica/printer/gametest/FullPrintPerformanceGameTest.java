@@ -271,7 +271,7 @@ public final class FullPrintPerformanceGameTest implements FabricClientGameTest 
                 SelectionType.LITEMATICA_SELECTION);
         Configs.Print.EASY_PLACE_PROTOCOL.setBooleanValue(false);
         Configs.Print.SERVUX_HAND_CONFIRMATION.setBooleanValue(false);
-        Configs.Print.PLACE_IN_AIR.setBooleanValue(false);
+        Configs.Print.PLACE_IN_AIR.setBooleanValue(true);
         Configs.Print.PRINT_SKIP.setBooleanValue(false);
         Configs.Print.PRINT_REPLACE.setBooleanValue(false);
         Configs.Print.BREAK_WRONG_BLOCK.setBooleanValue(false);
@@ -441,6 +441,8 @@ public final class FullPrintPerformanceGameTest implements FabricClientGameTest 
                 + " packetVsExecutionRatio="
                 + packetVsExecutionRatio + "%"
                 + " schedulerOtherMs=" + consumerOtherNanos / 1_000_000.0D);
+        System.out.println("[FullPrintProfile] consumerTimeline="
+                + FullPrintProfileMetrics.describeConsumerTimeline());
         System.out.println("[FullPrintProfile] useItemPackets="
                 + metrics.useItemPackets()
                 + " carriedItemPackets=" + metrics.carriedItemPackets()

@@ -43,7 +43,7 @@ public final class TestServuxProtocol {
             metadata.putString("name", "litematic_data");
             metadata.putString("id", "servux:litematics");
             metadata.putInt("version", ServuxLitematicaPacket.PROTOCOL_VERSION);
-            metadata.putString("servux", "gametest-minimal");
+            metadata.putString("servux", "servux-fabric-26.2");
             send(context, packetWithCompound("MetadataResponse", metadata));
             return;
         }

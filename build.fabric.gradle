@@ -135,7 +135,18 @@ repositories {
     maven { name = 'TerraformersMC'; url = 'https://maven.terraformersmc.com/releases' }
     maven { name = 'Masa'; url = 'https://masa.dy.fi/maven' }
     maven { name = 'SakuraRyoko'; url = 'https://masa.dy.fi/maven/sakura-ryoko' }
+    maven { name = 'JitPack'; url = 'https://jitpack.io' }
 }
+
+// 26.3's Litematica/MaLiLib snapshots are published by the Sakura Ryoko
+// builds on JitPack. Older version modules keep their released Masa Maven
+// coordinates; the explicit coordinates let each Minecraft adapter select
+// its own upstream artifact without scattering version checks through the
+// dependency block.
+def malilibCoordinate = project.findProperty('malilib_coordinate')?.toString()
+        ?: "fi.dy.masa.malilib:${modConfig.prop('malilib')}"
+def litematicaCoordinate = project.findProperty('litematica_coordinate')?.toString()
+        ?: "fi.dy.masa.litematica:${modConfig.prop('litematica')}"
 
 configurations.configureEach {
     resolutionStrategy {
@@ -184,8 +195,8 @@ dependencies {
         implementation "maven.modrinth:malilib:${gameTestMalilib}"
         implementation "maven.modrinth:litematica:${gameTestLitematica}"
     } else {
-        implementation "fi.dy.masa.malilib:${modConfig.prop('malilib')}"
-        implementation "fi.dy.masa.litematica:${modConfig.prop('litematica')}"
+        implementation malilibCoordinate
+        implementation litematicaCoordinate
     }
     def quickshulkerUrl = modConfig.prop('quickshulker').toString()
     if (!quickshulkerUrl.isEmpty()) {
