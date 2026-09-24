@@ -7,9 +7,7 @@ on:
 jobs:
   client-gametest:
     name: MC ${{ matrix.minecraft }} / ChainVein ${{ matrix.chainvein }} / QuickShulker ${{ matrix.quickshulker }} / loss ${{ matrix.packetloss }} / Servux protocol ${{ matrix.servux }} / bedrock ${{ matrix.bedrockminer || 'none' }} / Litematica ${{ matrix.litematica || 'default' }}
-    # 26.3's SDL3/RenderPearl client needs a newer Mesa software renderer than
-    # the ubuntu-latest (24.04) image provides under Xvfb.
-    runs-on: ${{ matrix.minecraft == '26.3' && 'ubuntu-26.04' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -235,23 +233,22 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
-      - name: Prepare software graphics for Minecraft 26.3
+      # Match the known-good ChainVeinFabric 26.3 client GameTest setup:
+      # SDL3 must use Mesa's software EGL path instead of the GLX visual.
+      - name: Install headless OpenGL runtime for Minecraft 26.3
         if: matrix.minecraft == '26.3'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgl1-mesa-dri mesa-vulkan-drivers mesa-utils vulkan-tools
-          test -f /usr/share/vulkan/icd.d/lvp_icd.x86_64.json
-          xvfb-run -a env MESA_LOADER_DRIVER_OVERRIDE=zink \
-            VK_DRIVER_FILES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json \
-            LIBGL_KOPPER_DRI2=true glxinfo -B
-          xvfb-run -a env VK_DRIVER_FILES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json \
-            vulkaninfo --summary
+          sudo apt-get install -y libgl1-mesa-dri libglx-mesa0 mesa-utils
+          xvfb-run -a glxinfo -B
 
       - name: Run client GameTest
         env:
-          MESA_LOADER_DRIVER_OVERRIDE: ${{ matrix.minecraft == '26.3' && 'zink' || '' }}
-          VK_DRIVER_FILES: ${{ matrix.minecraft == '26.3' && '/usr/share/vulkan/icd.d/lvp_icd.x86_64.json' || '' }}
-          LIBGL_KOPPER_DRI2: ${{ matrix.minecraft == '26.3' && 'true' || '' }}
+          LIBGL_ALWAYS_SOFTWARE: ${{ matrix.minecraft == '26.3' && '1' || '' }}
+          MESA_LOADER_DRIVER_OVERRIDE: ${{ matrix.minecraft == '26.3' && 'llvmpipe' || '' }}
+          SDL_VIDEO_DRIVER: ${{ matrix.minecraft == '26.3' && 'x11' || '' }}
+          SDL_VIDEO_FORCE_EGL: ${{ matrix.minecraft == '26.3' && '1' || '' }}
+          SDL_VIDEO_X11_NODIRECTCOLOR: ${{ matrix.minecraft == '26.3' && '1' || '' }}
         run: >-
           timeout --signal=TERM 600s xvfb-run -a ./gradlew
           ":${{ matrix.minecraft }}:runClientGameTest"
