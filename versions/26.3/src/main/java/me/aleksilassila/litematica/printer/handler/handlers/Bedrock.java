@@ -42,10 +42,13 @@ public class Bedrock extends Module {
             MessageUtils.setOverlayMessage(I18n.BEDROCK_CREATIVE_MODE.getName());
             return false;
         }
-        if (!ModUtils.isBedrockMinerLoaded() && !ModUtils.isBlockMinerLoaded()) {
-            if (ModUtils.isLoadMod("bedrock-miner"))
-                MessageUtils.setOverlayMessage(I18n.BEDROCK_NOT_SUPPORT.getName());
+        if (!ModUtils.isBedrockMinerLoaded() && !ModUtils.isBlockMinerLoaded()
+                && !ModUtils.isFabricBedrockMinerLoaded()) {
             MessageUtils.setOverlayMessage(I18n.BEDROCK_MOD_MISSING.getName());
+            return false;
+        }
+        if (!BedrockCompat.isAvailable()) {
+            MessageUtils.setOverlayMessage(I18n.BEDROCK_NOT_SUPPORT.getName());
             return false;
         }
         if (!BedrockCompat.isWorking()) {
@@ -78,7 +81,8 @@ public class Bedrock extends Module {
     @Override
     protected boolean canSearch() {
         return super.canSearch()
-                && (ModUtils.isBedrockMinerLoaded() || ModUtils.isBlockMinerLoaded());
+                && (ModUtils.isBedrockMinerLoaded() || ModUtils.isBlockMinerLoaded()
+                    || ModUtils.isFabricBedrockMinerLoaded());
     }
 
     @Override

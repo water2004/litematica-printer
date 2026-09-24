@@ -1,13 +1,13 @@
 {
   "litematica-printer.auto_disable_notice": "Принтер автоматически отключён",
   "litematica-printer.bedrock.creative_mode": "Режим бедрока недоступен в творческом режиме!",
-  "litematica-printer.bedrock.mod_missing": "Мод Fabric-Bedrock-Miner/Block-Miner не установлен — разрушение бедрока недоступно!",
+  "litematica-printer.bedrock.mod_missing": "Не установлен поддерживаемый мод для разрушения бедрока.",
   "litematica-printer.block.mismatch": "Блок %s имеет несовместимый блок снизу — размещение пропущено",
   "litematica-printer.block.no_support": "Блок %s не имеет опоры снизу — размещение пропущено",
   "litematica-printer.brewingstand.lower": "Для понижения уровня воды в котле требуется §l§6%s",
   "litematica-printer.brewingstand.raise": "Для повышения уровня воды в котле требуется §l§6%s",
   "litematica-printer.config.bedrock": "Разрушение бедрока",
-  "litematica-printer.config.bedrock.desc": "Запускает мод BedrockMiner для добычи бедрока. Функция недоступна, если мод не установлен.",
+  "litematica-printer.config.bedrock.desc": "Передаёт задачи Fabric-Bedrock-Miner, Bedrock Miner или BlockMiner; нужен один из этих модов.",
   "litematica-printer.config.bedrockEnabled": "Включить разрушение бедрока",
   "litematica-printer.config.bedrockEnabled.desc": "Переключатель модуля разрушения бедрока.",
   "litematica-printer.config.breakBlocksPerTick": "Задач бедрока за тик",
@@ -259,5 +259,5 @@
   "litematica-printer.update.repository": "Репозиторий кода:",
   "modmenu.descriptionTranslation.litematica-printer": "Расширение для Litematica, добавляющее недостающую функцию принтера, позволяющую автоматически строить по схемам.",
   "modmenu.nameTranslation.litematica-printer": "Litematica Printer",
-  "litematica-printer.bedrock.not_support": "Не поддерживается в оригинальной версии Bedrock Miner, используйте версию bunnyi"
+  "litematica-printer.bedrock.not_support": "Мод для разрушения бедрока обнаружен, но его API несовместим с принтером."
 }

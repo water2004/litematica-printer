@@ -1,13 +1,13 @@
 {
   "litematica-printer.auto_disable_notice": "Printer automatically disabled",
   "litematica-printer.bedrock.creative_mode": "Bedrock mode cannot be used in creative mode!",
-  "litematica-printer.bedrock.mod_missing": "Fabric-Bedrock-Miner/Block-Miner mod not installed, cannot break bedrock!",
+  "litematica-printer.bedrock.mod_missing": "No supported bedrock-breaking mod is installed.",
   "litematica-printer.block.mismatch": "Block %s has mismatched block below, skipping placement",
   "litematica-printer.block.no_support": "Block %s has no support below, skipping placement",
   "litematica-printer.brewingstand.lower": "Lower cauldron water level requires §l§6%s",
   "litematica-printer.brewingstand.raise": "Raise cauldron water level requires §l§6%s",
   "litematica-printer.config.bedrock": "Bedrock Breaking",
-  "litematica-printer.config.bedrock.desc": "Invoke BedrockMiner mod to achieve bedrock mining. This feature is unavailable if the mod is not installed.",
+  "litematica-printer.config.bedrock.desc": "Submit bedrock jobs to a supported bedrock-breaking mod. Requires Fabric-Bedrock-Miner, Bedrock Miner or BlockMiner.",
   "litematica-printer.config.bedrockEnabled": "Enable Bedrock Breaking",
   "litematica-printer.config.bedrockEnabled.desc": "Toggle for the bedrock breaking module.",
   "litematica-printer.config.breakBlocksPerTick": "Bedrock Jobs Per Tick",
@@ -259,5 +259,5 @@
   "litematica-printer.update.repository": "Code repository:",
   "modmenu.descriptionTranslation.litematica-printer": "An extension for Litematica that adds the missing printer functionality, allowing you to automatically build schematics.",
   "modmenu.nameTranslation.litematica-printer": "Litematica Printer",
-  "litematica-printer.bedrock.not_support": "Not supported in original Bedrock Miner, please use bunnyi port version"
+  "litematica-printer.bedrock.not_support": "Installed bedrock-breaking mod was detected, but its API is incompatible."
 }

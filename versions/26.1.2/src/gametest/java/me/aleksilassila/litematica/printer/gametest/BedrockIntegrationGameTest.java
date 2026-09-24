@@ -33,8 +33,7 @@ public final class BedrockIntegrationGameTest implements FabricClientGameTest {
 
     @Override
     public void runTest(ClientGameTestContext context) {
-        if (GameTestMode.isAnyPerformance()) return;
-        String miner = GameTestMode.bedrockMiner();
+        String miner = System.getProperty("litematica-printer.gametest.bedrockMiner", "none");
         if (miner.equals("none")) return;
         if (!miner.equals("bedrockminer") && !miner.equals("blockminer")
                 && !miner.equals("fabric-bedrock-miner")) {
@@ -48,7 +47,7 @@ public final class BedrockIntegrationGameTest implements FabricClientGameTest {
             singleplayer.getServer().runCommand("tp @p 2.5 65 -3.5");
 
             context.waitTicks(5);
-            singleplayer.getConnection().waitForChunksDownload();
+            singleplayer.getClientLevel().waitForChunksDownload();
             context.waitFor(client -> client.player != null
                     && !client.player.getAbilities().instabuild
                     && client.level != null
@@ -93,8 +92,9 @@ public final class BedrockIntegrationGameTest implements FabricClientGameTest {
         }
 
         String expectedVersion = switch (miner) {
+            case "bedrockminer" -> "1.6.1-mc26.1";
             case "blockminer" -> "1.1.1";
-            case "fabric-bedrock-miner" -> "2.0.11+26.3";
+            case "fabric-bedrock-miner" -> "2.0.11+26.1.2";
             default -> throw new AssertionError(miner);
         };
         String actualModId = miner.equals("fabric-bedrock-miner") ? "bedrock-miner" : miner;

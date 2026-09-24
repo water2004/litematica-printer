@@ -1,13 +1,13 @@
 {
   "litematica-printer.auto_disable_notice": "打印机已自动关闭",
   "litematica-printer.bedrock.creative_mode": "创造模式无法使用破基岩模式！",
-  "litematica-printer.bedrock.mod_missing": "未安装 Fabric-Bedrock-Miner/Block-Miner 模组，无法破基岩！",
+  "litematica-printer.bedrock.mod_missing": "未安装受支持的破基岩模组，无法破基岩！",
   "litematica-printer.block.mismatch": "方块 %s 下方方块不相符，跳过放置",
   "litematica-printer.block.no_support": "方块 %s 下方无支撑，跳过放置",
   "litematica-printer.brewingstand.lower": "降低炼药锅内水位需要 §l§6%s",
   "litematica-printer.brewingstand.raise": "增加炼药锅内水位需要 §l§6%s",
   "litematica-printer.config.bedrock": "破基岩",
-  "litematica-printer.config.bedrock.desc": "调用BedrockMiner模组实现基岩挖掘，未安装该模组则此功能不可用。",
+  "litematica-printer.config.bedrock.desc": "将破基岩作业提交给受支持的模组；需要 Fabric-Bedrock-Miner、Bedrock Miner 或 BlockMiner。",
   "litematica-printer.config.bedrockEnabled": "启用破基岩",
   "litematica-printer.config.bedrockEnabled.desc": "控制破基岩模块的开关。",
   "litematica-printer.config.breakBlocksPerTick": "每刻破基岩作业数",
@@ -259,5 +259,5 @@
   "litematica-printer.update.repository": "代码仓库：",
   "modmenu.descriptionTranslation.litematica-printer": "Litematica 的扩展模组，补全了缺失的打印机功能，可以自动按照原理图建造。",
   "modmenu.nameTranslation.litematica-printer": "投影打印机",
-  "litematica-printer.bedrock.not_support": "暂不支持原版 Bedrock Miner，请使用 bunnyi 分支版"
+  "litematica-printer.bedrock.not_support": "已检测到破基岩模组，但其接口与当前打印机不兼容。"
 }

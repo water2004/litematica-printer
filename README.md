@@ -3,7 +3,7 @@
 [简体中文](README_zh.md)
 
 [![GitHub release](https://img.shields.io/github/v/release/water2004/litematica-printer?include_prereleases)](https://github.com/water2004/litematica-printer/releases)
-[![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2%20%7C%2026.2-blue)](#download)
+[![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2%20%7C%2026.2%20%7C%2026.3-blue)](#download)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-green)](LICENSE.md)
 
 > [!IMPORTANT]
@@ -19,8 +19,9 @@ Download the jar matching your Minecraft version from [GitHub Releases](https://
 | --- | --- |
 | 26.1.2 | `litematica-printer-<version>+26.1.2.jar` |
 | 26.2 | `litematica-printer-<version>+26.2.jar` |
+| 26.3 | `litematica-printer-<version>+26.3.jar` |
 
-Only these two artifacts are built and tested. The upstream project and this fork use the same mod id, `litematica-printer`, so do not install both at the same time.
+These three Minecraft versions are built and tested. The upstream project and this fork use the same mod id, `litematica-printer`, so do not install both at the same time.
 
 Back up important worlds and inventories before using automated placement or breaking features.
 
@@ -33,7 +34,7 @@ Install these client-side dependencies for the same Minecraft version:
 - [MaLiLib](https://modrinth.com/mod/malilib)
 - [Litematica](https://modrinth.com/mod/litematica)
 
-The tested baselines are MaLiLib `0.28.8` with Litematica `0.27.9` on Minecraft 26.1.2, and MaLiLib `0.29.2` with Litematica `0.28.3` on Minecraft 26.2. Compatible newer Litematica releases may also work within the declared Minecraft range.
+The tested baselines are MaLiLib `0.28.8` with Litematica `0.27.9` on Minecraft 26.1.2, MaLiLib `0.29.2` with Litematica `0.28.3` on 26.2, and MaLiLib `0.30.0` with Litematica commit `101ac3a23649` on 26.3. Compatible newer Litematica releases may also work within the declared Minecraft range.
 
 ## Optional integrations
 
@@ -45,7 +46,7 @@ The base placement, filling, and fluid-removal features do not require the integ
 | [Quick Shulker](https://github.com/water2004/quickshulker) | Retrieve required materials from carried shulker boxes. The direct screen-independent protocol is used when supported; the legacy screen path remains isolated for compatible older releases. Use matching Quick Shulker client and server versions. |
 | AxShulkers or TakeItOut | Alternative server-backed shulker material sources selectable in the printer settings. |
 | [Servux](https://modrinth.com/mod/servux) | Litematica Easy Place protocol support and optional server-authoritative held-item confirmation. |
-| [Fabric-Bedrock-Miner](https://github.com/bunnyi116/fabric-bedrock-miner) or [Block-Miner](https://github.com/z7087/blockminer) | Executes jobs produced by the bedrock-breaking mode. |
+| [Fabric-Bedrock-Miner](https://modrinth.com/mod/fabric-bedrock-miner) (`bedrock-miner`), [Bedrock Miner](https://modrinth.com/mod/next-fabric-bedrock-miner) by bunnyi116 (`bedrockminer`), or [BlockMiner](https://github.com/z7087/blockminer) (`blockminer`) | Executes jobs produced by the bedrock-breaking mode. Use a build matching your Minecraft version; bunnyi116's current releases cover 26.1/26.2, while the other two also have 26.3 builds. |
 
 All integrations are capability-detected. Features that depend on a missing integration stay disabled or are skipped; normal printing remains available.
 

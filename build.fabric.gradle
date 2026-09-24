@@ -105,9 +105,9 @@ if (!(gameTestQuickShulker in ['none', 'current', 'legacy', 'direct', 'direct-fa
     throw new GradleException(
             "printerGameTestQuickShulker 必须是 none、current、legacy、direct 或 direct-fallback，当前为 ${gameTestQuickShulker}")
 }
-if (!(gameTestBedrockMiner in ['none', 'bedrockminer', 'blockminer'])) {
+if (!(gameTestBedrockMiner in ['none', 'bedrockminer', 'blockminer', 'fabric-bedrock-miner'])) {
     throw new GradleException(
-            "printerGameTestBedrockMiner 必须是 none、bedrockminer 或 blockminer，当前为 ${gameTestBedrockMiner}")
+            "printerGameTestBedrockMiner 必须是 none、bedrockminer、blockminer 或 fabric-bedrock-miner，当前为 ${gameTestBedrockMiner}")
 }
 if (gameTestLitematicaOverride != (gameTestMalilib != 'default')) {
     throw new GradleException(
@@ -231,9 +231,11 @@ dependencies {
     }
 
     if (printerGameTest && gameTestBedrockMiner != 'none') {
-        def propertyName = gameTestBedrockMiner == 'bedrockminer'
-                ? 'bedrock_miner_gametest'
-                : 'block_miner_gametest'
+        def propertyName = switch (gameTestBedrockMiner) {
+            case 'bedrockminer' -> 'bedrock_miner_gametest'
+            case 'blockminer' -> 'block_miner_gametest'
+            case 'fabric-bedrock-miner' -> 'fabric_bedrock_miner_gametest'
+        }
         def minerUrl = project.findProperty(propertyName)?.toString()
         if (minerUrl == null || minerUrl.isEmpty()) {
             throw new GradleException("未配置 ${gameTestBedrockMiner} GameTest 发布依赖")
@@ -243,6 +245,13 @@ dependencies {
             throw new GradleException("无法下载 ${gameTestBedrockMiner} GameTest 依赖")
         }
         gametestImplementation files(minerFile)
+        if (gameTestBedrockMiner == 'fabric-bedrock-miner') {
+            def kotlinFile = modConfig.downloadDependencyMod(project.property('fabric_language_kotlin_gametest').toString())
+            if (kotlinFile == null || !kotlinFile.exists()) {
+                throw new GradleException('无法下载 Fabric Language Kotlin GameTest 依赖')
+            }
+            gametestImplementation files(kotlinFile)
+        }
     }
 }
 

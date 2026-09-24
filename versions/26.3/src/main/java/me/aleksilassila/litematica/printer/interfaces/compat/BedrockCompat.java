@@ -1,7 +1,7 @@
 package me.aleksilassila.litematica.printer.interfaces.compat;
 
+import me.aleksilassila.litematica.printer.Reference;
 import me.aleksilassila.litematica.printer.utils.ModUtils;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Block;
@@ -10,23 +10,20 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Method;
 
 /**
- * Compatibility layer for bedrock-miner (mod ID: bedrockminer) and
- * blockminer (mod ID: blockminer).
+ * Optional adapters for bunnyi116's Bedrock Miner ({@code bedrockminer}),
+ * BlockMiner ({@code blockminer}), and the original Fabric-Bedrock-Miner
+ * ({@code bedrock-miner}). These are distinct projects with distinct APIs.
  * <p>
- * Both mods provide automated breaking of hard blocks (bedrock, etc.)
- * by managing mining tasks in a background task queue. This class
- * detects which mod is installed, resolves the appropriate methods
- * via reflection, and exposes a uniform API.
- * <p>
- * All interactions use reflection. This class compiles and runs safely
- * when neither mod is installed.
+ * Resolves the installed mod's client API reflectively so the printer also
+ * loads when no bedrock-breaking mod is installed.
  */
 public class BedrockCompat {
-    private static final Minecraft mc = Minecraft.getInstance();
-
     private static boolean resolved = false;
+    @Nullable private static Kind kind;
 
-    // ── Drilling adapter (whichever mod was detected) ──
+    private enum Kind {
+        BLOCK_MINER, BEDROCK_MINER, FABRIC_BEDROCK_MINER
+    }
 
     @Nullable private static Object minerInstance;
     @Nullable private static Method addBlockTaskMethod;
@@ -35,6 +32,8 @@ public class BedrockCompat {
     @Nullable private static Method setRunningMethod;
     @Nullable private static Method isFeatureEnableMethod;
     @Nullable private static Method setFeatureEnableMethod;
+    @Nullable private static Method enableMethod;
+    @Nullable private static Method disableMethod;
 
     private static boolean isResolved() {
         if (!resolved) resolve();
@@ -50,8 +49,14 @@ public class BedrockCompat {
 
         if (ModUtils.isBlockMinerLoaded()) {
             resolveBlockMiner();
-        } else if (ModUtils.isBedrockMinerLoaded()) {
+            if (minerInstance != null) return;
+        }
+        if (ModUtils.isBedrockMinerLoaded()) {
             resolveBedrockMiner();
+            if (minerInstance != null) return;
+        }
+        if (ModUtils.isFabricBedrockMinerLoaded()) {
+            resolveFabricBedrockMiner();
         }
     }
 
@@ -69,17 +74,15 @@ public class BedrockCompat {
             clearTaskMethod    = tmClass.getDeclaredMethod("clearTasks");
             clearTaskMethod.setAccessible(true);
             isRunningMethod    = tmClass.getDeclaredMethod("isEnabled");
-            setRunningMethod   = null; // handled via two separate methods
             Method enable      = tmClass.getDeclaredMethod("onEnable");
             Method disable     = tmClass.getDeclaredMethod("onDisable");
             enable.setAccessible(true);
             disable.setAccessible(true);
-            // Store enable/disable in unused slots as a pair
-            setRunningMethod   = null; // we handle setRunning via onEnable/onDisable
-            // Since setRunning isn't a simple toggle, we handle it locally
-            isFeatureEnableMethod  = null; // blockminer doesn't have this feature toggle
-            setFeatureEnableMethod = null;
-        } catch (Exception ignored) {
+            enableMethod = enable;
+            disableMethod = disable;
+            kind = Kind.BLOCK_MINER;
+        } catch (ReflectiveOperationException | LinkageError error) {
+            Reference.LOGGER.warn("Cannot initialize blockminer integration", error);
             clear();
         }
     }
@@ -96,12 +99,32 @@ public class BedrockCompat {
             setRunningMethod       = tmClass.getDeclaredMethod("setRunning", boolean.class, boolean.class);
             isFeatureEnableMethod  = tmClass.getDeclaredMethod("isBedrockMinerFeatureEnable");
             setFeatureEnableMethod = tmClass.getDeclaredMethod("setBedrockMinerFeatureEnable", boolean.class);
-        } catch (Exception ignored) {
+            kind = Kind.BEDROCK_MINER;
+        } catch (ReflectiveOperationException | LinkageError error) {
+            Reference.LOGGER.warn("Cannot initialize bedrockminer integration", error);
+            clear();
+        }
+    }
+
+    private static void resolveFabricBedrockMiner() {
+        try {
+            Class<?> controller = Class.forName(
+                    "com.github.lxyan2333.bedrockminer.client.breaking.BreakingFlowController");
+            minerInstance = controller.getField("INSTANCE").get(null);
+            addBlockTaskMethod = controller.getMethod("tryEnqueueBlock", BlockPos.class);
+            clearTaskMethod = controller.getMethod("cancelAllFlows");
+            isRunningMethod = controller.getMethod("getEnabled");
+            enableMethod = controller.getMethod("enable");
+            disableMethod = controller.getMethod("disable");
+            kind = Kind.FABRIC_BEDROCK_MINER;
+        } catch (ReflectiveOperationException | LinkageError error) {
+            Reference.LOGGER.warn("Cannot initialize fabric-bedrock-miner integration", error);
             clear();
         }
     }
 
     private static void clear() {
+        kind = null;
         minerInstance = null;
         addBlockTaskMethod = null;
         clearTaskMethod = null;
@@ -109,13 +132,11 @@ public class BedrockCompat {
         setRunningMethod = null;
         isFeatureEnableMethod = null;
         setFeatureEnableMethod = null;
+        enableMethod = null;
+        disableMethod = null;
     }
 
-    // ================================================================
-    //  Public API
-    // ================================================================
-
-    /** Whether either miner mod is loaded and its API was resolved. */
+    /** Whether a supported miner was loaded and its API was resolved. */
     public static boolean isAvailable() {
         return isResolved();
     }
@@ -124,13 +145,15 @@ public class BedrockCompat {
     public static void addToBreakList(BlockPos pos, ClientLevel world) {
         if (!isResolved()) return;
         try {
-            if (ModUtils.isBlockMinerLoaded()) {
+            if (kind != Kind.BEDROCK_MINER) {
                 addBlockTaskMethod.invoke(minerInstance, pos);
             } else {
                 Block block = world.getBlockState(pos).getBlock();
                 addBlockTaskMethod.invoke(minerInstance, world, pos, block);
             }
-        } catch (Exception ignored) {}
+        } catch (ReflectiveOperationException error) {
+            Reference.LOGGER.warn("Cannot submit bedrock-breaking task", error);
+        }
     }
 
     /** Clear all pending break tasks. */
@@ -138,7 +161,9 @@ public class BedrockCompat {
         if (!isResolved()) return;
         try {
             clearTaskMethod.invoke(minerInstance);
-        } catch (Exception ignored) {}
+        } catch (ReflectiveOperationException error) {
+            Reference.LOGGER.warn("Cannot clear bedrock-breaking tasks", error);
+        }
     }
 
     /** Check whether the miner is currently running. */
@@ -146,7 +171,7 @@ public class BedrockCompat {
         if (!isResolved()) return false;
         try {
             return (boolean) isRunningMethod.invoke(minerInstance);
-        } catch (Exception e) {
+        } catch (ReflectiveOperationException e) {
             return false;
         }
     }
@@ -160,27 +185,20 @@ public class BedrockCompat {
     public static void setWorking(boolean running, boolean showMessage) {
         if (!isResolved()) return;
         try {
-            if (ModUtils.isBlockMinerLoaded()) {
-                Class<?> tmClass = Class.forName("me.z7087.blockminer.task.TaskManager");
-                if (running) {
-                    Method enable = tmClass.getDeclaredMethod("onEnable");
-                    enable.setAccessible(true);
-                    enable.invoke(minerInstance);
-                } else {
-                    Method disable = tmClass.getDeclaredMethod("onDisable");
-                    disable.setAccessible(true);
-                    disable.invoke(minerInstance);
-                }
+            if (kind != Kind.BEDROCK_MINER) {
+                (running ? enableMethod : disableMethod).invoke(minerInstance);
             } else {
                 setRunningMethod.invoke(minerInstance, running, showMessage);
                 if (!running) clearTasks();
             }
-        } catch (Exception ignored) {}
+        } catch (ReflectiveOperationException error) {
+            Reference.LOGGER.warn("Cannot change bedrock miner running state", error);
+        }
     }
 
     /** BedrockMiner-specific: check whether its feature toggle is enabled. */
     public static boolean isFeatureEnable() {
-        if (!isResolved() || isFeatureEnableMethod == null) return true;
+        if (!isResolved() || isFeatureEnableMethod == null) return false;
         try {
             return (boolean) isFeatureEnableMethod.invoke(minerInstance);
         } catch (Exception e) {
@@ -193,6 +211,8 @@ public class BedrockCompat {
         if (!isResolved() || setFeatureEnableMethod == null) return;
         try {
             setFeatureEnableMethod.invoke(minerInstance, enabled);
-        } catch (Exception ignored) {}
+        } catch (ReflectiveOperationException error) {
+            Reference.LOGGER.warn("Cannot change bedrock miner feature state", error);
+        }
     }
 }

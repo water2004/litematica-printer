@@ -36,7 +36,8 @@ public final class BedrockIntegrationGameTest implements FabricClientGameTest {
         if (GameTestMode.isAnyPerformance()) return;
         String miner = GameTestMode.bedrockMiner();
         if (miner.equals("none")) return;
-        if (!miner.equals("bedrockminer") && !miner.equals("blockminer")) {
+        if (!miner.equals("bedrockminer") && !miner.equals("blockminer")
+                && !miner.equals("fabric-bedrock-miner")) {
             throw new AssertionError("Unsupported bedrock GameTest mode: " + miner);
         }
 
@@ -81,18 +82,25 @@ public final class BedrockIntegrationGameTest implements FabricClientGameTest {
     private static void assertModMatrix(String miner) {
         boolean bedrockMinerLoaded = FabricLoader.getInstance().isModLoaded("bedrockminer");
         boolean blockMinerLoaded = FabricLoader.getInstance().isModLoaded("blockminer");
+        boolean fabricBedrockMinerLoaded = FabricLoader.getInstance().isModLoaded("bedrock-miner");
         if (bedrockMinerLoaded != miner.equals("bedrockminer")
-                || blockMinerLoaded != miner.equals("blockminer")) {
+                || blockMinerLoaded != miner.equals("blockminer")
+                || fabricBedrockMinerLoaded != miner.equals("fabric-bedrock-miner")) {
             throw new AssertionError("Bedrock GameTest must install exactly one miner; mode="
                     + miner + ", bedrockminer=" + bedrockMinerLoaded
-                    + ", blockminer=" + blockMinerLoaded);
+                    + ", blockminer=" + blockMinerLoaded
+                    + ", bedrock-miner=" + fabricBedrockMinerLoaded);
         }
 
-        String expectedVersion = miner.equals("bedrockminer")
-                ? "1.6.1-mc26.2"
-                : "1.1.1";
+        String expectedVersion = switch (miner) {
+            case "bedrockminer" -> "1.6.1-mc26.2";
+            case "blockminer" -> "1.1.1";
+            case "fabric-bedrock-miner" -> "2.0.11+26.2";
+            default -> throw new AssertionError(miner);
+        };
+        String actualModId = miner.equals("fabric-bedrock-miner") ? "bedrock-miner" : miner;
         String actualVersion = FabricLoader.getInstance()
-                .getModContainer(miner)
+                .getModContainer(actualModId)
                 .orElseThrow(() -> new AssertionError(miner + " mod container is missing"))
                 .getMetadata().getVersion().getFriendlyString();
         if (!actualVersion.equals(expectedVersion)) {

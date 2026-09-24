@@ -3,7 +3,7 @@
 [English](README.md)
 
 [![GitHub release](https://img.shields.io/github/v/release/water2004/litematica-printer?include_prereleases)](https://github.com/water2004/litematica-printer/releases)
-[![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2%20%7C%2026.2-blue)](#下载)
+[![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2%20%7C%2026.2%20%7C%2026.3-blue)](#下载)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-green)](LICENSE.md)
 
 > [!IMPORTANT]
@@ -19,8 +19,9 @@ Litematica Printer 四改版是 [Litematica](https://modrinth.com/mod/litematica
 | --- | --- |
 | 26.1.2 | `litematica-printer-<版本>+26.1.2.jar` |
 | 26.2 | `litematica-printer-<版本>+26.2.jar` |
+| 26.3 | `litematica-printer-<版本>+26.3.jar` |
 
-目前只构建和测试这两个版本。上游项目与本项目使用相同的模组 ID `litematica-printer`，请勿同时安装。
+目前构建和测试这三个游戏版本。上游项目与本项目使用相同的模组 ID `litematica-printer`，请勿同时安装。
 
 使用自动放置或破坏功能前，请备份重要世界和物品。
 
@@ -33,7 +34,7 @@ Litematica Printer 四改版是 [Litematica](https://modrinth.com/mod/litematica
 - [MaLiLib](https://modrinth.com/mod/malilib)
 - [Litematica](https://modrinth.com/mod/litematica)
 
-Minecraft 26.1.2 的测试基线是 MaLiLib `0.28.8` 与 Litematica `0.27.9`；Minecraft 26.2 的测试基线是 MaLiLib `0.29.2` 与 Litematica `0.28.3`。在声明的 Minecraft 范围内，兼容的较新 Litematica 版本也可能正常工作。
+Minecraft 26.1.2 的测试基线是 MaLiLib `0.28.8` 与 Litematica `0.27.9`；26.2 是 MaLiLib `0.29.2` 与 Litematica `0.28.3`；26.3 是 MaLiLib `0.30.0` 与 Litematica 提交 `101ac3a23649`。在声明的 Minecraft 范围内，兼容的较新 Litematica 版本也可能正常工作。
 
 ## 可选集成
 
@@ -45,7 +46,7 @@ Minecraft 26.1.2 的测试基线是 MaLiLib `0.28.8` 与 Litematica `0.27.9`；M
 | [Quick Shulker](https://github.com/water2004/quickshulker) | 从玩家携带的潜影盒中取出所需材料。支持时使用不打开界面的直接协议；兼容旧版时使用被隔离的旧界面路径。Quick Shulker 客户端与服务端应使用相互匹配的版本。 |
 | AxShulkers 或 TakeItOut | 可在打印机设置中选择的服务端潜影盒材料来源。 |
 | [Servux](https://modrinth.com/mod/servux) | Litematica 轻松放置协议，以及可选的服务端权威手持物品确认。 |
-| [Fabric-Bedrock-Miner](https://github.com/bunnyi116/fabric-bedrock-miner) 或 [Block-Miner](https://github.com/z7087/blockminer) | 执行破基岩模式发现的作业。 |
+| [Fabric-Bedrock-Miner](https://modrinth.com/mod/fabric-bedrock-miner)（`bedrock-miner`）、bunnyi116 的 [Bedrock Miner](https://modrinth.com/mod/next-fabric-bedrock-miner)（`bedrockminer`）或 [BlockMiner](https://github.com/z7087/blockminer)（`blockminer`） | 执行破基岩模式发现的作业。请安装与游戏版本匹配的构建；bunnyi116 当前发布了 26.1/26.2 版，另外两个模组也有 26.3 版。 |
 
 所有集成都通过能力探测启用。缺少集成时，对应功能会保持关闭或跳过，普通打印不受影响。
 

@@ -34,6 +34,10 @@ public class ModUtils {
         return isLoadMod("bedrockminer");
     }
 
+    public static boolean isFabricBedrockMinerLoaded() {
+        return isLoadMod("bedrock-miner");
+    }
+
     public static boolean isBlockMinerLoaded() {
         return isLoadMod("blockminer");
     }
