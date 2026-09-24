@@ -138,15 +138,11 @@ repositories {
     maven { name = 'JitPack'; url = 'https://jitpack.io' }
 }
 
-// 26.3's Litematica/MaLiLib snapshots are published by the Sakura Ryoko
-// builds on JitPack. Older version modules keep their released Masa Maven
-// coordinates; the explicit coordinates let each Minecraft adapter select
-// its own upstream artifact without scattering version checks through the
-// dependency block.
-def malilibCoordinate = project.findProperty('malilib_coordinate')?.toString()
-        ?: "fi.dy.masa.malilib:${modConfig.prop('malilib')}"
-def litematicaCoordinate = project.findProperty('litematica_coordinate')?.toString()
-        ?: "fi.dy.masa.litematica:${modConfig.prop('litematica')}"
+// Use the published Modrinth Maven artifacts for every Minecraft adapter.
+// The old Masa/JitPack coordinates were not reliably resolvable on fresh CI
+// runners, even when a developer's local Gradle cache contained them.
+def malilibCoordinate = "maven.modrinth:malilib:${modConfig.prop('malilib_dependency')}"
+def litematicaCoordinate = "maven.modrinth:litematica:${modConfig.prop('litematica_dependency')}"
 
 configurations.configureEach {
     resolutionStrategy {
