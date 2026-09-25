@@ -173,7 +173,7 @@ On Windows, use `gradlew.bat build`. Version-specific jars are written to:
 - `versions/26.1.2/build/libs/`
 - `versions/26.2/build/libs/`
 
-Minecraft-independent scheduling code lives in `core/`; each directory under `versions/` contains its own Minecraft adapter. Tags matching `v*` on `main` run GameTests, build all three jars, and publish the corresponding GitHub Release. This hotfix uses a tag without the `v` prefix and is published manually after local verification.
+Minecraft-independent scheduling code lives in `core/`; each directory under `versions/` contains its own Minecraft adapter. Tags matching `v*` on `main` run GameTests, build all three jars, and publish the corresponding GitHub Release. Targeted hotfix jars can be added manually to an existing Release after local verification.
 
 ## License
 

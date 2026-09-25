@@ -173,7 +173,7 @@ Windows 使用 `gradlew.bat build`。各版本 jar 输出到：
 - `versions/26.1.2/build/libs/`
 - `versions/26.2/build/libs/`
 
-与 Minecraft 无关的调度代码位于 `core/`；`versions/` 下各目录包含独立的 Minecraft 适配。`main` 上匹配 `v*` 的标签会自动运行 GameTest、构建三个 jar 并发布对应 GitHub Release；本次 hotfix 使用不带 `v` 前缀的标签，在本地验证后手动发布。
+与 Minecraft 无关的调度代码位于 `core/`；`versions/` 下各目录包含独立的 Minecraft 适配。`main` 上匹配 `v*` 的标签会自动运行 GameTest、构建三个 jar 并发布对应 GitHub Release；定向 hotfix 的 jar 可在本地验证后手动追加到现有 Release。
 
 ## 许可证
 
