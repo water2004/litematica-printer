@@ -1,6 +1,7 @@
 package me.aleksilassila.litematica.printer.mixin.printer.litematica;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import fi.dy.masa.litematica.data.EntityDataManager;
 import fi.dy.masa.malilib.util.data.tag.CompoundData;
 import me.aleksilassila.litematica.printer.config.Configs;
@@ -16,6 +17,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(value = EntityDataManager.class, remap = false)
 public abstract class MixinEntityDataManager {
+    /** Keep v2's packet gate open without changing Litematica's saved setting. */
+    @ModifyReturnValue(method = "isEnabled", at = @At("RETURN"))
+    private boolean enableEntityDataForHandConfirmation(boolean original) {
+        return original || Configs.Print.SERVUX_HAND_CONFIRMATION.getBooleanValue();
+    }
+
     @ModifyExpressionValue(
             method = {
                     "onClientTick",

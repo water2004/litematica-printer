@@ -2,6 +2,7 @@ package me.aleksilassila.litematica.printer.gametest;
 
 import fi.dy.masa.malilib.util.LayerMode;
 import fi.dy.masa.litematica.data.DataManager;
+import fi.dy.masa.litematica.data.EntityDataManager;
 import fi.dy.masa.litematica.selection.AreaSelection;
 import fi.dy.masa.litematica.selection.Box;
 import fi.dy.masa.litematica.selection.SelectionMode;
@@ -37,6 +38,7 @@ public final class LitematicaCompatibilityGameTest implements FabricClientGameTe
         context.runOnClient(client -> {
             assertVersion("litematica", expectedLitematica);
             assertVersion("malilib", expectedMalilib);
+            assertServuxGate();
         });
 
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
@@ -81,6 +83,26 @@ public final class LitematicaCompatibilityGameTest implements FabricClientGameTe
         if (!actual.equals(expected)) {
             throw new AssertionError("Expected " + modId + " " + expected
                     + " but Fabric loaded " + actual);
+        }
+    }
+
+    private static void assertServuxGate() {
+        var nativeSync = fi.dy.masa.litematica.config.Configs.Generic.ENTITY_DATA_SYNC;
+        boolean originalNative = nativeSync.getBooleanValue();
+        boolean originalPrinter = Configs.Print.SERVUX_HAND_CONFIRMATION.getBooleanValue();
+        try {
+            nativeSync.setBooleanValue(false);
+            Configs.Print.SERVUX_HAND_CONFIRMATION.setBooleanValue(false);
+            if (EntityDataManager.getInstance().isEnabled()) {
+                throw new AssertionError("Servux entity-data gate stayed open with both switches off");
+            }
+            Configs.Print.SERVUX_HAND_CONFIRMATION.setBooleanValue(true);
+            if (!EntityDataManager.getInstance().isEnabled() || nativeSync.getBooleanValue()) {
+                throw new AssertionError("Printer confirmation did not open the Servux gate independently");
+            }
+        } finally {
+            Configs.Print.SERVUX_HAND_CONFIRMATION.setBooleanValue(originalPrinter);
+            nativeSync.setBooleanValue(originalNative);
         }
     }
 

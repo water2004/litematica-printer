@@ -48,6 +48,9 @@ public final class ServuxHandConfirmationGameTest implements FabricClientGameTes
         if (Boolean.getBoolean("litematica-printer.gametest.quickshulkerStress")) return;
         if (!Boolean.getBoolean("litematica-printer.gametest.servux")) return;
 
+        boolean originalEntitySync = context.computeOnClient(client ->
+                fi.dy.masa.litematica.config.Configs.Generic.ENTITY_DATA_SYNC
+                        .getBooleanValue());
         NetworkChaos.reset();
         TestServuxProtocol.resetCounters();
         TestServuxProtocol.register();
@@ -59,6 +62,8 @@ public final class ServuxHandConfirmationGameTest implements FabricClientGameTes
             connection.getClientLevel().waitForChunksDownload();
 
             context.runOnClient(client -> {
+                fi.dy.masa.litematica.config.Configs.Generic.ENTITY_DATA_SYNC
+                        .setBooleanValue(false);
                 Configs.Print.SERVUX_HAND_CONFIRMATION.setBooleanValue(true);
                 ServuxHandItemConfirmation.reset();
             });
@@ -123,6 +128,8 @@ public final class ServuxHandConfirmationGameTest implements FabricClientGameTes
             context.runOnClient(client -> {
                 disablePrinter();
                 Configs.Print.SERVUX_HAND_CONFIRMATION.setBooleanValue(false);
+                fi.dy.masa.litematica.config.Configs.Generic.ENTITY_DATA_SYNC
+                        .setBooleanValue(originalEntitySync);
                 ServuxHandItemConfirmation.reset();
             });
             NetworkChaos.reset();
