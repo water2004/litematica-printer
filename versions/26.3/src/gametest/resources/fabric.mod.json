@@ -7,6 +7,7 @@
   "entrypoints": {
     "fabric-client-gametest": [
       "me.aleksilassila.litematica.printer.gametest.PrinterIntegrationGameTest",
+      "me.aleksilassila.litematica.printer.gametest.QuickShulkerReturnRecoveryGameTest",
       "me.aleksilassila.litematica.printer.gametest.QuickShulkerLifecycleGameTest",
       "me.aleksilassila.litematica.printer.gametest.FluidRemovalGameTest",
       "me.aleksilassila.litematica.printer.gametest.PacketLossReproductionGameTest",

@@ -36,8 +36,15 @@ final class QuickShulkerDirectBridge {
         }
 
         Inventory inventory = player.getInventory();
-        if (QuickShulkerInventory.isInventoryFull(inventory) && !RETURNS.isEmpty()) {
-            return requestReturn(inventory, RETURNS.getFirst());
+        if (QuickShulkerInventory.isInventoryFull(inventory)) {
+            // A retained return may currently have no usable box/slot. Visit each
+            // candidate at most once, rotating attempted returns for fairness.
+            for (int remaining = RETURNS.size(); remaining > 0; remaining--) {
+                ReturnRequest request = RETURNS.removeFirst();
+                RETURNS.addLast(request);
+                if (requestReturn(inventory, request)) return true;
+            }
+            return false;
         }
 
         int emptySlot = QuickShulkerInventory.findEmptySlot(inventory);
@@ -81,7 +88,14 @@ final class QuickShulkerDirectBridge {
                                 pending.boxSlot())));
             }
         } else if (pending.kind() == Kind.RETURN) {
-            RETURNS.removeFirstOccurrence(pending.returnRequest());
+            // Completion can mean timeout or a partial transfer, not an empty
+            // player slot. Keep the intent while material remains; the next
+            // request resolves fresh endpoints from the synchronized inventory.
+            // This also handles a lost receipt after the server did move it.
+            if (QuickShulkerInventory.findItem(
+                    player.getInventory(), pending.item()) < 0) {
+                RETURNS.removeFirstOccurrence(pending.returnRequest());
+            }
             cooldown = 0;
         }
         pending = null;
