@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "litematica-printer-smoke",
+  "version": "1.0.0",
+  "name": "Printer automated smoke tests",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "me.aleksilassila.litematica.printer.interfaces.compat.PrinterSmokeClient"
+    ]
+  },
+  "depends": {
+    "litematica-printer": "*",
+    "fabric-api": "*"
+  }
+}

@@ -3,7 +3,7 @@
 [简体中文](README_zh.md)
 
 [![GitHub release](https://img.shields.io/github/v/release/water2004/litematica-printer?include_prereleases)](https://github.com/water2004/litematica-printer/releases)
-[![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2%20%7C%2026.2-blue)](#download)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1%20%7C%2026.1.2%20%7C%2026.2-blue)](#download)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-green)](LICENSE.md)
 
 > [!IMPORTANT]
@@ -20,7 +20,9 @@ Download the jar matching your Minecraft version from [GitHub Releases](https://
 | 26.1.2 | `litematica-printer-<version>+26.1.2.jar` |
 | 26.2 | `litematica-printer-<version>+26.2.jar` |
 
-Only these two artifacts are built and tested. The upstream project and this fork use the same mod id, `litematica-printer`, so do not install both at the same time.
+A Minecraft 1.21.1 backport is also available as a source build. See the [1.21.1 build and validation notes](versions/1.21.1/README.md) for dependencies, commands, and test coverage.
+
+The upstream project and this fork use the same mod id, `litematica-printer`, so do not install both at the same time.
 
 Back up important worlds and inventories before using automated placement or breaking features.
 

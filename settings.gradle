@@ -17,4 +17,7 @@ pluginManagement {
     }
 }
 
+include ':1.21.1'
+project(':1.21.1').projectDir = file('versions/1.21.1')
+
 include ':core'

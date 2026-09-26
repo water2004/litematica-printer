@@ -1,0 +1,67 @@
+plugins {
+    id 'mod-plugin'
+    id 'net.fabricmc.fabric-loom-remap'
+}
+
+evaluationDependsOn(':core')
+
+version = modConfig.fullProjectVersion
+group = modConfig.modMavenGroup
+base {
+    archivesName.set(modConfig.modArchivesBaseName)
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.fabricmc.net' }
+    maven { url = 'https://api.modrinth.com/maven' }
+    maven { url = 'https://maven.terraformersmc.com/releases' }
+}
+
+dependencies {
+    implementation project(':core')
+    minecraft "com.mojang:minecraft:${modConfig.mcVersion}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${modConfig.fabricLoaderVersion}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${modConfig.fabricApiVersion}"
+    modImplementation "maven.modrinth:malilib:${modConfig.malilib}"
+    modImplementation "maven.modrinth:litematica:${modConfig.litematica}"
+    modImplementation "com.terraformersmc:modmenu:${modConfig.prop('modmenu')}"
+    def pinyinDependency = implementation("com.belerweb:pinyin4j:${modConfig.prop('pinyin_version')}")
+    include pinyinDependency
+}
+
+tasks.named('jar', Jar) {
+    dependsOn project(':core').tasks.named('classes')
+    from(project(':core').sourceSets.main.output)
+}
+
+loom {
+    mixin {
+        useLegacyMixinAp = true
+        defaultRefmapName = 'litematica-printer.refmap.json'
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
+}
+
+// Separate executable integration harness; never included in the release JAR.
+sourceSets {
+    smokeTest {
+        compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
+        runtimeClasspath += sourceSets.main.runtimeClasspath + sourceSets.main.output
+    }
+}
+tasks.register('smokeJar', Jar) {
+    archiveClassifier = 'smoke-test-dev'
+    from sourceSets.smokeTest.output
+}
+tasks.register('remapSmokeJar', net.fabricmc.loom.task.RemapJarTask) {
+    dependsOn tasks.named('smokeJar')
+    inputFile = tasks.named('smokeJar').flatMap { it.archiveFile }
+    archiveClassifier = 'smoke-test'
+    addNestedDependencies = false
+    classpath.from(sourceSets.smokeTest.compileClasspath)
+}

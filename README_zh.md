@@ -3,7 +3,7 @@
 [English](README.md)
 
 [![GitHub release](https://img.shields.io/github/v/release/water2004/litematica-printer?include_prereleases)](https://github.com/water2004/litematica-printer/releases)
-[![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2%20%7C%2026.2-blue)](#下载)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1%20%7C%2026.1.2%20%7C%2026.2-blue)](#下载)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-green)](LICENSE.md)
 
 > [!IMPORTANT]
@@ -20,7 +20,9 @@ Litematica Printer 四改版是 [Litematica](https://modrinth.com/mod/litematica
 | 26.1.2 | `litematica-printer-<版本>+26.1.2.jar` |
 | 26.2 | `litematica-printer-<版本>+26.2.jar` |
 
-目前只构建和测试这两个版本。上游项目与本项目使用相同的模组 ID `litematica-printer`，请勿同时安装。
+Minecraft 1.21.1 适配版可从源码构建。前置版本、构建命令和验证范围见 [1.21.1 适配说明](versions/1.21.1/README.md)。
+
+上游项目与本项目使用相同的模组 ID `litematica-printer`，请勿同时安装。
 
 使用自动放置或破坏功能前，请备份重要世界和物品。
 
