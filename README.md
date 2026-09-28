@@ -11,6 +11,16 @@
 
 Litematica Printer 4th is a client-side Fabric extension for [Litematica](https://modrinth.com/mod/litematica). It continuously discovers unfinished schematic positions and processes them through a bounded, multithreaded producer-consumer scheduler. Printing, filling, fluid removal, and bedrock breaking are independent modes.
 
+## Star History
+
+<a href="https://www.star-history.com/?repos=water2004%2Flitematica-printer&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=water2004/litematica-printer&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=water2004/litematica-printer&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=water2004/litematica-printer&type=date&legend=top-left" />
+ </picture>
+</a>
+
 ## Download
 
 Download the jar matching your Minecraft version from [GitHub Releases](https://github.com/water2004/litematica-printer/releases):
