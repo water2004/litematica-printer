@@ -26,7 +26,7 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${modConfig.fabricApiVersion}"
     modImplementation "maven.modrinth:malilib:${modConfig.malilib}"
     modImplementation "maven.modrinth:litematica:${modConfig.litematica}"
-    modImplementation "com.terraformersmc:modmenu:${modConfig.prop('modmenu')}"
+    modCompileOnly("com.terraformersmc:modmenu:${modConfig.prop('modmenu')}") { transitive = false }
     def pinyinDependency = implementation("com.belerweb:pinyin4j:${modConfig.prop('pinyin_version')}")
     include pinyinDependency
 }

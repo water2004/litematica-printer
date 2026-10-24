@@ -12,5 +12,8 @@
   "depends": {
     "litematica-printer": "*",
     "fabric-api": "*"
-  }
+  },
+  "mixins": [
+    "smoke-packet-trace.mixins.json"
+  ]
 }

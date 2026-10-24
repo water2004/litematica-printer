@@ -70,7 +70,7 @@ def prepare(scenario, kind, mode='full', miner=None, servux=False):
 
 def command(kind, scenario, mode='full', miner='none', servux=False, task='runMappedClientCI'):
     wrapper = os.environ.get('MAPPED_CI_GRADLE', 'gradlew.bat' if os.name == 'nt' else './gradlew')
-    return [wrapper, '-Ptargets=' + mc, *(['-PenableAudit=true'] if kind != 'smoke' else []), '-I', '.github/scripts/mapped-ci.gradle',
+    return [wrapper, '-Ptargets=' + mc, *(['-Ploader_version=' + os.environ['MAPPED_CI_LOADER']] if 'MAPPED_CI_LOADER' in os.environ else []), *(['-PenableAudit=true'] if kind != 'smoke' else []), '-I', '.github/scripts/mapped-ci.gradle',
             ':' + mc + ':' + task, '-PciKind=' + kind, '-PciMode=' + mode,
             '-PciScenario=' + scenario, '-PciMiner=' + miner, '-PciServux=' + str(servux).lower(),
             '--no-daemon', '--max-workers=2', '--console=plain', '--stacktrace',

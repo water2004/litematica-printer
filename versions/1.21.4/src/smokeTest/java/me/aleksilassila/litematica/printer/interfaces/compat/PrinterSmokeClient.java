@@ -142,6 +142,10 @@ public final class PrinterSmokeClient implements ClientModInitializer {
                 }
                 case 3 -> {
                     if (!done() || client.player.getY() < 63 || !client.player.getInventory().getItem(9).is(Items.STONE)) return;
+                    // Vanilla ignores use-item packets until its client-loaded handshake completes.
+                    // This fixture closes the loading screen early, so explicitly wait for that handshake.
+                    if (!client.player.hasClientLoaded()) return;
+                    LOG.info("PRINTER_SMOKE_ENTRY_READY loaded={}", client.player.hasClientLoaded());
                     configureFill(false);
                     advance(4);
                 }

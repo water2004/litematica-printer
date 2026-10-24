@@ -92,10 +92,7 @@ public class ActionManager {
         }
         MultiPlayerGameModeExtension gameModeExtension = (MultiPlayerGameModeExtension) Reference.MINECRAFT.gameMode;
         if (gameModeExtension != null) {
-            // Hand confirmation cannot validate a locally predicted support block.
-            // Use server-updated blocks as anchors while authoritative mode is enabled.
-            boolean localPrediction = !Configs.Placement.PRINT_USE_PACKET.getBooleanValue()
-                    && !Configs.Print.SERVUX_HAND_CONFIRMATION.getBooleanValue();
+            boolean localPrediction = !Configs.Placement.PRINT_USE_PACKET.getBooleanValue();
             BlockHitResult blockHitResult = new BlockHitResult(hitVec, side, target, false);
             gameModeExtension.litematica_printer$useItemOn(
                     localPrediction, InteractionHand.MAIN_HAND, blockHitResult);

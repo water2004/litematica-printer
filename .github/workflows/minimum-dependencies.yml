@@ -1,0 +1,111 @@
+name: Minimum supported dependencies
+on:
+  push:
+    branches: ['dory/minimum-dependencies-1.21.x']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  # Preserve diagnostic and readiness-control evidence from separate commits.
+  group: minimum-dependencies-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
+env:
+  LIBGL_ALWAYS_SOFTWARE: '1'
+  GALLIUM_DRIVER: llvmpipe
+  MESA_LOADER_DRIVER_OVERRIDE: llvmpipe
+  SDL_VIDEODRIVER: x11
+  SDL_VIDEO_DRIVER: x11
+  SDL_VIDEO_FORCE_EGL: '1'
+jobs:
+  compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      max-parallel: 11
+      matrix:
+        minecraft: ['1.21','1.21.1','1.21.2','1.21.3','1.21.4','1.21.5','1.21.6','1.21.7','1.21.8','1.21.9','1.21.10']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify every production source against preserved upstream behavior
+        run: python .github/scripts/verify-production-source.py
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install production client graphics runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1-mesa-dri libglx-mesa0 libegl1 libegl-mesa0 mesa-vulkan-drivers libflite1
+      - name: Compile and exercise minimum and current dependencies
+        run: |
+          chmod +x gradlew
+          python .github/scripts/run-minimum-deps.py '${{ matrix.minecraft }}'
+      - name: Retain all production JARs and compatibility evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: minimum-dependencies-${{ matrix.minecraft }}-${{ github.sha }}
+          path: |
+            .ci/minimum-results/${{ matrix.minecraft }}/
+            .ci/results/${{ matrix.minecraft }}/
+            .ci/minimum-build-logs/${{ matrix.minecraft }}/
+            .ci/minimum-source/*/${{ matrix.minecraft }}/build/test-results/
+            .ci/minimum-source/*/${{ matrix.minecraft }}/build/libs/*.jar
+            versions/${{ matrix.minecraft }}/build/libs/*.jar
+          if-no-files-found: error
+          include-hidden-files: true
+      - name: Collect the tested 1.1.5 release candidate
+        run: python .github/scripts/collect-release-1.1.5.py '${{ matrix.minecraft }}'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-1.1.5-${{ matrix.minecraft }}-${{ github.sha }}
+          path: .ci/release-candidate/${{ matrix.minecraft }}/
+          if-no-files-found: error
+  publish-1-1-5:
+    needs: [compatibility, withdraw-1-1-4]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dory/minimum-dependencies-1.21.x' && contains(github.event.head_commit.message, '[release-1.1.5]')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-1.1.5-*-${{ github.sha }}
+          path: release-candidates
+      - name: Publish new 1.1.5 release and preserve all earlier releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python .github/scripts/publish-release-1.1.5.py
+      - name: Retain release and preservation verification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-1.1.5-verification-${{ github.sha }}
+          path: .ci/release-1.1.5/
+          if-no-files-found: error
+
+  withdraw-1-1-4:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[release-1.1.5]')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Withdraw only the new incorrect 1.1.4 release, retaining its tag and assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import json, os, urllib.request
+          base='https://api.github.com/repos/water2004/litematica-printer/releases/422691551'
+          headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'}
+          with urllib.request.urlopen(urllib.request.Request(base,headers=headers)) as r: before=json.load(r)
+          assert before['tag_name']=='v1.1.4' and before['target_commitish']=='9508bec4834b93abd8fbb896af882704b720296c'
+          request=urllib.request.Request(base,data=json.dumps({'draft':True,'make_latest':'false'}).encode(),headers=headers,method='PATCH')
+          with urllib.request.urlopen(request) as r: after=json.load(r)
+          assert after['draft'] and [(a['id'],a['digest']) for a in before['assets']]==[(a['id'],a['digest']) for a in after['assets']]
+          print('WITHDRAWN_1_1_4_ASSETS_RETAINED',after['id'])
+          PY

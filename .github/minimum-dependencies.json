@@ -1,0 +1,321 @@
+{
+  "1.21": {
+    "loader": "0.16.0",
+    "dependencies": [
+      {
+        "name": "fabric-api-0.100.2+1.21.jar",
+        "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/IHIHC1yO/fabric-api-0.100.2%2B1.21.jar",
+        "sha256": "8d5cf88db34ad79df2ab507c7520b93e7cc9a2dc28f0b40517da7387b085a609"
+      },
+      {
+        "name": "malilib-fabric-1.21-0.21.10.jar",
+        "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/C99LEy6r/malilib-fabric-1.21-0.21.10.jar",
+        "sha256": "fed24701279ed7d55ea9e1bce9d4528e3f679ef9883c1ab7fb7a8c6a3fcd2915"
+      },
+      {
+        "name": "litematica-fabric-1.21-0.19.61.jar",
+        "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/o7i8oi1Z/litematica-fabric-1.21-0.19.61.jar",
+        "sha256": "81b66009d4e0868e9e3e2e1593e0942ba0c651ddd8300586ae1ffbd227b6ba24"
+      }
+    ],
+    "versions": {
+      "fabric-api": "0.100.2+1.21",
+      "malilib": "0.21.10",
+      "litematica": "0.19.61"
+    },
+    "companions": {
+      "quickshulker": "5149d15cb46977ef8e2510a9e4249e3220612f72",
+      "ChainVeinFabric": "ccb5ff4fa90967c575643e7d6fc170fc9858b3ae"
+    }
+  },
+  "1.21.1": {
+    "loader": "0.16.0",
+    "dependencies": [
+      {
+        "name": "fabric-api-0.102.0+1.21.1.jar",
+        "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/VAjB0MYF/fabric-api-0.102.0%2B1.21.1.jar",
+        "sha256": "fd021e3ea8d043805207f39d43ac4b358629b30f0d9280ffc5a886a433291bd1"
+      },
+      {
+        "name": "malilib-fabric-1.21-0.21.10.jar",
+        "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/C99LEy6r/malilib-fabric-1.21-0.21.10.jar",
+        "sha256": "fed24701279ed7d55ea9e1bce9d4528e3f679ef9883c1ab7fb7a8c6a3fcd2915"
+      },
+      {
+        "name": "litematica-fabric-1.21-0.19.61.jar",
+        "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/o7i8oi1Z/litematica-fabric-1.21-0.19.61.jar",
+        "sha256": "81b66009d4e0868e9e3e2e1593e0942ba0c651ddd8300586ae1ffbd227b6ba24"
+      }
+    ],
+    "versions": {
+      "fabric-api": "0.102.0+1.21.1",
+      "malilib": "0.21.10",
+      "litematica": "0.19.61"
+    },
+    "companions": {
+      "quickshulker": "16b13abcbbd83d4d16af85552eec5e85b9468712",
+      "ChainVeinFabric": "df8875bca61d48022d57eadffa3438f53561b36f"
+    }
+  },
+  "1.21.2": {
+    "loader": "0.16.8",
+    "dependencies": [
+      {
+        "name": "fabric-api-0.106.1+1.21.2.jar",
+        "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/UEjZZNue/fabric-api-0.106.1%2B1.21.2.jar",
+        "sha256": "d306e1cf9348bc13292bbdcec19a417a50d6dc538121eec02d10704e6b9e2ee8"
+      },
+      {
+        "name": "malilib-fabric-1.21.3-0.22.8.jar",
+        "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/YyAlxssn/malilib-fabric-1.21.3-0.22.8.jar",
+        "sha256": "3f87cbc2fb582896e8308f23b9526d14015f37e207834e62608ca2b802a84127"
+      },
+      {
+        "name": "litematica-fabric-1.21.3-0.20.9.jar",
+        "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/diPHpcNy/litematica-fabric-1.21.3-0.20.9.jar",
+        "sha256": "e43f65b382878791f9a9a305b5f9e9fa675e4f7550f5e7358ec5272c2475a547"
+      }
+    ],
+    "versions": {
+      "fabric-api": "0.106.1+1.21.2",
+      "malilib": "0.22.8",
+      "litematica": "0.20.9"
+    },
+    "companions": {
+      "quickshulker": "ce8f9a4700e5fb20c279ef60283ae684c1fd598c",
+      "ChainVeinFabric": "e7a3119c917b110b36bfd609e13db36f89c3b9ee"
+    }
+  },
+  "1.21.3": {
+    "loader": "0.16.8",
+    "dependencies": [
+      {
+        "name": "fabric-api-0.106.1+1.21.3.jar",
+        "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/dhD4I4lJ/fabric-api-0.106.1%2B1.21.3.jar",
+        "sha256": "fe6c2f18b8f1d097a74d712a88899474c909fcd73bb83d8f3d63715eb479fe2c"
+      },
+      {
+        "name": "malilib-fabric-1.21.3-0.22.8.jar",
+        "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/YyAlxssn/malilib-fabric-1.21.3-0.22.8.jar",
+        "sha256": "3f87cbc2fb582896e8308f23b9526d14015f37e207834e62608ca2b802a84127"
+      },
+      {
+        "name": "litematica-fabric-1.21.3-0.20.9.jar",
+        "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/diPHpcNy/litematica-fabric-1.21.3-0.20.9.jar",
+        "sha256": "e43f65b382878791f9a9a305b5f9e9fa675e4f7550f5e7358ec5272c2475a547"
+      }
+    ],
+    "versions": {
+      "fabric-api": "0.106.1+1.21.3",
+      "malilib": "0.22.8",
+      "litematica": "0.20.9"
+    },
+    "companions": {
+      "quickshulker": "01a21e414183574b39ba9a24eec0ba1e6b83f2e9",
+      "ChainVeinFabric": "a137d429e7aff9c276c781bfae7057143581c6d9"
+    }
+  },
+  "1.21.4": {
+    "loader": "0.16.9",
+    "dependencies": [
+      {
+        "name": "fabric-api-0.110.5+1.21.4.jar",
+        "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/Oh9IKZRD/fabric-api-0.110.5%2B1.21.4.jar",
+        "sha256": "ba77c70ae9b239e05f256cd64266b958528701ff6fc0088afc4be2e04bc167cb"
+      },
+      {
+        "name": "malilib-fabric-1.21.4-0.23.5.jar",
+        "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/ifi4uRpL/malilib-fabric-1.21.4-0.23.5.jar",
+        "sha256": "07e2c7569378e37059b35c0cf7a6530554f756737c8e341e1a8c2312dc2d4548"
+      },
+      {
+        "name": "litematica-fabric-1.21.4-0.21.7.jar",
+        "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/Z7jnVo9V/litematica-fabric-1.21.4-0.21.7.jar",
+        "sha256": "19fbf46ddc0776c2ff2a1be4cac627b3a236cc4682ce93d01c858e1437e93d4d"
+      }
+    ],
+    "versions": {
+      "fabric-api": "0.110.5+1.21.4",
+      "malilib": "0.23.5",
+      "litematica": "0.21.7"
+    },
+    "companions": {
+      "quickshulker": "1dc86bb21b1a3fd842efaf47d6a9034e5a818d53",
+      "ChainVeinFabric": "11edf115e8844f835b6a7a7fda355e675946ac4a"
+    }
+  },
+  "1.21.5": {
+    "loader": "0.16.10",
+    "dependencies": [
+      {
+        "name": "fabric-api-0.119.5+1.21.5.jar",
+        "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/MNJwZRWx/fabric-api-0.119.5%2B1.21.5.jar",
+        "sha256": "c4176a3a9dadc24391749a6f8dbe43cda69503e8113db71a8880d8d9b409fc9f"
+      },
+      {
+        "name": "malilib-fabric-1.21.5-0.24.3.jar",
+        "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/YrRUsIk9/malilib-fabric-1.21.5-0.24.3.jar",
+        "sha256": "81a7bbea53c702a3155f44c19c315d9c9028d901c2b8bfc90ebcb62551a08e59"
+      },
+      {
+        "name": "litematica-fabric-1.21.5-0.22.5.jar",
+        "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/f9S0ZzGY/litematica-fabric-1.21.5-0.22.5.jar",
+        "sha256": "9969ba282f3b9489bc85b3f0e0668cdc1a127e82ef31797c3473cd00f2785c9f"
+      }
+    ],
+    "versions": {
+      "fabric-api": "0.119.5+1.21.5",
+      "malilib": "0.24.3",
+      "litematica": "0.22.5"
+    },
+    "companions": {
+      "quickshulker": "b7c22fdb0fe783a335d1737bb954aad30023d1b4",
+      "ChainVeinFabric": "bbdfd8e2ad55be28eb79bf086bb11e794a0b3b34"
+    }
+  },
+  "1.21.6": {
+    "loader": "0.16.13",
+    "dependencies": [
+      {
+        "name": "fabric-api-0.128.0+1.21.6.jar",
+        "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/b2dnY6PN/fabric-api-0.128.0%2B1.21.6.jar",
+        "sha256": "087f3ec475ed380c716fc05509614ff3f18437df43ff10f3f3231ad23c72ea87"
+      },
+      {
+        "name": "malilib-fabric-1.21.8-0.25.7.jar",
+        "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/2kC79eY3/malilib-fabric-1.21.8-0.25.7.jar",
+        "sha256": "4f26699e52a73b3cfe8e98e7588617a99052b23add3352f8c559c133716ec92f"
+      },
+      {
+        "name": "litematica-fabric-1.21.8-0.23.7.jar",
+        "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/GJMDd9Zq/litematica-fabric-1.21.8-0.23.7.jar",
+        "sha256": "65bcd10312e93038489a0c2e43f65cc815f9cb3ce38f923848a637277bce55ae"
+      }
+    ],
+    "versions": {
+      "fabric-api": "0.128.0+1.21.6",
+      "malilib": "0.25.7",
+      "litematica": "0.23.7"
+    },
+    "companions": {
+      "quickshulker": "547c7c1d761623f04ba9d00a72ea64ec5327fde7",
+      "ChainVeinFabric": "825a1cf78a0be6ee415dbe755bc02de68ffbb23a"
+    }
+  },
+  "1.21.7": {
+    "loader": "0.16.13",
+    "dependencies": [
+      {
+        "name": "fabric-api-0.128.1+1.21.7.jar",
+        "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/sLmbxWpX/fabric-api-0.128.1%2B1.21.7.jar",
+        "sha256": "04729f23a915a190f3269dcdafd49e9cc75d3c35ff0bbd1769376dcff547751f"
+      },
+      {
+        "name": "malilib-fabric-1.21.8-0.25.7.jar",
+        "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/2kC79eY3/malilib-fabric-1.21.8-0.25.7.jar",
+        "sha256": "4f26699e52a73b3cfe8e98e7588617a99052b23add3352f8c559c133716ec92f"
+      },
+      {
+        "name": "litematica-fabric-1.21.8-0.23.7.jar",
+        "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/GJMDd9Zq/litematica-fabric-1.21.8-0.23.7.jar",
+        "sha256": "65bcd10312e93038489a0c2e43f65cc815f9cb3ce38f923848a637277bce55ae"
+      }
+    ],
+    "versions": {
+      "fabric-api": "0.128.1+1.21.7",
+      "malilib": "0.25.7",
+      "litematica": "0.23.7"
+    },
+    "companions": {
+      "quickshulker": "edb10018e65c6cae98b4539f9f5392f571bd6fee",
+      "ChainVeinFabric": "8c6376d7d35b370fb7812f425b187493f36204f9"
+    }
+  },
+  "1.21.8": {
+    "loader": "0.16.13",
+    "dependencies": [
+      {
+        "name": "fabric-api-0.129.0+1.21.8.jar",
+        "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/X2hTodix/fabric-api-0.129.0%2B1.21.8.jar",
+        "sha256": "fe31a897f9886011914e3e8c292a2774d8427fe0cb2e3611cb8ce18289c612a7"
+      },
+      {
+        "name": "malilib-fabric-1.21.8-0.25.7.jar",
+        "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/2kC79eY3/malilib-fabric-1.21.8-0.25.7.jar",
+        "sha256": "4f26699e52a73b3cfe8e98e7588617a99052b23add3352f8c559c133716ec92f"
+      },
+      {
+        "name": "litematica-fabric-1.21.8-0.23.7.jar",
+        "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/GJMDd9Zq/litematica-fabric-1.21.8-0.23.7.jar",
+        "sha256": "65bcd10312e93038489a0c2e43f65cc815f9cb3ce38f923848a637277bce55ae"
+      }
+    ],
+    "versions": {
+      "fabric-api": "0.129.0+1.21.8",
+      "malilib": "0.25.7",
+      "litematica": "0.23.7"
+    },
+    "companions": {
+      "quickshulker": "bb4f8cc3f0b1475a977f3b110cc6c0e8b960fd77",
+      "ChainVeinFabric": "18079921947d2cb0f1d38d8716b4f6e4c4a93843"
+    }
+  },
+  "1.21.9": {
+    "loader": "0.17.0",
+    "dependencies": [
+      {
+        "name": "fabric-api-0.133.14+1.21.9.jar",
+        "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/rWWImuoz/fabric-api-0.133.14%2B1.21.9.jar",
+        "sha256": "cb76e917c48e82e2d63255104629399622334ff3a34878dc53bc91ae8c608abd"
+      },
+      {
+        "name": "malilib-fabric-1.21.10-0.26.7.jar",
+        "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/PdAcB2av/malilib-fabric-1.21.10-0.26.7.jar",
+        "sha256": "37a360de28627c3495b57bb7aad3e854d7bdcbe64531f390d913dba30d6171a5"
+      },
+      {
+        "name": "litematica-fabric-1.21.10-0.24.8.jar",
+        "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/g2Be4qSQ/litematica-fabric-1.21.10-0.24.8.jar",
+        "sha256": "9a25b46c6e5d756a505dc14e31313a60eeca7321e7e799f90d1a33eec538a928"
+      }
+    ],
+    "versions": {
+      "fabric-api": "0.133.14+1.21.9",
+      "malilib": "0.26.7",
+      "litematica": "0.24.8"
+    },
+    "companions": {
+      "quickshulker": "e35f8943148ef58e21cb415b49df1a85137e14a4",
+      "ChainVeinFabric": "be1d4565fc46d8fa046ca216630bf5e4ca0c7042"
+    }
+  },
+  "1.21.10": {
+    "loader": "0.17.0",
+    "dependencies": [
+      {
+        "name": "fabric-api-0.134.1+1.21.10.jar",
+        "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/2diTWKwa/fabric-api-0.134.1%2B1.21.10.jar",
+        "sha256": "f73dfb4065c3a82c09444fb44b377ff497b92cd036cebbebb63f4f6e6a547705"
+      },
+      {
+        "name": "malilib-fabric-1.21.10-0.26.7.jar",
+        "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/PdAcB2av/malilib-fabric-1.21.10-0.26.7.jar",
+        "sha256": "37a360de28627c3495b57bb7aad3e854d7bdcbe64531f390d913dba30d6171a5"
+      },
+      {
+        "name": "litematica-fabric-1.21.10-0.24.8.jar",
+        "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/g2Be4qSQ/litematica-fabric-1.21.10-0.24.8.jar",
+        "sha256": "9a25b46c6e5d756a505dc14e31313a60eeca7321e7e799f90d1a33eec538a928"
+      }
+    ],
+    "versions": {
+      "fabric-api": "0.134.1+1.21.10",
+      "malilib": "0.26.7",
+      "litematica": "0.24.8"
+    },
+    "companions": {
+      "quickshulker": "7a6d2d31448d08e305ad934d82665ec925009d02",
+      "ChainVeinFabric": "15c6ba7967c38685e1e755efeaf71dff3e9a0525"
+    }
+  }
+}

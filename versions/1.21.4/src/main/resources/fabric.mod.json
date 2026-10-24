@@ -33,9 +33,9 @@
     "minecraft": "${minecraft_dependency}",
     "malilib": ">=${malilib}",
     "litematica": ">=${litematica}",
-    "fabricloader": ">=0.19.3",
+    "fabricloader": ">=0.16.9",
     "java": ">=21",
-    "fabric-api": "*"
+    "fabric-api": ">=0.110.5+1.21.4"
   },
   "suggests": {
     "chainveinfabric": ">=3.0.0"
