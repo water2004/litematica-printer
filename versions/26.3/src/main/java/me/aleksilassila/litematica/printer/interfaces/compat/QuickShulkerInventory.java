@@ -148,7 +148,8 @@ final class QuickShulkerInventory {
 
     private static List<ItemStack> shulkerSlots(ItemStack box) {
         ItemContainerContents contents = box.get(DataComponents.CONTAINER);
-        return contents == null ? List.of() : contents.nonEmptyItemCopyStream().toList();
+        // Direct endpoints use physical slot indices, including empty slots.
+        return contents == null ? List.of() : contents.itemCopies().toList();
     }
 
     private static List<ItemStack> copyNonEmpty(List<ItemStack> stacks) {
