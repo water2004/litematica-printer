@@ -135,6 +135,12 @@ jobs:
             quickshulker: none
             packetloss: false
             servux: false
+            bedrockminer: bedrockminer
+          - minecraft: 26.3
+            chainvein: false
+            quickshulker: none
+            packetloss: false
+            servux: false
             bedrockminer: fabric-bedrock-miner
           - minecraft: 26.3
             chainvein: true
