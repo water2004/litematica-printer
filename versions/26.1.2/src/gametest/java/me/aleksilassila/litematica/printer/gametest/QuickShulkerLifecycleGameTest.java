@@ -29,6 +29,9 @@ public final class QuickShulkerLifecycleGameTest implements FabricClientGameTest
         if (disconnectFailure != null) failures.add(disconnectFailure);
 
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
+            // Inventory synchronization may finish before the loading screen does.
+            // Do not close this short-lived world during Fabric's login/tick barrier.
+            singleplayer.getClientLevel().waitForChunksDownload();
             singleplayer.getServer().runOnServer(server -> {
                 var player = server.getPlayerList().getPlayers().getFirst();
                 var inventory = player.getInventory();
