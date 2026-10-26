@@ -93,6 +93,7 @@ public final class BedrockIntegrationGameTest implements FabricClientGameTest {
         }
 
         String expectedVersion = switch (miner) {
+            case "bedrockminer" -> "1.6.2-mc26.3";
             case "blockminer" -> "1.1.1";
             case "fabric-bedrock-miner" -> "2.0.11+26.3";
             default -> throw new AssertionError(miner);
