@@ -8,18 +8,19 @@ import fi.dy.masa.malilib.gui.Message;
 import fi.dy.masa.malilib.util.InfoUtils;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 import me.aleksilassila.litematica.printer.config.Configs;
-import me.aleksilassila.litematica.printer.core.network.HandConfirmationGate;
-import me.aleksilassila.litematica.printer.core.status.PrinterWaitReason;
 import me.aleksilassila.litematica.printer.mixin.printer.litematica.EasyPlaceUtilsAccessor;
 import me.aleksilassila.litematica.printer.mixin.printer.litematica.InventoryUtilsAccessor;
-import me.aleksilassila.litematica.printer.interfaces.compat.QuickShulkerCompat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.NonNullList;
+import net.minecraft.network.HashedStack;
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.world.entity.player.Inventory;
@@ -28,13 +29,6 @@ import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-
-import net.minecraft.network.HashedStack;
-
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class InventoryUtils {
     private static final Minecraft client = Minecraft.getInstance();
@@ -44,32 +38,6 @@ public class InventoryUtils {
     @Getter
     @Setter
     private static ItemStack orderlyStoreItem;
-
-    /**
-     * Result of preparing the main hand for a print action.
-     * Waiting results retain the block job for a later tick and carry the reason
-     * so the HUD can distinguish item preparation from a Servux response.
-     */
-    public enum ItemSwitchResult {
-        READY,
-        WAITING,
-        WAITING_FOR_CONFIRMATION,
-        UNAVAILABLE;
-
-        public boolean isWaiting() {
-            return this == WAITING || this == WAITING_FOR_CONFIRMATION;
-        }
-
-        public PrinterWaitReason waitingReason() {
-            return switch (this) {
-                case WAITING -> PrinterWaitReason.ITEM_SWITCH;
-                case WAITING_FOR_CONFIRMATION -> PrinterWaitReason.SERVUX_HAND_CONFIRMATION;
-                default -> throw new IllegalStateException("Result is not waiting: " + this);
-            };
-        }
-    }
-
-
 
     public static int getSelectedSlot(Inventory inventory) {
         return inventory.getSelectedSlot();
@@ -344,7 +312,6 @@ public class InventoryUtils {
         return true;
     }
 
-
     // ========== 新增：副手核心方法（无选中格子逻辑） ==========
 
     private static void showMessageWithCooldown(Message.MessageType type, String messageKey) {
@@ -360,104 +327,6 @@ public class InventoryUtils {
         // 超过冷却时间，发送消息并更新【该Key】的最后发送时间
         InfoUtils.showGuiOrInGameMessage(type, messageKey);
         LAST_MESSAGE_SEND_TIME.put(messageKey, currentTime);
-    }
-
-    public static ItemSwitchResult switchToItemsResult(LocalPlayer player, Item[] items) {
-        // 包含潜影盒延迟关闭窗口在内，只要当前仍是非玩家背包容器，就必须保留作业等待。
-        if (player.containerMenu != player.inventoryMenu) {
-            return ItemSwitchResult.WAITING;
-        }
-        if (items == null || items.length == 0) {
-            return ItemSwitchResult.READY;
-        }
-
-        // 已经手持任一允许物品时无需制造额外的等待 tick。
-        ItemStack currentMainHand = player.getMainHandItem();
-        for (Item item : items) {
-            if (currentMainHand.is(item)) {
-                HandConfirmationGate.Status confirmation =
-                        ServuxHandItemConfirmation.verify(player, items);
-                if (confirmation == HandConfirmationGate.Status.MISMATCH) {
-                    ServuxHandItemConfirmation.retrySwitch(player);
-                    return ItemSwitchResult.WAITING_FOR_CONFIRMATION;
-                }
-                if (confirmation != HandConfirmationGate.Status.CONFIRMED) {
-                    return ItemSwitchResult.WAITING_FOR_CONFIRMATION;
-                }
-                return ItemSwitchResult.READY;
-            }
-        }
-
-        Inventory inventory = player.getInventory();
-        boolean isCreativeMode = PlayerUtils.getAbilities(player).instabuild;
-        if (isCreativeMode) {
-            ServuxHandItemConfirmation.beginSwitch();
-            ItemStack stack = new ItemStack(items[0]);
-            boolean switched = InventoryUtils.setPickedItemToHand(stack, client);
-            return switched || player.getMainHandItem().is(items[0])
-                    ? ItemSwitchResult.WAITING
-                    : ItemSwitchResult.UNAVAILABLE;
-        }
-        // 查找物品在背包中的槽位
-        for (Item item : items) {
-            int slot = findItemInInventory(inventory, item);
-            if (slot != -1) {
-                ServuxHandItemConfirmation.beginSwitch();
-                ItemStack itemStack = inventory.getItem(slot);
-                orderlyStoreItem = itemStack.copy();
-                // 找到后只执行切换；实际打印留到下一 tick 重新验证主手后执行。
-                boolean switched = InventoryUtils.setPickedItemToHand(slot, itemStack, client);
-                return switched || player.getMainHandItem().is(item)
-                        ? ItemSwitchResult.WAITING
-                        : ItemSwitchResult.UNAVAILABLE;
-            }
-        }
-        // 没找到，尝试使用快捷潜影盒
-        boolean requestStarted = QuickShulkerCompat.requestShulkerItem(player, items);
-        if (requestStarted
-                || QuickShulkerCompat.isBusy()
-                || (Configs.Print.USE_QUICK_SHULKER.getBooleanValue()
-                    && QuickShulkerCompat.getCooldown() > 0)) {
-            return ItemSwitchResult.WAITING;
-        }
-        return ItemSwitchResult.UNAVAILABLE;
-    }
-
-    public static boolean switchToItems(LocalPlayer player, Item[] items) {
-        return switchToItemsResult(player, items) == ItemSwitchResult.READY;
-    }
-
-    private static int findItemInInventory(Inventory inventory, Item item) {
-        for (int i = 0; i < inventory.getContainerSize(); i++) {
-            if (inventory.getItem(i).getItem().equals(item)) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    public PickResult checkCanSwitchToItems(LocalPlayer player, Item[] items) {
-        if (player == null) {
-            return PickResult.FAIL;
-        }
-        Item[] targetItems = items;
-        if (targetItems == null || targetItems.length == 0) {
-            targetItems = new Item[]{Items.AIR};
-        }
-        Inventory inv = player.getInventory();
-        boolean isCreativeMode = PlayerUtils.getAbilities(player).instabuild;
-        if (isCreativeMode) {
-            return InventoryUtils.checkPickSlotAvailable(-1, client);
-        }
-        for (Item item : targetItems) {
-            for (int i = 0; i < inv.getContainerSize(); i++) {
-                ItemStack itemStack = inv.getItem(i);
-                if (itemStack.getItem().equals(item)) {
-                    return InventoryUtils.checkPickSlotAvailable(i, client);
-                }
-            }
-        }
-        return PickResult.FAIL;
     }
 
     public enum PickResult {

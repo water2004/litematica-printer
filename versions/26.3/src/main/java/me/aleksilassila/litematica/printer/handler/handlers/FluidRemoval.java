@@ -12,6 +12,7 @@ import me.aleksilassila.litematica.printer.handler.TransactionKey;
 import me.aleksilassila.litematica.printer.printer.*;
 import me.aleksilassila.litematica.printer.printer.action.Action;
 import me.aleksilassila.litematica.printer.printer.ActionManager;
+import me.aleksilassila.litematica.printer.printer.inventory.MaterialPreparation;
 import me.aleksilassila.litematica.printer.utils.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -118,9 +119,9 @@ public class FluidRemoval extends Module {
             if (!Configs.Fluid.FILL_FLOWING_FLUID.getBooleanValue() && !fluidState.isSource()) {
                 return;
             }
-            InventoryUtils.ItemSwitchResult switchResult =
-                    InventoryUtils.switchToItemsResult(player, fillItems.toArray(new Item[0]));
-            if (switchResult != InventoryUtils.ItemSwitchResult.READY) {
+            MaterialPreparation.Result switchResult =
+                    MaterialPreparation.prepare(player, fillItems.toArray(new Item[0]));
+            if (switchResult != MaterialPreparation.Result.READY) {
                 if (switchResult.isWaiting()) {
                     enterWaiting(blockPos, switchResult.waitingReason());
                     skipIteration.set(true);

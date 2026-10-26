@@ -88,9 +88,9 @@ public class GUI extends Module {
                 Configs.Print.ENABLED.getBooleanValue(),
                 Configs.Fluid.ENABLED.getBooleanValue(),
                 Configs.Fill.ENABLED.getBooleanValue(),
-                Set.copyOf(List.of(ModuleManager.FILL.getFillModeItemList())),
+                Set.copyOf(List.of(ModuleManager.FILL.getMaterialItems())),
                 spawnProofingAreas(),
-                Set.copyOf(List.of(ModuleManager.SPAWN_PROOFING.getFillModeItemList())));
+                Set.copyOf(List.of(ModuleManager.SPAWN_PROOFING.getMaterialItems())));
     }
 
     private static List<PrinterBox> spawnProofingAreas() {

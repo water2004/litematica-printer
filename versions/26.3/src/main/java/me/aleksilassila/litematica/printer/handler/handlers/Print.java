@@ -22,6 +22,7 @@ import me.aleksilassila.litematica.printer.printer.action.Action;
 import me.aleksilassila.litematica.printer.printer.action.ChainBreakAction;
 import me.aleksilassila.litematica.printer.printer.action.ClickAction;
 import me.aleksilassila.litematica.printer.printer.ActionManager;
+import me.aleksilassila.litematica.printer.printer.inventory.MaterialPreparation;
 import me.aleksilassila.litematica.printer.printer.MissingMaterialTracker;
 import me.aleksilassila.litematica.printer.utils.*;
 import net.minecraft.core.BlockPos;
@@ -339,8 +340,8 @@ public class Print extends Module {
             addHighlight(blockPos, HighlightType.FAILED);
             return;
         }
-        InventoryUtils.ItemSwitchResult switchResult = InventoryUtils.switchToItemsResult(player, reqItems);
-        if (switchResult != InventoryUtils.ItemSwitchResult.READY) {
+        MaterialPreparation.Result switchResult = MaterialPreparation.prepare(player, reqItems);
+        if (switchResult != MaterialPreparation.Result.READY) {
             if (switchResult.isWaiting()) {
                 enterWaiting(blockPos, switchResult.waitingReason());
                 skipIteration.set(true);

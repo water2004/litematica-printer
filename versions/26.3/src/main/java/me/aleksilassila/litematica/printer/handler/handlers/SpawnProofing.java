@@ -13,7 +13,7 @@ import net.minecraft.world.level.BlockGetter;
  * Surface-restricted filling. Jobs address supports inside the area selection;
  * the placement above them may be one block beyond its upper boundary.
  */
-public final class SpawnProofing extends Fill {
+public final class SpawnProofing extends MaterialPlacementModule {
     public static final String NAME = "spawnProofing";
 
     public SpawnProofing() {
