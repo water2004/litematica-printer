@@ -9,7 +9,7 @@
 > [!IMPORTANT]
 > This is the fourth-revision fork of [BiliXWhite/litematica-printer](https://github.com/BiliXWhite/litematica-printer). This repository has its own releases, compatibility range, issue tracker, and documentation. Download this fork only from the [water2004/litematica-printer Releases page](https://github.com/water2004/litematica-printer/releases).
 
-Litematica Printer 4th is a client-side Fabric extension for [Litematica](https://modrinth.com/mod/litematica). It continuously discovers unfinished schematic positions and processes them through a bounded, multithreaded producer-consumer scheduler. Printing, filling, fluid removal, and bedrock breaking are independent modes.
+Litematica Printer 4th is a client-side Fabric extension for [Litematica](https://modrinth.com/mod/litematica). It continuously discovers unfinished schematic positions and processes them through a bounded, multithreaded producer-consumer scheduler. Printing, filling, spawn proofing, fluid removal, and bedrock breaking are independent modes.
 
 ## Star History
 
@@ -94,10 +94,11 @@ In a fresh Minecraft 26.2 A/B benchmark using the same 531,441-position fixture,
 
 - **Print:** place missing blocks, adjust supported block states, and optionally break wrong or extra blocks.
 - **Fill:** fill the active Litematica selection using configurable block and direction filters.
+- **Spawn proofing:** use Filling's material-list / held-item selection to cover full top faces of supports inside the area selection. Covering blocks may extend one block above it. No schematic is needed; solid blocks and fluids are skipped, while replaceable vegetation can be replaced. Choose a spawn-proof material such as bottom slabs or rails.
 - **Fluid removal:** remove configured still or flowing fluids inside the active Litematica area selection.
 - **Bedrock breaking:** discover bedrock jobs and submit them to a supported bedrock-mining mod.
 
-Fill and fluid removal use an area-selection scope control, separate from schematic printing: the entire selection, below the player, or above the player. Work radius and Litematica's global render-layer range always apply; neither mode requires a loaded schematic.
+Fill, spawn proofing, and fluid removal use an area-selection scope control, separate from schematic printing: the entire selection, below the player, or above the player. Work radius and Litematica's global render-layer range always apply; none of these modes requires a loaded schematic.
 
 The legacy general-purpose mining mode and the built-in remote warehouse were removed.
 

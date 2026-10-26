@@ -24,6 +24,7 @@ public class ModuleManager {
     public static final GUI GUI = new GUI();
     public static final Print PRINT = new Print();
     public static final Fill FILL = new Fill();
+    public static final SpawnProofing SPAWN_PROOFING = new SpawnProofing();
     public static final FluidRemoval FLUID_REMOVAL = new FluidRemoval();
     public static final Bedrock BEDROCK = new Bedrock();
 
@@ -34,7 +35,7 @@ public class ModuleManager {
     private static long currentHandlerTime;
 
     public static final ImmutableList<Module> VALUES = ImmutableList.of(
-            GUI, PRINT, FILL, FLUID_REMOVAL, BEDROCK
+            GUI, PRINT, FILL, SPAWN_PROOFING, FLUID_REMOVAL, BEDROCK
     );
 
     private static boolean lastPrinterEnabled = false;
@@ -159,6 +160,7 @@ public class ModuleManager {
     private static PrinterStatus statusFor(Module module) {
         if (module == PRINT) return PrinterStatus.PRINTING;
         if (module == FILL) return PrinterStatus.FILLING;
+        if (module == SPAWN_PROOFING) return PrinterStatus.SPAWN_PROOFING;
         if (module == FLUID_REMOVAL) return PrinterStatus.REMOVING_FLUID;
         if (module == BEDROCK) return PrinterStatus.BREAKING_BEDROCK;
         return PrinterStatus.WAITING_FOR_SEARCH;

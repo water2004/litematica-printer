@@ -1,5 +1,8 @@
 package me.aleksilassila.litematica.printer.handler.handlers;
 
+import fi.dy.masa.malilib.config.options.ConfigBoolean;
+import fi.dy.masa.malilib.config.options.ConfigOptionList;
+import fi.dy.masa.malilib.config.options.ConfigStringList;
 import lombok.Getter;
 import me.aleksilassila.litematica.printer.I18n;
 import me.aleksilassila.litematica.printer.config.Configs;
@@ -30,6 +33,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class Fill extends Module {
     public final static String NAME = "fill";
+    private final MaterialSettings materialSettings;
 
     private List<String> fillCacheBlocklist = new ArrayList<>();
     @Getter
@@ -40,9 +44,16 @@ public class Fill extends Module {
     private final Map<Block, Boolean> replaceableMatchCache = new HashMap<>();
 
     public Fill() {
-        super(NAME, Configs.Fill.ENABLED,
-                () -> ((AreaSelectionType) Configs.Fill.FILL_SELECTION_TYPE.getOptionListValue()).heightFilter(),
-                true);
+        this(NAME, Configs.Fill.ENABLED, Configs.Fill.FILL_SELECTION_TYPE,
+                new MaterialSettings(Configs.Fill.FILL_BLOCK_MODE,
+                        Configs.Fill.FILL_BLOCK_LIST, Configs.Fill.FILL_HANDHELD_BLACKLIST));
+    }
+
+    protected Fill(String name, ConfigBoolean enabled, ConfigOptionList selectionType,
+                   MaterialSettings materialSettings) {
+        super(name, enabled,
+                () -> ((AreaSelectionType) selectionType.getOptionListValue()).heightFilter(), true);
+        this.materialSettings = materialSettings;
     }
 
     @Override
@@ -62,11 +73,11 @@ public class Fill extends Module {
 
     @Override
     protected void preprocess() {
-        FillBlockModeType fillMode = (FillBlockModeType) Configs.Fill.FILL_BLOCK_MODE.getOptionListValue();
+        FillBlockModeType fillMode = (FillBlockModeType) materialSettings.mode().getOptionListValue();
         switch (fillMode) {
             case BLOCKLIST:
                 // 每次去MC注册表中获取会造成大量卡顿, 所以仅在玩家修改了填充列表, 再去读取以便注册表
-                List<String> strings = Configs.Fill.FILL_BLOCK_LIST.getStrings();
+                List<String> strings = materialSettings.blocks().getStrings();
                 if (!strings.equals(fillCacheBlocklist)) {
                     fillCacheBlocklist = new ArrayList<>(strings);
                     if (strings.isEmpty()) {
@@ -84,11 +95,11 @@ public class Fill extends Module {
                 }
                 break;
             case HANDHELD:  // 手持物品
-                if (Configs.Fill.FILL_BLOCK_MODE.getOptionListValue() == FillBlockModeType.HANDHELD) {
+                if (materialSettings.mode().getOptionListValue() == FillBlockModeType.HANDHELD) {
                     ItemStack heldStack = player.getMainHandItem();
                     if (!heldStack.isEmpty() && heldStack.getCount() > 0) {
                         Item heldItem = heldStack.getItem();
-                        List<String> blacklist = Configs.Fill.FILL_HANDHELD_BLACKLIST.getStrings();
+                        List<String> blacklist = materialSettings.handheldBlacklist().getStrings();
                         if (!blacklist.isEmpty() && blacklist.stream().anyMatch(s -> PinYinSearchUtils.matchName(s, heldStack))) {
                             fillModeItemList = new Item[0];
                         } else {
@@ -123,7 +134,7 @@ public class Fill extends Module {
 
     @Override
     public boolean canProcessPos(BlockPos pos) {
-        if (Configs.Fill.FILL_BLOCK_MODE.getOptionListValue() == FillBlockModeType.HANDHELD) {
+        if (materialSettings.mode().getOptionListValue() == FillBlockModeType.HANDHELD) {
             ItemStack heldStack = player.getMainHandItem();
             if (heldStack.isEmpty() || heldStack.getCount() <= 0) return false;
         }
@@ -167,11 +178,8 @@ public class Fill extends Module {
 
     @Override
     protected void executeIteration(BlockPos blockPos, AtomicReference<Boolean> skipIteration) {
-        BlockState currentState = level.getBlockState(blockPos);
-        if (currentState.isAir()
-                || (currentState.getBlock() instanceof LiquidBlock)
-                || isReplaceable(currentState)
-        ) {
+        if (canProcessPos(blockPos)) {
+            BlockPos placementPos = getPlacementPos(blockPos);
             InventoryUtils.ItemSwitchResult switchResult =
                     InventoryUtils.switchToItemsResult(player, this.fillModeItemList);
             if (switchResult != InventoryUtils.ItemSwitchResult.READY) {
@@ -190,22 +198,14 @@ public class Fill extends Module {
             if (Configs.Placement.FALLING_CHECK.getBooleanValue() &&
                 player.getMainHandItem().getItem() instanceof BlockItem item &&
                 item.getBlock() instanceof FallingBlock block &&
-                FallingBlock.isFree(level.getBlockState(blockPos.below()))
+                FallingBlock.isFree(level.getBlockState(placementPos.below()))
             ) {
                 MessageUtils.setOverlayMessage(I18n.BLOCK_NO_SUPPORT.getName(block.getName().getString()));
                 return;
             }
 
-            Action action;
-            if (ConfigUtils.getFillModeFacing() != null) {
-                action = new Action()
-                        .setLookDirection(ConfigUtils.getFillModeFacing().getOpposite())
-                        .queueAction(blockPos, ConfigUtils.getFillModeFacing(), false, player);
-            } else {
-                action = new Action()
-                        .queueAction(blockPos, getPlayerPlacementDirection(), false, player);
-            }
-            addHighlight(blockPos, HighlightType.PLACE);
+            Action action = createPlacementAction(placementPos);
+            addHighlight(placementPos, HighlightType.PLACE);
             ActionManager.INSTANCE.setLook(action.getPlayerLook());
             ActionManager.INSTANCE.setNeedWaitModifyLookFromAction(action.getNeedWaitModifyLook());
             if (ActionManager.INSTANCE.sendQueue(player).needWaitModifyLook){
@@ -214,6 +214,23 @@ public class Fill extends Module {
                 this.setCooldown(blockPos, ConfigUtils.getPlaceCooldown());
             }
         }
+    }
+
+    protected BlockPos getPlacementPos(BlockPos jobPos) {
+        return jobPos;
+    }
+
+    protected Action createPlacementAction(BlockPos placementPos) {
+        if (ConfigUtils.getFillModeFacing() != null) {
+            return new Action()
+                    .setLookDirection(ConfigUtils.getFillModeFacing().getOpposite())
+                    .queueAction(placementPos, ConfigUtils.getFillModeFacing(), false, player);
+        }
+        return new Action().queueAction(placementPos, getPlayerPlacementDirection(), false, player);
+    }
+
+    protected record MaterialSettings(ConfigOptionList mode, ConfigStringList blocks,
+                                      ConfigStringList handheldBlacklist) {
     }
 
     private record FillSearchContext(List<String> replaceRules) {

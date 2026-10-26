@@ -40,6 +40,7 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
         optionSet.addAll(Hotkeys.OPTIONS);
         optionSet.addAll(Print.OPTIONS);
         optionSet.addAll(Fill.OPTIONS);
+        optionSet.addAll(SpawnProofing.OPTIONS);
         optionSet.addAll(Fluid.OPTIONS);
         optionSet.addAll(Bedrock.OPTIONS);
         optionSet.addAll(Highlight.OPTIONS);
@@ -60,6 +61,7 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
             .addAll(Hotkeys.OPTIONS)
             .addAll(Print.OPTIONS)
             .addAll(Fill.OPTIONS)
+            .addAll(SpawnProofing.OPTIONS)
             .addAll(Fluid.OPTIONS)
             .addAll(Bedrock.OPTIONS)
             .addAll(Highlight.OPTIONS)
@@ -422,6 +424,24 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
                 FILL_HANDHELD_BLACKLIST,
                 FILL_BLOCK_FACING
         );
+    }
+
+    public static class SpawnProofing {
+        public static final ConfigBooleanHotkeyed ENABLED = booleanHotkey("spawnProofingEnabled")
+                .defaultValue(false).build();
+        public static final ConfigOptionList SELECTION_TYPE = optionList("spawnProofingSelectionType")
+                .defaultValue(AreaSelectionType.ALL).setDescKey("").build();
+        public static final ConfigOptionList BLOCK_MODE = optionList("spawnProofingBlockMode")
+                .defaultValue(FillBlockModeType.BLOCKLIST).build();
+        public static final ConfigStringList BLOCK_LIST = stringListValue("spawnProofingBlockList")
+                .defaultValue(Blocks.STONE_SLAB)
+                .setVisible(() -> BLOCK_MODE.getOptionListValue() == FillBlockModeType.BLOCKLIST)
+                .build();
+        public static final ConfigStringList HANDHELD_BLACKLIST = stringListValue("spawnProofingHandheldBlacklist")
+                .setVisible(() -> BLOCK_MODE.getOptionListValue() == FillBlockModeType.HANDHELD)
+                .build();
+        public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
+                ENABLED, SELECTION_TYPE, BLOCK_MODE, BLOCK_LIST, HANDHELD_BLACKLIST);
     }
 
     public static class Fluid {

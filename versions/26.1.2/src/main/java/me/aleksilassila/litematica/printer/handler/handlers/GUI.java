@@ -8,6 +8,8 @@ import me.aleksilassila.litematica.printer.enums.BlockMatchingType;
 import me.aleksilassila.litematica.printer.handler.AsyncSearchCoordinator;
 import me.aleksilassila.litematica.printer.handler.Module;
 import me.aleksilassila.litematica.printer.handler.ModuleManager;
+import me.aleksilassila.litematica.printer.printer.PrinterBox;
+import me.aleksilassila.litematica.printer.utils.LitematicaUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.LiquidBlock;
@@ -61,6 +63,11 @@ public class GUI extends Module {
     }
 
     @Override
+    protected int snapshotHalo() {
+        return Configs.SpawnProofing.ENABLED.getBooleanValue() ? 1 : 0;
+    }
+
+    @Override
     protected AsyncSearchCoordinator.WorkspaceFilter workspaceFilter() {
         return AsyncSearchCoordinator.WorkspaceFilter.NONE;
     }
@@ -81,7 +88,21 @@ public class GUI extends Module {
                 Configs.Print.ENABLED.getBooleanValue(),
                 Configs.Fluid.ENABLED.getBooleanValue(),
                 Configs.Fill.ENABLED.getBooleanValue(),
-                Set.copyOf(List.of(ModuleManager.FILL.getFillModeItemList())));
+                Set.copyOf(List.of(ModuleManager.FILL.getFillModeItemList())),
+                spawnProofingAreas(),
+                Set.copyOf(List.of(ModuleManager.SPAWN_PROOFING.getFillModeItemList())));
+    }
+
+    private static List<PrinterBox> spawnProofingAreas() {
+        PrinterBox limit = ModuleManager.SPAWN_PROOFING.getBox().get();
+        if (!Configs.SpawnProofing.ENABLED.getBooleanValue() || limit == null) return List.of();
+        return LitematicaUtils.getSelectionBoxesSnapshot().stream()
+                .filter(limit::intersects)
+                .map(area -> new PrinterBox(
+                        Math.max(area.minX, limit.minX), Math.max(area.minY, limit.minY),
+                        Math.max(area.minZ, limit.minZ), Math.min(area.maxX, limit.maxX),
+                        Math.min(area.maxY, limit.maxY), Math.min(area.maxZ, limit.maxZ)))
+                .toList();
     }
 
     @Override
@@ -121,6 +142,18 @@ public class GUI extends Module {
                         block.currentState().getBlock().asItem())) {
                     stats.fillFinished++;
                     stats.totalFinished++;
+                }
+            }
+            if (!context.spawnProofingAreas().isEmpty()) {
+                BlockPos support = block.pos();
+                if (context.spawnProofingAreas().stream().anyMatch(area -> area.contains(support))
+                        && SpawnProofing.hasFullTop(block.currentView(), support)) {
+                    var target = block.currentView().getBlockState(support.above());
+                    boolean covered = context.spawnProofingItems().contains(target.getBlock().asItem());
+                    if (covered || SpawnProofing.needsCover(block.currentView(), support)) {
+                        stats.totalTotal++;
+                        if (covered) stats.totalFinished++;
+                    }
                 }
             }
         }
@@ -189,7 +222,9 @@ public class GUI extends Module {
             boolean printEnabled,
             boolean fluidEnabled,
             boolean fillEnabled,
-            Set<Item> fillItems) {
+            Set<Item> fillItems,
+            List<PrinterBox> spawnProofingAreas,
+            Set<Item> spawnProofingItems) {
     }
 
     private record GuiStats(

@@ -7,6 +7,7 @@ package me.aleksilassila.litematica.printer.core.status;
 public enum PrinterStatus {
     PRINTING("litematica-printer.hud.status.printing", Kind.ACTIVE),
     FILLING("litematica-printer.hud.status.filling", Kind.ACTIVE),
+    SPAWN_PROOFING("litematica-printer.hud.status.spawnProofing", Kind.ACTIVE),
     REMOVING_FLUID("litematica-printer.hud.status.removingFluid", Kind.ACTIVE),
     BREAKING_BEDROCK("litematica-printer.hud.status.breakingBedrock", Kind.ACTIVE),
     SEARCHING("litematica-printer.hud.status.searching", Kind.SEARCH),

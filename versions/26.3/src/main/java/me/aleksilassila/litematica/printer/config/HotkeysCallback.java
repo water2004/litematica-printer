@@ -23,6 +23,7 @@ public class HotkeysCallback {
             var modes = new fi.dy.masa.malilib.config.options.ConfigBooleanHotkeyed[]{
                     Configs.Print.ENABLED,
                     Configs.Fill.ENABLED,
+                    Configs.SpawnProofing.ENABLED,
                     Configs.Fluid.ENABLED,
                     Configs.Bedrock.ENABLED
             };
@@ -44,6 +45,7 @@ public class HotkeysCallback {
             if (keybind.isKeybindHeld()) {
                 Configs.Print.ENABLED.setBooleanValue(false);
                 Configs.Fill.ENABLED.setBooleanValue(false);
+                Configs.SpawnProofing.ENABLED.setBooleanValue(false);
                 Configs.Fluid.ENABLED.setBooleanValue(false);
                 Configs.Bedrock.ENABLED.setBooleanValue(false);
                 Configs.Core.WORK_SWITCH.setBooleanValue(false);
@@ -80,6 +82,7 @@ public class HotkeysCallback {
         // 特殊设置时，自动刷新界面
         Configs.Print.FILL_COMPOSTER.setValueChangeCallback(b -> ConfigUi.refresh());
         Configs.Fill.FILL_BLOCK_MODE.setValueChangeCallback(b -> ConfigUi.refresh());
+        Configs.SpawnProofing.BLOCK_MODE.setValueChangeCallback(b -> ConfigUi.refresh());
         Configs.Core.LAG_CHECK.setValueChangeCallback(b -> ConfigUi.refresh());
         Configs.Print.SERVUX_HAND_CONFIRMATION.setValueChangeCallback(
                 b -> ServuxHandItemConfirmation.reset());

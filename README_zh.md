@@ -9,7 +9,7 @@
 > [!IMPORTANT]
 > 本项目是 [BiliXWhite/litematica-printer](https://github.com/BiliXWhite/litematica-printer) 三改版的四改分支。本仓库拥有独立的发布、兼容范围、问题追踪和文档；请只从 [water2004/litematica-printer Releases](https://github.com/water2004/litematica-printer/releases) 下载本四改版。
 
-Litematica Printer 四改版是 [Litematica](https://modrinth.com/mod/litematica) 的客户端 Fabric 扩展。它持续发现尚未完成的投影位置，并通过有界、多线程的生产者—消费者调度器处理作业。打印、填充、排流体和破基岩是彼此独立的工作模式。
+Litematica Printer 四改版是 [Litematica](https://modrinth.com/mod/litematica) 的客户端 Fabric 扩展。它持续发现尚未完成的投影位置，并通过有界、多线程的生产者—消费者调度器处理作业。打印、填充、铺防刷怪、排流体和破基岩是彼此独立的工作模式。
 
 ## 下载
 
@@ -84,10 +84,11 @@ Minecraft 26.1.2 的测试基线是 MaLiLib `0.28.8` 与 Litematica `0.27.9`；2
 
 - **打印：**放置缺失方块、调整受支持的方块状态，并可选破坏错误或多余方块。
 - **填充：**根据方块与方向过滤设置，在当前 Litematica 选区内填充。
+- **铺防刷怪：**使用与填充相同的材料列表／手持选择，在选区内承托块的完整上表面铺设下半砖、铁轨等材料。无需投影；允许铺到选区上方一格，跳过已有实心方块和流体，允许替换草等可替换植物。材料本身是否防刷怪由玩家选择决定。
 - **排流体：**清除当前 Litematica 区域选区内配置的静止或流动流体。
 - **破基岩：**发现破基岩作业并提交给受支持的破基岩模组。
 
-填充和排流体使用独立于投影打印的选区范围控件：全部选区、选区内玩家下方、选区内玩家上方。工作半径和 Litematica 全局渲染层范围始终生效，这两个模式均不需要加载投影。
+填充、铺防刷怪和排流体使用独立于投影打印的选区范围控件：全部选区、选区内玩家下方、选区内玩家上方。工作半径和 Litematica 全局渲染层范围始终生效，这些模式均不需要加载投影。
 
 旧的通用挖掘模式和内置远程大仓已经移除。
 

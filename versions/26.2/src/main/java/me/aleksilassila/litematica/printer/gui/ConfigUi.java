@@ -81,6 +81,7 @@ public class ConfigUi extends GuiConfigsBase {
         HOTKEYS(I18n.of("category.hotkeys")),
         PRINT(I18n.of("category.print")),
         FILL(I18n.of("category.fill")),
+        SPAWN_PROOFING(I18n.of("category.spawnProofing")),
         FLUID(I18n.of("category.fluid")),
         BEDROCK(I18n.of("category.bedrock")),
         HIGHLIGHT(I18n.of("category.highlight"));
@@ -106,6 +107,7 @@ public class ConfigUi extends GuiConfigsBase {
                 case PLACEMENT  -> Configs.Placement.OPTIONS;
                 case PRINT      -> Configs.Print.OPTIONS;
                 case FILL       -> Configs.Fill.OPTIONS;
+                case SPAWN_PROOFING -> Configs.SpawnProofing.OPTIONS;
                 case FLUID      -> Configs.Fluid.OPTIONS;
                 case BEDROCK    -> Configs.Bedrock.OPTIONS;
                 case HIGHLIGHT  -> Configs.Highlight.OPTIONS;
