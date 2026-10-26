@@ -24,6 +24,7 @@ import me.aleksilassila.litematica.printer.printer.action.ClickAction;
 import me.aleksilassila.litematica.printer.printer.ActionManager;
 import me.aleksilassila.litematica.printer.printer.inventory.MaterialPreparation;
 import me.aleksilassila.litematica.printer.printer.MissingMaterialTracker;
+import me.aleksilassila.litematica.printer.printer.placement.PlacementGuide;
 import me.aleksilassila.litematica.printer.utils.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

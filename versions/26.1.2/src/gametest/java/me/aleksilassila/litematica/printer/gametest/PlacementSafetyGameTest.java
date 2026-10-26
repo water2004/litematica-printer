@@ -11,7 +11,7 @@ import me.aleksilassila.litematica.printer.enums.SelectionType;
 import me.aleksilassila.litematica.printer.handler.ModuleManager;
 import me.aleksilassila.litematica.printer.handler.search.PlacementGuideTestAccess;
 import me.aleksilassila.litematica.printer.printer.ActionManager;
-import me.aleksilassila.litematica.printer.printer.PlacementGuide;
+import me.aleksilassila.litematica.printer.printer.placement.PlacementGuide;
 import me.aleksilassila.litematica.printer.printer.PlacementSafety;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;

@@ -15,7 +15,7 @@ import me.aleksilassila.litematica.printer.interfaces.compat.ChainVeinCompat;
 import me.aleksilassila.litematica.printer.printer.action.Action;
 import me.aleksilassila.litematica.printer.printer.action.ChainBreakAction;
 import me.aleksilassila.litematica.printer.printer.action.ClickAction;
-import me.aleksilassila.litematica.printer.printer.PlacementGuide;
+import me.aleksilassila.litematica.printer.printer.placement.PlacementGuide;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
