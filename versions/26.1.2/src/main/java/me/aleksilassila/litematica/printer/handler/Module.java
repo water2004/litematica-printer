@@ -22,10 +22,13 @@ import me.aleksilassila.litematica.printer.core.job.JobPool;
 import me.aleksilassila.litematica.printer.core.spatial.PlayerHeightFilter;
 import me.aleksilassila.litematica.printer.core.status.PrinterWaitReason;
 import me.aleksilassila.litematica.printer.enums.*;
+import me.aleksilassila.litematica.printer.handler.ModuleDiagnostics.SearchCandidateInfo;
 import me.aleksilassila.litematica.printer.handler.search.AsyncSearchCoordinator;
 import me.aleksilassila.litematica.printer.handler.search.SearchGeometry;
 import me.aleksilassila.litematica.printer.handler.search.SearchSnapshots;
-import me.aleksilassila.litematica.printer.printer.*;
+import me.aleksilassila.litematica.printer.printer.ActionManager;
+import me.aleksilassila.litematica.printer.printer.BlockPosCooldownManager;
+import me.aleksilassila.litematica.printer.printer.PrinterBox;
 import me.aleksilassila.litematica.printer.utils.ConfigUtils;
 import me.aleksilassila.litematica.printer.utils.LitematicaUtils;
 import me.aleksilassila.litematica.printer.utils.PlayerUtils;
@@ -36,7 +39,6 @@ import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -90,12 +92,7 @@ public abstract class Module extends ConfigUtils {
     @Getter
     private PrinterWaitReason waitingReason = PrinterWaitReason.ITEM_SWITCH;
 
-    private volatile GuiBlockInfo currentGuiInfo = null;
-    private volatile GuiBlockInfo currentJobGuiInfo = null;
-    private volatile int queuedJobCount = 0;
-    private volatile long lastJobActivityTick = Long.MIN_VALUE;
-    private volatile long producerScannedPositions = 0L;
-    private volatile long producerTotalPositions = 0L;
+    private final ModuleDiagnostics diagnostics = new ModuleDiagnostics();
     private volatile boolean searchPrepared = false;
     private long moduleGeneration = 0L;
 
@@ -286,9 +283,9 @@ public abstract class Module extends ConfigUtils {
                 bucketKey = selection.key();
                 bucket = selection.bucket();
             }
-            queuedJobCount = jobPool.size();
+            diagnostics.setQueuedJobCount(jobPool.size());
             if (bucket == null) {
-                currentJobGuiInfo = null;
+                diagnostics.clearCurrentJob();
                 return;
             }
 
@@ -297,7 +294,7 @@ public abstract class Module extends ConfigUtils {
                     : Integer.MAX_VALUE;
             int executed = executeJobTransaction(bucketKey, bucket, allowedExecutions, skipIteration);
             execCount += executed;
-            queuedJobCount = jobPool.size();
+            diagnostics.setQueuedJobCount(jobPool.size());
 
             // 快照桶不再放回共享目录。阻塞换手、动作限额或时间片结束时
             // 留到下一 tick 继续；桶被取空后 pollFromBucket 会自动释放。
@@ -392,8 +389,8 @@ public abstract class Module extends ConfigUtils {
     }
 
     private void updateCurrentJobInfo(@Nullable BlockPos pos, boolean executed) {
-        currentJobGuiInfo = pos == null ? null : createGuiInfo(pos, executed);
-        if (pos != null) lastJobActivityTick = ModuleManager.getCurrentHandlerTime();
+        diagnostics.reportJob(pos == null ? null : createGuiInfo(pos, executed),
+                ModuleManager.getCurrentHandlerTime());
     }
 
     private GuiBlockInfo createGuiInfo(BlockPos pos, boolean executed) {
@@ -430,16 +427,12 @@ public abstract class Module extends ConfigUtils {
         waitingKey = null;
         waitingReason = PrinterWaitReason.ITEM_SWITCH;
         jobPool.clear();
-        queuedJobCount = 0;
-        currentJobGuiInfo = null;
-        lastJobActivityTick = Long.MIN_VALUE;
-        producerScannedPositions = 0L;
-        producerTotalPositions = 0L;
+        diagnostics.reset();
     }
 
     @Nullable
     public GuiBlockInfo getGuiInfo() {
-        return currentGuiInfo;
+        return diagnostics.getGuiInfo();
     }
 
     public boolean hasJobPoolScheduler() {
@@ -447,11 +440,11 @@ public abstract class Module extends ConfigUtils {
     }
 
     public int getQueuedJobCount() {
-        return queuedJobCount;
+        return diagnostics.getQueuedJobCount();
     }
 
     public boolean wasJobActiveOnTick(long tick) {
-        return lastJobActivityTick == tick;
+        return diagnostics.wasJobActiveOnTick(tick);
     }
 
     public int getJobPoolCapacity() {
@@ -459,16 +452,16 @@ public abstract class Module extends ConfigUtils {
     }
 
     public long getProducerScannedPositions() {
-        return producerScannedPositions;
+        return diagnostics.getScannedPositions();
     }
 
     public long getProducerTotalPositions() {
-        return producerTotalPositions;
+        return diagnostics.getTotalPositions();
     }
 
     @Nullable
     public GuiBlockInfo getCurrentJobGuiInfo() {
-        return currentJobGuiInfo;
+        return diagnostics.getCurrentJobGuiInfo();
     }
 
     /**
@@ -577,26 +570,15 @@ public abstract class Module extends ConfigUtils {
             }
         }
         jobPool.publish(jobs, request.poolGeneration());
-        queuedJobCount = jobPool.size();
+        diagnostics.setQueuedJobCount(jobPool.size());
 
-        if (lastCandidate != null) {
-            BlockState required = lastCandidate.requiredState() != null
-                    ? lastCandidate.requiredState() : lastCandidate.currentState();
-            currentGuiInfo = new GuiBlockInfo(
-                    lastCandidate.pos(),
-                    lastCandidate.currentState(),
-                    required,
-                    true,
-                    false,
-                    true);
-        }
+        diagnostics.publishCandidate(lastCandidate);
     }
 
     public void searchRoundStarted(
             AsyncSearchCoordinator.SearchRequest request, long totalPositions) {
         if (!isSearchRequestCurrent(request)) return;
-        producerScannedPositions = 0L;
-        producerTotalPositions = totalPositions;
+        diagnostics.reportProgress(0L, totalPositions);
         if (scanState != ScanState.WAITING) scanState = ScanState.COLLECT;
     }
 
@@ -605,8 +587,7 @@ public abstract class Module extends ConfigUtils {
             long scannedPositions,
             long totalPositions) {
         if (!isSearchRequestCurrent(request)) return;
-        producerScannedPositions = Math.min(scannedPositions, totalPositions);
-        producerTotalPositions = totalPositions;
+        diagnostics.reportProgress(scannedPositions, totalPositions);
     }
 
     protected final boolean isSearchRequestCurrent(
@@ -731,14 +712,5 @@ public abstract class Module extends ConfigUtils {
 
     private enum EmptySearchContext {
         INSTANCE
-    }
-
-    /**
-     * HUD 只需保留候选位置和状态，不能让结果 payload 间接持有整个小块快照。
-     */
-    private record SearchCandidateInfo(
-            BlockPos pos,
-            BlockState currentState,
-            @Nullable BlockState requiredState) {
     }
 }
