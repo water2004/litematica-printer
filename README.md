@@ -44,7 +44,7 @@ Install these client-side dependencies for the same Minecraft version:
 - [MaLiLib](https://modrinth.com/mod/malilib)
 - [Litematica](https://modrinth.com/mod/litematica)
 
-The tested baselines are MaLiLib `0.28.8` with Litematica `0.27.9` on Minecraft 26.1.2, MaLiLib `0.29.2` with Litematica `0.28.3` on 26.2, and MaLiLib `0.30.0` with Litematica commit `101ac3a23649` on 26.3. Compatible newer Litematica releases may also work within the declared Minecraft range.
+The tested baselines are MaLiLib `0.28.8` with Litematica `0.27.9` on Minecraft 26.1.2, MaLiLib `0.29.2` with Litematica `0.28.3` on 26.2, and MaLiLib `0.30.1` with Litematica `0.29.0` on 26.3. Compatible newer Litematica releases may also work within the declared Minecraft range.
 
 ## Optional integrations
 
@@ -56,7 +56,7 @@ The base placement, filling, and fluid-removal features do not require the integ
 | [Quick Shulker](https://github.com/water2004/quickshulker) | Retrieve required materials from carried shulker boxes. The direct screen-independent protocol is used when supported; the legacy screen path remains isolated for compatible older releases. Use matching Quick Shulker client and server versions. |
 | AxShulkers or TakeItOut | Alternative server-backed shulker material sources selectable in the printer settings. |
 | [Servux](https://modrinth.com/mod/servux) | Litematica Easy Place protocol support and optional server-authoritative held-item confirmation. |
-| [Fabric-Bedrock-Miner](https://modrinth.com/mod/fabric-bedrock-miner) (`bedrock-miner`), [Bedrock Miner](https://modrinth.com/mod/next-fabric-bedrock-miner) by bunnyi116 (`bedrockminer`), or [BlockMiner](https://github.com/z7087/blockminer) (`blockminer`) | Executes jobs produced by the bedrock-breaking mode. Use a build matching your Minecraft version; bunnyi116's current releases cover 26.1/26.2, while the other two also have 26.3 builds. |
+| [Fabric-Bedrock-Miner](https://modrinth.com/mod/fabric-bedrock-miner) (`bedrock-miner`), [Bedrock Miner](https://modrinth.com/mod/next-fabric-bedrock-miner) by bunnyi116 (`bedrockminer`), or [BlockMiner](https://github.com/z7087/blockminer) (`blockminer`) | Executes jobs produced by the bedrock-breaking mode. Use a build matching your Minecraft version. All three integrations are tested on 26.3, including bunnyi116's Bedrock Miner 1.6.2. |
 
 All integrations are capability-detected. Features that depend on a missing integration stay disabled or are skipped; normal printing remains available.
 
@@ -194,8 +194,32 @@ On Windows, use `gradlew.bat build`. Version-specific jars are written to:
 
 - `versions/26.1.2/build/libs/`
 - `versions/26.2/build/libs/`
+- `versions/26.3/build/libs/`
 
 Minecraft-independent scheduling code lives in `core/`; each directory under `versions/` contains its own Minecraft adapter. Tags matching `v*` on `main` run GameTests, build all three jars, and publish the corresponding GitHub Release. Targeted hotfix jars can be added manually to an existing Release after local verification.
+
+## Code organization
+
+The architecture remains a Minecraft-independent core plus explicit adapters per game version; there is no generated common source or mapping wrapper.
+
+| Location within each version's Java sources | Responsibility |
+| --- | --- |
+| `handler/search/` | Scan geometry, immutable snapshot pages, worker rounds, and opt-in scan profiling. |
+| `handler/Module` and `ModuleDiagnostics` | Consumer scheduling and separate HUD reporting state. |
+| `handler/handlers/` | Work modes. Fill and SpawnProofing share material execution through `MaterialPlacementModule`, not inheritance from one mode to another. |
+| `printer/placement/` | Classify blocks and build missing-block, state-adjustment, or replacement actions. Safety checks stay separate. |
+| `printer/inventory/` | Material acquisition and hand-confirmation policy; `utils/InventoryUtils` retains low-level inventory operations. |
+| `interfaces/compat/` | Optional-mod boundaries, including encapsulated direct/legacy shulker paths. |
+
+Workers read captured snapshots, never live Minecraft worlds. Consumers revalidate jobs against the current world before acting. Skipped or stale jobs are consumed; later scans rediscover unfinished work. HUD state does not drive scheduling.
+
+Run `./gradlew :core:test` for pure-core tests. Client GameTests are opt-in, for example:
+
+```bash
+./gradlew :26.3:runClientGameTest -PprinterGameTest=true -PprinterGameTestChainVein=true -PprinterGameTestQuickShulker=none
+```
+
+Use `direct` or `legacy` instead of `none` to exercise shulker integration with the release dependencies in that version's `gradle.properties`. The GameTest READMEs document opt-in stress diagnostics and known failure observations; these are not automatically promoted to passing regression expectations.
 
 ## License
 

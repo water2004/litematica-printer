@@ -34,7 +34,7 @@ Litematica Printer 四改版是 [Litematica](https://modrinth.com/mod/litematica
 - [MaLiLib](https://modrinth.com/mod/malilib)
 - [Litematica](https://modrinth.com/mod/litematica)
 
-Minecraft 26.1.2 的测试基线是 MaLiLib `0.28.8` 与 Litematica `0.27.9`；26.2 是 MaLiLib `0.29.2` 与 Litematica `0.28.3`；26.3 是 MaLiLib `0.30.0` 与 Litematica 提交 `101ac3a23649`。在声明的 Minecraft 范围内，兼容的较新 Litematica 版本也可能正常工作。
+Minecraft 26.1.2 的测试基线是 MaLiLib `0.28.8` 与 Litematica `0.27.9`；26.2 是 MaLiLib `0.29.2` 与 Litematica `0.28.3`；26.3 是 MaLiLib `0.30.1` 与 Litematica `0.29.0`。在声明的 Minecraft 范围内，兼容的较新 Litematica 版本也可能正常工作。
 
 ## 可选集成
 
@@ -46,7 +46,7 @@ Minecraft 26.1.2 的测试基线是 MaLiLib `0.28.8` 与 Litematica `0.27.9`；2
 | [Quick Shulker](https://github.com/water2004/quickshulker) | 从玩家携带的潜影盒中取出所需材料。支持时使用不打开界面的直接协议；兼容旧版时使用被隔离的旧界面路径。Quick Shulker 客户端与服务端应使用相互匹配的版本。 |
 | AxShulkers 或 TakeItOut | 可在打印机设置中选择的服务端潜影盒材料来源。 |
 | [Servux](https://modrinth.com/mod/servux) | Litematica 轻松放置协议，以及可选的服务端权威手持物品确认。 |
-| [Fabric-Bedrock-Miner](https://modrinth.com/mod/fabric-bedrock-miner)（`bedrock-miner`）、bunnyi116 的 [Bedrock Miner](https://modrinth.com/mod/next-fabric-bedrock-miner)（`bedrockminer`）或 [BlockMiner](https://github.com/z7087/blockminer)（`blockminer`） | 执行破基岩模式发现的作业。请安装与游戏版本匹配的构建；bunnyi116 当前发布了 26.1/26.2 版，另外两个模组也有 26.3 版。 |
+| [Fabric-Bedrock-Miner](https://modrinth.com/mod/fabric-bedrock-miner)（`bedrock-miner`）、bunnyi116 的 [Bedrock Miner](https://modrinth.com/mod/next-fabric-bedrock-miner)（`bedrockminer`）或 [BlockMiner](https://github.com/z7087/blockminer)（`blockminer`） | 执行破基岩模式发现的作业。请安装与游戏版本匹配的构建。三个集成都已测试 26.3，包括 bunnyi116 的 Bedrock Miner 1.6.2。 |
 
 所有集成都通过能力探测启用。缺少集成时，对应功能会保持关闭或跳过，普通打印不受影响。
 
@@ -181,8 +181,32 @@ Windows 使用 `gradlew.bat build`。各版本 jar 输出到：
 
 - `versions/26.1.2/build/libs/`
 - `versions/26.2/build/libs/`
+- `versions/26.3/build/libs/`
 
 与 Minecraft 无关的调度代码位于 `core/`；`versions/` 下各目录包含独立的 Minecraft 适配。`main` 上匹配 `v*` 的标签会自动运行 GameTest、构建三个 jar 并发布对应 GitHub Release；定向 hotfix 的 jar 可在本地验证后手动追加到现有 Release。
+
+## 代码组织
+
+架构仍是与 Minecraft 无关的 core，加上各游戏版本独立适配；不引入生成式 common 源码或 mapping 包装层。
+
+| 各版本 Java 源码中的位置 | 职责 |
+| --- | --- |
+| `handler/search/` | 扫描范围、不可变快照页、工作线程轮次，以及按需启用的扫描性能统计。 |
+| `handler/Module` 与 `ModuleDiagnostics` | 消费调度与独立的 HUD 展示状态。 |
+| `handler/handlers/` | 工作模式。填充和防刷怪通过 `MaterialPlacementModule` 共用材料执行，不让一个模式继承另一个模式。 |
+| `printer/placement/` | 方块分类，以及缺失方块、状态调整、错误方块替换的动作生成；安全检查独立维护。 |
+| `printer/inventory/` | 取物与换手确认策略；`utils/InventoryUtils` 保留底层物品栏操作。 |
+| `interfaces/compat/` | 可选模组边界，包括内部封装的潜影盒 direct/legacy 路径。 |
+
+工作线程只读取已捕获的快照，不访问实时世界。消费者执行前重新校验当前世界；跳过和过时作业也算消费，未完成的位置由后续扫描重新发现。HUD 状态不参与调度决策。
+
+纯 core 测试使用 `./gradlew :core:test`。客户端 GameTest 按需启用，例如：
+
+```bash
+./gradlew :26.3:runClientGameTest -PprinterGameTest=true -PprinterGameTestChainVein=true -PprinterGameTestQuickShulker=none
+```
+
+将 `none` 换成 `direct` 或 `legacy`，即可使用各版本 `gradle.properties` 中的发布依赖测试潜影盒集成。GameTest 目录内的 README 记录了按需启用的压测诊断和已知失败现象；这些观察不会被直接当作成功回归预期。
 
 ## 许可证
 
