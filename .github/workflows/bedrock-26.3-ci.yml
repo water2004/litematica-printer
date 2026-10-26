@@ -1,0 +1,86 @@
+# Branch-only verification harness; normal CI uses gametest.yml.
+name: bedrock-26.3-ci
+
+on:
+  push:
+    branches:
+      - codex/test-bedrock-26.3
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  client-gametest:
+    name: MC 26.3 / ${{ matrix.bedrockminer }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        minecraft: ['26.3']
+        chainvein: [false]
+        quickshulker: [none]
+        packetloss: [false]
+        servux: [false]
+        bedrockminer: [bedrockminer, blockminer, fabric-bedrock-miner]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      # Match the known-good ChainVeinFabric 26.3 client GameTest setup:
+      # SDL3 must use Mesa's software EGL path instead of the GLX visual.
+      - name: Install headless OpenGL runtime for Minecraft 26.3
+        if: matrix.minecraft == '26.3'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dri libglx-mesa0 mesa-utils
+          xvfb-run -a glxinfo -B
+
+      - name: Run client GameTest
+        env:
+          LIBGL_ALWAYS_SOFTWARE: ${{ matrix.minecraft == '26.3' && '1' || '' }}
+          MESA_LOADER_DRIVER_OVERRIDE: ${{ matrix.minecraft == '26.3' && 'llvmpipe' || '' }}
+          SDL_VIDEO_DRIVER: ${{ matrix.minecraft == '26.3' && 'x11' || '' }}
+          SDL_VIDEO_FORCE_EGL: ${{ matrix.minecraft == '26.3' && '1' || '' }}
+          SDL_VIDEO_X11_NODIRECTCOLOR: ${{ matrix.minecraft == '26.3' && '1' || '' }}
+        run: >-
+          timeout --signal=TERM 600s xvfb-run -a ./gradlew
+          ":${{ matrix.minecraft }}:runClientGameTest"
+          -PprinterGameTest=true
+          -PprinterGameTestChainVein=${{ matrix.chainvein }}
+          -PprinterGameTestQuickShulker=${{ matrix.quickshulker }}
+          -PprinterGameTestQuickShulkerPacketLoss=${{ matrix.packetloss }}
+          -PprinterGameTestServux=${{ matrix.servux }}
+          -PprinterGameTestBedrockMiner=${{ matrix.bedrockminer || 'none' }}
+          -PprinterGameTestLitematica=${{ matrix.litematica || 'default' }}
+          -PprinterGameTestMalilib=${{ matrix.malilib || 'default' }}
+          --no-daemon
+          --stacktrace
+
+      - name: Upload GameTest diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gametest-${{ matrix.minecraft }}-chain-${{ matrix.chainvein }}-quick-${{ matrix.quickshulker }}-loss-${{ matrix.packetloss }}-servux-${{ matrix.servux }}-bedrock-${{ matrix.bedrockminer || 'none' }}-litematica-${{ matrix.litematica || 'default' }}
+          path: |
+            versions/${{ matrix.minecraft }}/build/run/clientGameTest/logs/**
+            versions/${{ matrix.minecraft }}/build/run/clientGameTest/crash-reports/**
+          if-no-files-found: warn
+
