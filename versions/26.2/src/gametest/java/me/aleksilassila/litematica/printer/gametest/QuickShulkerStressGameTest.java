@@ -1,5 +1,7 @@
 package me.aleksilassila.litematica.printer.gametest;
 
+import me.aleksilassila.litematica.printer.gametest.diagnostics.StackBoundaryMaterialLedger;
+import me.aleksilassila.litematica.printer.gametest.diagnostics.StackBoundaryPlacementTrace;
 import org.edtp.networkchaos.api.ChaosConfig;
 import org.edtp.networkchaos.api.ChaosStats;
 import org.edtp.networkchaos.api.DirectionStats;
@@ -85,16 +87,26 @@ public final class QuickShulkerStressGameTest implements FabricClientGameTest {
             Items.WHEAT,
             Items.CARROT,
             Items.POTATO);
-    private static final List<BlockPos> TARGETS = rectangle(-8, 9, 64, 2, 9);
+    private static final boolean STACK_BOUNDARY = Boolean.getBoolean(
+            "litematica-printer.gametest.stackBoundary");
+    private static final int BLOCKS_PER_TICK = Integer.getInteger(
+            "litematica-printer.gametest.placementLimit", 16);
+    private static final boolean PACKET_MODE = STACK_BOUNDARY
+            && GameTestMode.isFullPrintPacketMode();
+    private static final List<BlockPos> TARGETS = STACK_BOUNDARY
+            ? java.util.stream.IntStream.rangeClosed(64, 73).boxed()
+                    .flatMap(y -> rectangle(-8, 9, y, 2, 19).stream()).toList()
+            : rectangle(-8, 9, 64, 2, 9);
+    private static final Set<BlockPos> TARGET_SET = Set.copyOf(TARGETS);
 
-    private static final int LOOSE_PER_MATERIAL = 2;
-    private static final int BOXED_PER_MATERIAL = 10;
+    private static final int LOOSE_PER_MATERIAL = STACK_BOUNDARY ? 64 : 2;
+    private static final int BOXED_PER_MATERIAL = STACK_BOUNDARY ? 128 : 10;
     private static final int EXPECTED_INITIAL_MATERIALS =
             MATERIALS.size() * (LOOSE_PER_MATERIAL + BOXED_PER_MATERIAL);
     private static final int LOSS_PERCENT = Integer.getInteger(
             "litematica-printer.gametest.quickshulkerStressLossPercent", 15);
     private static final long LOSS_SEED = 0x515549434B53484CL;
-    private static final int MAX_TICKS = 800;
+    private static final int MAX_TICKS = STACK_BOUNDARY ? 1600 : 800;
     private static final int SAMPLE_TICKS = 5;
     private static final int CONVERGED_TICKS = 20;
     private static final int DIRECT_DRAIN_TICKS = 160;
@@ -121,6 +133,9 @@ public final class QuickShulkerStressGameTest implements FabricClientGameTest {
         try (TestDedicatedServerContext server = context.worldBuilder().createServer();
              var connection = server.connect()) {
             prepareWorld(server);
+            var initialLedger = STACK_BOUNDARY ? server.computeOnServer(gameServer ->
+                    StackBoundaryMaterialLedger.capture(gameServer.overworld(),
+                            gameServer.getPlayerList().getPlayers().getFirst(), MATERIALS, TARGET_SET)) : null;
             server.runCommand("gamemode survival @p");
             server.runCommand("tp @p 0.5 65 0.5");
 
@@ -197,6 +212,37 @@ public final class QuickShulkerStressGameTest implements FabricClientGameTest {
             }
 
             int sampledTicks = elapsedTicks;
+            boolean requireRecovery = STACK_BOUNDARY && LOSS_PERCENT > 0 && mode.equals("direct");
+            boolean recovered = !requireRecovery;
+            if (requireRecovery) {
+                String liveState = context.computeOnClient(minecraft ->
+                        "status=" + ModuleManager.getPrinterStatus()
+                                + " queued=" + ModuleManager.PRINT.getQueuedJobCount()
+                                + " busy=" + QuickShulkerCompat.isBusy()
+                                + " client=" + readWorld(minecraft.level));
+                WorldSnapshot serverBefore = server.computeOnServer(gameServer ->
+                        readWorld(gameServer.overworld()));
+                System.out.println("[StackBoundaryRecovery] before clearing faults: "
+                        + liveState + " server=" + serverBefore);
+                NetworkChaos.disable();
+                int recoveryTicks = 0;
+                while (recoveryTicks < 400) {
+                    context.waitTicks(SAMPLE_TICKS);
+                    recoveryTicks += SAMPLE_TICKS;
+                    boolean serverComplete = server.computeOnServer(gameServer ->
+                            readWorld(gameServer.overworld()).correct() == TARGETS.size());
+                    boolean clientComplete = context.computeOnClient(minecraft ->
+                            readWorld(minecraft.level).correct() == TARGETS.size()
+                                    && !QuickShulkerCompat.isBusy()
+                                    && minecraft.player.containerMenu == minecraft.player.inventoryMenu);
+                    if (serverComplete && clientComplete) {
+                        recovered = true;
+                        break;
+                    }
+                }
+                System.out.println("[StackBoundaryRecovery] recovered=" + recovered
+                        + " recoveryTicks=" + recoveryTicks);
+            }
             context.runOnClient(client -> disablePrinter());
             if (mode.equals("direct")) {
                 int drainTicks = 0;
@@ -239,14 +285,32 @@ public final class QuickShulkerStressGameTest implements FabricClientGameTest {
                     comparison,
                     serverSnapshot.inventory().totalTargetItems()
                             + serverSnapshot.world().targetMaterialBlocks()
+                            + serverSnapshot.world().outsideMaterialBlocks()
                             - EXPECTED_INITIAL_MATERIALS,
                     lossSummary,
                     servux ? TestServuxProtocol.snapshot() : null);
 
             System.out.println("[Litematica Printer GameTest] QuickShulker stress result: "
                     + result);
+            if (STACK_BOUNDARY) {
+                var finalLedger = server.computeOnServer(gameServer ->
+                        StackBoundaryMaterialLedger.capture(gameServer.overworld(),
+                                gameServer.getPlayerList().getPlayers().getFirst(), MATERIALS, TARGET_SET));
+                System.out.println("[StackBoundaryLedger] initial=" + initialLedger.total()
+                        + " delta=" + finalLedger.deltaFrom(initialLedger) + " final=" + finalLedger);
+            }
+            System.out.println("[StackBoundary] enabled=" + STACK_BOUNDARY
+                    + " targets=" + TARGETS.size() + " blocksPerTick=" + BLOCKS_PER_TICK
+                    + " packetMode=" + PACKET_MODE
+                    + " loosePerMaterial=" + LOOSE_PER_MATERIAL
+                    + " boxedPerMaterial=" + BOXED_PER_MATERIAL);
             validateObservation(mode, result);
+            if (!recovered) {
+                throw new AssertionError("Direct cross-stack print did not resume after faults cleared: "
+                        + result);
+            }
         } finally {
+            StackBoundaryPlacementTrace.stop();
             NetworkChaos.reset();
             TestSchematicRegion.clear();
             context.runOnClient(client -> {
@@ -268,7 +332,7 @@ public final class QuickShulkerStressGameTest implements FabricClientGameTest {
                 .getModContainer("quickshulker")
                 .orElseThrow(() -> new AssertionError("QuickShulker is not installed"))
                 .getMetadata().getVersion().getFriendlyString();
-        String expected = mode.equals("direct") ? "4.0.0" : "3.0.4";
+        String expected = mode.equals("direct") ? "4.0." : "3.0.4";
         if (!version.startsWith(expected)) {
             throw new AssertionError(
                     "Expected QuickShulker " + expected + " but loaded " + version);
@@ -327,13 +391,20 @@ public final class QuickShulkerStressGameTest implements FabricClientGameTest {
             interactionRange.setBaseValue(32.0D);
 
             for (int x = -9; x <= 10; x++) {
-                for (int z = -1; z <= 10; z++) {
+                for (int z = -1; z <= (STACK_BOUNDARY ? 20 : 10); z++) {
                     level.setBlockAndUpdate(new BlockPos(x, 63, z),
                             Blocks.COBBLESTONE.defaultBlockState());
                 }
             }
             TARGETS.forEach(pos ->
                     level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState()));
+            if (STACK_BOUNDARY) {
+                // Observe unintended placement next to the schematic without counting
+                // the cobblestone support platform as consumed printing material.
+                for (BlockPos pos : BlockPos.betweenClosed(-9, 64, 1, 10, 74, 20)) {
+                    level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+                }
+            }
 
             Inventory inventory = player.getInventory();
             inventory.clearContent();
@@ -343,9 +414,13 @@ public final class QuickShulkerStressGameTest implements FabricClientGameTest {
                         MATERIALS.get(index).asItem(), LOOSE_PER_MATERIAL));
 
                 ItemStack box = new ItemStack(Items.SHULKER_BOX);
-                box.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(List.of(
-                        new ItemStack(MATERIALS.get(index).asItem(), BOXED_PER_MATERIAL),
-                        new ItemStack(NOISE_ITEMS.get(index), index % 8 + 1))));
+                var contents = new java.util.ArrayList<ItemStack>();
+                for (int remaining = BOXED_PER_MATERIAL; remaining > 0; remaining -= 64) {
+                    contents.add(new ItemStack(MATERIALS.get(index).asItem(),
+                            Math.min(64, remaining)));
+                }
+                contents.add(new ItemStack(NOISE_ITEMS.get(index), index % 8 + 1));
+                box.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(contents));
                 inventory.setItem(MATERIALS.size() + index, box);
             }
             player.inventoryMenu.sendAllDataToRemote();
@@ -396,17 +471,21 @@ public final class QuickShulkerStressGameTest implements FabricClientGameTest {
     }
 
     private static void configurePrinter() {
+        if (STACK_BOUNDARY) StackBoundaryPlacementTrace.start(TARGET_SET);
         configureSelection();
         Configs.Core.LAG_CHECK.setBooleanValue(false);
         Configs.Core.WORK_RANGE.setDoubleValue(24.0D);
-        Configs.Placement.PRINT_USE_PACKET.setBooleanValue(false);
+        Configs.Placement.PRINT_USE_PACKET.setBooleanValue(PACKET_MODE);
         Configs.Placement.PLACE_INTERVAL.setIntegerValue(0);
-        Configs.Placement.PLACE_BLOCKS_PER_TICK.setIntegerValue(16);
+        Configs.Placement.PLACE_BLOCKS_PER_TICK.setIntegerValue(BLOCKS_PER_TICK);
+        if (Configs.Placement.PLACE_BLOCKS_PER_TICK.getIntegerValue() != BLOCKS_PER_TICK) {
+            throw new AssertionError("Requested placement limit was clamped");
+        }
         Configs.Placement.PLACE_COOLDOWN.setIntegerValue(0);
         Configs.Print.PRINT_SELECTION_TYPE.setOptionListValue(
                 SelectionType.LITEMATICA_SELECTION);
         Configs.Print.EASY_PLACE_PROTOCOL.setBooleanValue(false);
-        Configs.Print.PLACE_IN_AIR.setBooleanValue(false);
+        Configs.Print.PLACE_IN_AIR.setBooleanValue(STACK_BOUNDARY);
         Configs.Print.PRINT_SKIP.setBooleanValue(false);
         Configs.Print.PRINT_REPLACE.setBooleanValue(false);
         Configs.Print.BREAK_WRONG_BLOCK.setBooleanValue(false);
@@ -448,6 +527,7 @@ public final class QuickShulkerStressGameTest implements FabricClientGameTest {
         int wrong = 0;
         int missing = 0;
         int targetMaterialBlocks = 0;
+        int outsideMaterialBlocks = 0;
         Set<Block> distinctCorrect = new HashSet<>();
         Set<String> anomalies = new HashSet<>();
         List<Block> blocks = TARGETS.stream()
@@ -468,8 +548,18 @@ public final class QuickShulkerStressGameTest implements FabricClientGameTest {
                 anomalies.add(expected + "->" + actual);
             }
         }
+        if (STACK_BOUNDARY) {
+            for (BlockPos pos : BlockPos.betweenClosed(-9, 64, 1, 10, 74, 20)) {
+                Block actual = level.getBlockState(pos).getBlock();
+                if (!TARGET_SET.contains(pos) && MATERIALS.contains(actual)) {
+                    outsideMaterialBlocks++;
+                    if (anomalies.size() < 32) anomalies.add("outside@" + pos + "=" + actual);
+                }
+            }
+        }
         return new WorldSnapshot(
                 correct, wrong, missing, distinctCorrect.size(), targetMaterialBlocks,
+                outsideMaterialBlocks,
                 Set.copyOf(anomalies), blocks);
     }
 
@@ -535,6 +625,22 @@ public final class QuickShulkerStressGameTest implements FabricClientGameTest {
     }
 
     private static void validateObservation(String mode, StressResult result) {
+        if (STACK_BOUNDARY && LOSS_PERCENT == 0) {
+            if (result.server().world().correct() != TARGETS.size()
+                    || result.client().world().correct() != TARGETS.size()
+                    || result.comparison().clientServerMismatches() != 0
+                    || result.comparison().ghostBlocks() != 0
+                    || result.server().world().outsideMaterialBlocks() != 0
+                    || result.client().world().outsideMaterialBlocks() != 0
+                    || result.serverConservationDelta() != 0
+                    || result.client().busy() || result.client().foreignContainer()
+                    || result.server().inventory().shulkerBoxes() != MATERIALS.size()
+                    || result.client().inventory().shulkerBoxes() != MATERIALS.size()
+                    || result.server().inventory().totalTargetItems()
+                            != result.client().inventory().totalTargetItems()) {
+                throw new AssertionError("Cross-stack printing stalled or lost state: " + result);
+            }
+        }
         if (LOSS_PERCENT > 0 && result.loss().droppedPackets() < 10) {
             throw new AssertionError("Stress test did not exercise meaningful packet loss: "
                     + result.loss());
@@ -579,6 +685,7 @@ public final class QuickShulkerStressGameTest implements FabricClientGameTest {
             int missing,
             int distinctCorrectMaterials,
             int targetMaterialBlocks,
+            int outsideMaterialBlocks,
             Set<String> anomalies,
             List<Block> blocks) {
         @Override
@@ -587,6 +694,7 @@ public final class QuickShulkerStressGameTest implements FabricClientGameTest {
                     + ", wrong=" + wrong
                     + ", missing=" + missing
                     + ", materials=" + distinctCorrectMaterials
+                    + ", outside=" + outsideMaterialBlocks
                     + ", anomalies=" + anomalies + ']';
         }
     }

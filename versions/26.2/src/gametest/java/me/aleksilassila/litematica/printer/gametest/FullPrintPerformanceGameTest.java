@@ -42,7 +42,8 @@ public final class FullPrintPerformanceGameTest implements FabricClientGameTest 
     private static final int SHAPE_CENTER_Y = 66;
     private static final int SHAPE_CENTER_Z = 1;
     private static final int SHAPE_RADIUS_SQUARED = 49;
-    private static final int BLOCKS_PER_TICK = 8;
+    private static final int BLOCKS_PER_TICK = Integer.getInteger(
+            "litematica-printer.gametest.placementLimit", 8);
     private static final int ITERATION_TIME_LIMIT_MS = 8;
     private static final List<BlockPos> TARGETS = createTargets();
 

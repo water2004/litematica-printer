@@ -1,6 +1,7 @@
 package me.aleksilassila.litematica.printer.gametest.mixin;
 
 import me.aleksilassila.litematica.printer.gametest.FullPrintProfileMetrics;
+import me.aleksilassila.litematica.printer.gametest.diagnostics.StackBoundaryPlacementTrace;
 import me.aleksilassila.litematica.printer.handler.handlers.Print;
 import me.aleksilassila.litematica.printer.printer.action.Action;
 import me.aleksilassila.litematica.printer.utils.InventoryUtils;
@@ -12,10 +13,23 @@ import net.minecraft.world.item.Item;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import java.util.concurrent.atomic.AtomicReference;
 
 /** Test-only classification of consumer attempts that produce no interaction packet. */
 @Mixin(Print.class)
 public abstract class PrintConsumerReasonMixin {
+    @Inject(method = "executeIteration", at = @At("HEAD"))
+    private void beginJob(BlockPos pos, AtomicReference<Boolean> skip, CallbackInfo callback) {
+        StackBoundaryPlacementTrace.beginJob(pos);
+    }
+
+    @Inject(method = "executeIteration", at = @At("RETURN"))
+    private void endJob(BlockPos pos, AtomicReference<Boolean> skip, CallbackInfo callback) {
+        StackBoundaryPlacementTrace.endJob();
+    }
+
     @Redirect(
             method = "executeIteration",
             at = @At(

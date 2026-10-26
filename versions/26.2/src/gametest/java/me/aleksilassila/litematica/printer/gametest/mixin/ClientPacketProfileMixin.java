@@ -1,6 +1,7 @@
 package me.aleksilassila.litematica.printer.gametest.mixin;
 
 import me.aleksilassila.litematica.printer.gametest.FullPrintProfileMetrics;
+import me.aleksilassila.litematica.printer.gametest.diagnostics.StackBoundaryPlacementTrace;
 import net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl;
 import net.minecraft.network.protocol.Packet;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,5 +16,6 @@ public abstract class ClientPacketProfileMixin {
             at = @At("HEAD"))
     private void recordPrinterPacket(Packet<?> packet, CallbackInfo callback) {
         FullPrintProfileMetrics.recordPacket(packet);
+        StackBoundaryPlacementTrace.clientSent(packet);
     }
 }

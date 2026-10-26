@@ -42,6 +42,15 @@ def gameTestQuickShulkerStress = providers.gradleProperty(
         .map { it.toBoolean() }
         .orElse(false)
         .get()
+
+def gameTestStackBoundary = providers.gradleProperty('printerGameTestStackBoundary')
+        .map { it.toBoolean() }
+        .orElse(false)
+        .get()
+def gameTestPlacementLimit = providers.gradleProperty('printerGameTestPlacementLimit')
+        .orElse('')
+        .get()
+
 def gameTestScanPerformance = providers.gradleProperty(
         'printerGameTestScanPerformance')
         .map { it.toBoolean() }
@@ -284,6 +293,11 @@ tasks.named('runClientGameTest') {
     jvmArgs "-Dlitematica-printer.gametest.quickshulkerPacketLoss=${gameTestQuickShulkerPacketLoss}"
     jvmArgs "-Dlitematica-printer.gametest.quickshulkerLegacyPacketLoss=${gameTestQuickShulkerLegacyPacketLoss}"
     jvmArgs "-Dlitematica-printer.gametest.quickshulkerStress=${gameTestQuickShulkerStress}"
+    jvmArgs "-Dlitematica-printer.gametest.stackBoundary=${gameTestStackBoundary}"
+    jvmArgs "-Dlitematica-printer.gametest.coloredShulker=${providers.gradleProperty('printerGameTestColoredShulker').orElse('false').get()}"
+    if (!gameTestPlacementLimit.isEmpty()) {
+        jvmArgs "-Dlitematica-printer.gametest.placementLimit=${gameTestPlacementLimit}"
+    }
     jvmArgs "-Dlitematica-printer.gametest.scanPerformance=${gameTestScanPerformance}"
     jvmArgs "-Dlitematica-printer.gametest.scanProfileLabel=${gameTestScanProfileLabel}"
     jvmArgs "-Dlitematica-printer.gametest.scanIterations=${gameTestScanIterations}"

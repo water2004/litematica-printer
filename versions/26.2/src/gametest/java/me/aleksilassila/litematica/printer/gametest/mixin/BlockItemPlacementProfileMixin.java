@@ -1,6 +1,7 @@
 package me.aleksilassila.litematica.printer.gametest.mixin;
 
 import me.aleksilassila.litematica.printer.gametest.FullPrintProfileMetrics;
+import me.aleksilassila.litematica.printer.gametest.diagnostics.StackBoundaryPlacementTrace;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -23,5 +24,6 @@ public abstract class BlockItemPlacementProfileMixin {
             BlockPlaceContext context,
             CallbackInfoReturnable<InteractionResult> callback) {
         FullPrintProfileMetrics.endBlockItemPlacement(callback.getReturnValue());
+        StackBoundaryPlacementTrace.placed(context, callback.getReturnValue());
     }
 }

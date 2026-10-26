@@ -6,6 +6,7 @@
   "environment": "client",
   "entrypoints": {
     "fabric-client-gametest": [
+      "me.aleksilassila.litematica.printer.gametest.diagnostics.ColoredShulkerDiagnostic",
       "me.aleksilassila.litematica.printer.gametest.PrinterIntegrationGameTest",
       "me.aleksilassila.litematica.printer.gametest.QuickShulkerLifecycleGameTest",
       "me.aleksilassila.litematica.printer.gametest.FluidRemovalGameTest",
