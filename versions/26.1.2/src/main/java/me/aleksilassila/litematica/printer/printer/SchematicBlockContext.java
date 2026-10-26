@@ -111,6 +111,15 @@ public class SchematicBlockContext {
         return snapshot;
     }
 
+    /** Missing snapshot pages/unloaded world chunks are not evidence of air. */
+    public boolean hasStatesAt(BlockPos pos) {
+        if (snapshot) {
+            return ((AsyncSearchCoordinator.SnapshotBlockView) currentView).containsState(pos)
+                    && ((AsyncSearchCoordinator.SnapshotBlockView) requiredView).containsState(pos);
+        }
+        return level != null && level.hasChunkAt(pos);
+    }
+
     public BlockGetter getCurrentView() {
         return currentView;
     }

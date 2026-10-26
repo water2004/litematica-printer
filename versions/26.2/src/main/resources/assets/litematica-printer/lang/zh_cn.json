@@ -1,4 +1,10 @@
 {
+  "litematica-printer.safety.skipped": "安全跳过：%s（%s）",
+  "litematica-printer.safety.mismatch": "依赖尚未完成",
+  "litematica-printer.safety.cycle": "施工依赖成环",
+  "litematica-printer.safety.unknown": "依赖位置数据不可用",
+  "litematica-printer.safety.limit": "依赖图超出检查预算",
+  "litematica-printer.safety.blocked": "未完成的输出旁已有活塞",
   "litematica-printer.config.category.spawnProofing": "§6铺防刷怪",
   "litematica-printer.config.category.spawnProofing.desc": "在区域选区内的完整上表面铺设所选材料",
   "litematica-printer.config.spawnProofingEnabled": "启用铺防刷怪",

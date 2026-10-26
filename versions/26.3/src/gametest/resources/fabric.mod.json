@@ -12,6 +12,7 @@
       "me.aleksilassila.litematica.printer.gametest.QuickShulkerSlotLayoutGameTest",
       "me.aleksilassila.litematica.printer.gametest.FluidRemovalGameTest",
       "me.aleksilassila.litematica.printer.gametest.SpawnProofingGameTest",
+      "me.aleksilassila.litematica.printer.gametest.PlacementSafetyGameTest",
       "me.aleksilassila.litematica.printer.gametest.PacketLossReproductionGameTest",
       "me.aleksilassila.litematica.printer.gametest.ServuxHandConfirmationGameTest",
       "me.aleksilassila.litematica.printer.gametest.QuickShulkerStressGameTest",

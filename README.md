@@ -116,6 +116,15 @@ Existing block-operation behavior remains available, including:
 
 ### Feedback and controls
 
+Safe observer placement uses construction dependencies: observed inputs (including observer
+chains and falling-block supports) precede observers, and observers pointing their outputs
+directly at a piston precede that piston. Connections caused by the candidate itself are
+not prerequisites. The consumer checks live blocks; rejected jobs are consumed and can be
+rediscovered later, without holding up other work. Cycles, unavailable dependency data and
+over-budget checks are skipped, never force-placed after a timeout. The debug consumer panel
+shows the reason and dependency position. This is conservative construction ordering, not
+a simulation or a guarantee of safety for arbitrary redstone machines.
+
 - Stable completion progress and missing-material HUD.
 - Current consumer activity, wait reason, job position, and job-pool length.
 - Producer scan progress for the current round.

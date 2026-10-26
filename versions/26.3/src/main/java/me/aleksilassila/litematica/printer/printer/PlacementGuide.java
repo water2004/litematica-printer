@@ -364,87 +364,7 @@ public class PlacementGuide {
                 return new Action().setSides(Direction.DOWN).setItems(Items.FLINT_AND_STEEL, Items.FIRE_CHARGE).setRequiresSupport();
             }
             case OBSERVER -> {
-                @Nullable
-                Direction facing = ctx.getRequiredStateProperty(ObserverBlock.FACING).orElse(null);
-                if (facing == null) {
-                    return null;
-                }
-
-                SchematicBlockContext input = ctx.offset(facing);
-                SchematicBlockContext output = ctx.offset(facing.getOpposite());
-
-                if (Configs.Print.SAFELY_OBSERVER.getBooleanValue()) {
-                    List<Property<?>> inputPropertiesToIgnore = new ArrayList<>();
-                    if (input.requiredState.getBlock() instanceof WallBlock) {
-                        BlockUtils.getWallFacingProperty(facing.getOpposite())
-                                .ifPresent(inputPropertiesToIgnore::add);
-                    }
-                    if (output.requiredState.getBlock() instanceof CrossCollisionBlock) {
-                        BlockUtils.getCrossCollisionBlock(facing.getOpposite())
-                                .ifPresent(inputPropertiesToIgnore::add);
-                    }
-
-                    BlockMatchingType inputState = BlockMatchingType.get(input, inputPropertiesToIgnore.toArray(new Property<?>[0]));
-                    BlockMatchingType outputState = BlockMatchingType.get(output);
-
-                    if (inputState == BlockMatchingType.CORRECT && outputState == BlockMatchingType.CORRECT) {
-                        if (BlockUtils.checkObserverChain(input)) {
-                            return new Action().setLookDirection(facing).setNeedWaitModifyLook(true);
-                        }
-                        return null;
-                    }
-
-                    if (inputState == BlockMatchingType.CORRECT) {
-                        SchematicBlockContext temp = input;
-                        while (temp.requiredState.getBlock() instanceof FallingBlock) {
-                            SchematicBlockContext offset = temp.offset(Direction.DOWN);
-                            if (BlockMatchingType.get(offset) != BlockMatchingType.CORRECT) {
-                                return null;
-                            }
-                            temp = offset;
-                        }
-
-                        if (!output.requiredState.isAir() && !BlockUtils.checkObserverChain(input)) {
-                            return null;
-                        }
-
-                        for (Direction d : Direction.values()) {
-                            SchematicBlockContext offset = output.offset(d);
-                            if (offset.blockPos.equals(output.blockPos) || offset.blockPos.equals(input.blockPos) || offset.blockPos.equals(ctx.blockPos)) {
-                                continue;
-                            }
-                            if (offset.requiredState.getBlock() instanceof PistonBaseBlock && !offset.currentState.isAir()) {
-                                return null;
-                            }
-                        }
-
-                    } else if (inputState == BlockMatchingType.ERROR_BLOCK_STATE) {
-                        return null;
-                    } else {
-                        if (!output.requiredState.isAir()) {
-                            if (output.currentState.isAir() && input.requiredState.getBlock() instanceof WallBlock) {
-                                if (!ctx.isSnapshot()) {
-                                    BlockPosCooldownManager.INSTANCE.setCooldown(
-                                            Objects.requireNonNull(ctx.level),
-                                            "observer",
-                                            ctx.blockPos,
-                                            2);
-                                }
-                                return new Action().setLookDirection(facing).setNeedWaitModifyLook(true);
-                            }
-                            return null;
-                        } else {
-                            // 检查是否被其他侦测器侦测
-                            if (BlockUtils.checkObserverChain(input)) {
-                                return new Action().setLookDirection(facing).setNeedWaitModifyLook(true);
-                            }
-                            if (!BlockUtils.checkObserverChain(output)) {
-                                return null;
-                            }
-                        }
-                    }
-                }
-
+                Direction facing = ctx.requiredState.getValue(ObserverBlock.FACING);
                 return new Action().setLookDirection(facing).setNeedWaitModifyLook(true);
             }
             case LADDER -> {
@@ -506,26 +426,6 @@ public class PlacementGuide {
             }
             case PISTON -> {
                 Direction facing = ctx.requiredState.getValue(BlockStateProperties.FACING);
-                // 侦测器安全放置
-                if (Configs.Print.SAFELY_OBSERVER.getBooleanValue()) {
-                    // 活塞四周
-                    for (Direction direction : Direction.values()) {
-                        SchematicBlockContext temp = ctx.offset(direction);
-                        while (temp.requiredState.getBlock() instanceof ObserverBlock) {
-                            @Nullable Direction tempObserverFacing = temp.getRequiredStateProperty(ObserverBlock.FACING).orElse(null);
-                            if (tempObserverFacing != null) {
-                                SchematicBlockContext offset = temp.offset(tempObserverFacing);
-                                if (tempObserverFacing == direction) {
-                                    if (BlockMatchingType.get(offset) != BlockMatchingType.CORRECT) {
-                                        return null;
-                                    }
-                                }
-                                temp = offset;
-                            }
-                        }
-                    }
-
-                }
                 return new Action().setLookDirection(facing.getOpposite()).setNeedWaitModifyLook();
             }
             case SIGN -> {

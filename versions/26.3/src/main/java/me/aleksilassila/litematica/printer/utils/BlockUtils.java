@@ -1,7 +1,6 @@
 package me.aleksilassila.litematica.printer.utils;
 
 import me.aleksilassila.litematica.printer.enums.BlockMatchingType;
-import me.aleksilassila.litematica.printer.printer.SchematicBlockContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -19,7 +18,6 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -114,12 +112,12 @@ public class BlockUtils {
         };
     }
 
-    public static Optional<Property<?>> getCrossCollisionBlock(Direction wallFacing) {
-        return switch (wallFacing) {
-            case NORTH -> Optional.of(wallNorthProperty);
-            case SOUTH -> Optional.of(wallSouthProperty);
-            case WEST -> Optional.of(wallWestProperty);
-            case EAST -> Optional.of(wallEastProperty);
+    public static Optional<Property<?>> getCrossCollisionBlock(Direction facing) {
+        return switch (facing) {
+            case NORTH -> Optional.of(BlockStateProperties.NORTH);
+            case SOUTH -> Optional.of(BlockStateProperties.SOUTH);
+            case WEST -> Optional.of(BlockStateProperties.WEST);
+            case EAST -> Optional.of(BlockStateProperties.EAST);
             default -> Optional.empty();
         };
     }
@@ -358,20 +356,5 @@ public class BlockUtils {
             sides.put(side, Vec3.atLowerCornerOf(getVector(requiredDir)).scale(0.25));
         }
         return sides;
-    }
-
-
-    public static boolean checkObserverChain(SchematicBlockContext start) {
-        SchematicBlockContext temp = start;
-        while (temp.requiredState.getBlock() instanceof ObserverBlock) {
-            @Nullable
-            Direction tempObserverFacing = temp.getRequiredStateProperty(ObserverBlock.FACING).orElse(null);
-            SchematicBlockContext offset = temp.offset(tempObserverFacing);
-            if (tempObserverFacing != null && BlockMatchingType.get(offset) != BlockMatchingType.CORRECT) {
-                return false;
-            }
-            temp = offset;
-        }
-        return true;
     }
 }

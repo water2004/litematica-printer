@@ -7,6 +7,7 @@ import lombok.Setter;
 import me.aleksilassila.litematica.printer.I18n;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.core.status.PrinterWaitReason;
+import me.aleksilassila.litematica.printer.core.dependency.DependencyCheck;
 import me.aleksilassila.litematica.printer.enums.BlockMatchingType;
 import me.aleksilassila.litematica.printer.enums.HighlightType;
 import me.aleksilassila.litematica.printer.enums.SelectionType;
@@ -50,6 +51,19 @@ public class Print extends Module {
 
     private SchematicBlockContext ctx;
 
+    /** Diagnostic only: never used to retain or resume a rejected job. */
+    public record SafetyRejection(BlockPos job,
+            DependencyCheck.Result<BlockPos> result) {}
+
+    @Getter
+    private SafetyRejection safetyRejection;
+
+    @Override
+    public void resetScanState() {
+        super.resetScanState();
+        safetyRejection = null;
+    }
+
     // canProcessPos 缓存
     private List<String> lastSkipConfig = Collections.emptyList();
     private Set<String> skipSet = Collections.emptySet();
@@ -88,6 +102,7 @@ public class Print extends Module {
 
     @Override
     public boolean canProcessPos(BlockPos blockPos) {
+        safetyRejection = null;
         WorldSchematic schematic = SchematicWorldHandler.getSchematicWorld();
         if (schematic == null) return false;
 
@@ -125,6 +140,15 @@ public class Print extends Module {
 
         Action action = guide.getAction(ctx);
         if (action == null) return false;
+        if (Configs.Print.SAFELY_OBSERVER.getBooleanValue()
+                && PlacementSafety.appliesTo(ctx.requiredState)
+                && BlockMatchingType.get(ctx) == BlockMatchingType.MISSING_BLOCK) {
+            var result = PlacementSafety.evaluate(ctx);
+            if (!result.allowed()) {
+                safetyRejection = new SafetyRejection(blockPos.immutable(), result);
+                return false;
+            }
+        }
         if (action instanceof ChainBreakAction && !ChainVeinCompat.canBreakBlock(blockPos)) {
             return false;
         }
@@ -186,7 +210,7 @@ public class Print extends Module {
         }
 
         /*
-         * 小快照边界外的依赖（例如较长观察者链）可能让快照版 guide 保守返回 null。
+         * 小快照边界外的放置条件可能让快照版 guide 保守返回 null。
          * 缺失方块仍可用目标物品生成准确的放置事务键；消费者会做最终实时校验。
          */
         if (matching == BlockMatchingType.MISSING_BLOCK) {

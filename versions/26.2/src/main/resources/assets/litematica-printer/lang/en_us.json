@@ -1,4 +1,10 @@
 {
+  "litematica-printer.safety.skipped": "Safety skip: %s (%s)",
+  "litematica-printer.safety.mismatch": "unfinished dependency",
+  "litematica-printer.safety.cycle": "cyclic construction dependency",
+  "litematica-printer.safety.unknown": "dependency data unavailable",
+  "litematica-printer.safety.limit": "dependency graph exceeds check budget",
+  "litematica-printer.safety.blocked": "unfinished output beside an existing piston",
   "litematica-printer.config.category.spawnProofing": "§6Spawn Proofing",
   "litematica-printer.config.category.spawnProofing.desc": "Cover full top faces in the Litematica area selection",
   "litematica-printer.config.spawnProofingEnabled": "Enable Spawn Proofing",

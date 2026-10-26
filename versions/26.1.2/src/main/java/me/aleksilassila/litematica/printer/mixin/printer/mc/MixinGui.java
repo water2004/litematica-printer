@@ -142,6 +142,16 @@ public abstract class MixinGui {
                 booleanToColoredString(currentJob.interacted)).getString());
         lines.add(MessageUtils.translatable(KEY_EXECUTED,
                 booleanToColoredString(currentJob.execute)).getString());
+        if (module instanceof me.aleksilassila.litematica.printer.handler.handlers.Print print
+                && Configs.Print.SAFELY_OBSERVER.getBooleanValue()) {
+            var rejection = print.getSafetyRejection();
+            if (rejection != null && rejection.job().equals(currentJob.pos) && !currentJob.execute) {
+                String reason = MessageUtils.translatable("litematica-printer.safety."
+                        + rejection.result().reason().name().toLowerCase(java.util.Locale.ROOT)).getString();
+                lines.add(MessageUtils.translatable("litematica-printer.safety.skipped", reason,
+                        rejection.result().position().toShortString()).getString());
+            }
+        }
         return lines;
     }
 

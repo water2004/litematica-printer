@@ -585,6 +585,14 @@ public final class AsyncSearchCoordinator {
             return getBlockState(pageIndex(x, y, z), x, y, z);
         }
 
+        public boolean containsState(BlockPos pos) {
+            int index = pageIndex(pos.getX(), pos.getY(), pos.getZ());
+            if (index < 0 || index >= slots.length) return false;
+            PageSlot slot = slots[index];
+            SnapshotPage page = slot == null ? null : slot.page;
+            return page != null && page.get(pos.getX(), pos.getY(), pos.getZ(), null) != null;
+        }
+
         private int pageIndex(int x, int y, int z) {
             int pageX = (x >> SNAPSHOT_PAGE_SHIFT) - minPageX;
             int pageY = (y >> SNAPSHOT_PAGE_SHIFT) - minPageY;
