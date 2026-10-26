@@ -1,13 +1,13 @@
 package me.aleksilassila.litematica.printer.handler.handlers;
 
 import me.aleksilassila.litematica.printer.config.Configs;
-import me.aleksilassila.litematica.printer.handler.AsyncSearchCoordinator;
+import me.aleksilassila.litematica.printer.handler.search.SearchSnapshots;
 import me.aleksilassila.litematica.printer.handler.TransactionKey;
 import me.aleksilassila.litematica.printer.printer.action.Action;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.BlockGetter;
 
 /**
  * Surface-restricted filling. Jobs address supports inside the area selection;
@@ -51,7 +51,7 @@ public final class SpawnProofing extends Fill {
 
     @Override
     protected TransactionKey getSearchTransactionKey(
-            AsyncSearchCoordinator.SearchBlockSnapshot block, Object context) {
+            SearchSnapshots.SearchBlockSnapshot block, Object context) {
         if (block.currentState().isAir()) return null;
         return needsCover(block.currentView(), block.pos()) ? TransactionKey.HOMOGENEOUS : null;
     }

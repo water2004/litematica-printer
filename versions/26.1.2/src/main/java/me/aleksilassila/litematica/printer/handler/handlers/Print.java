@@ -2,26 +2,27 @@ package me.aleksilassila.litematica.printer.handler.handlers;
 
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import fi.dy.masa.litematica.world.WorldSchematic;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.Getter;
 import lombok.Setter;
-import me.aleksilassila.litematica.printer.I18n;
 import me.aleksilassila.litematica.printer.config.Configs;
-import me.aleksilassila.litematica.printer.core.status.PrinterWaitReason;
 import me.aleksilassila.litematica.printer.core.dependency.DependencyCheck;
 import me.aleksilassila.litematica.printer.enums.BlockMatchingType;
 import me.aleksilassila.litematica.printer.enums.HighlightType;
 import me.aleksilassila.litematica.printer.enums.SelectionType;
-import me.aleksilassila.litematica.printer.handler.AsyncSearchCoordinator;
 import me.aleksilassila.litematica.printer.handler.Module;
+import me.aleksilassila.litematica.printer.handler.search.SearchSnapshots;
 import me.aleksilassila.litematica.printer.handler.TransactionKey;
+import me.aleksilassila.litematica.printer.I18n;
+import me.aleksilassila.litematica.printer.interfaces.compat.ChainVeinCompat;
 import me.aleksilassila.litematica.printer.interfaces.Implementation;
 import me.aleksilassila.litematica.printer.printer.*;
 import me.aleksilassila.litematica.printer.printer.action.Action;
 import me.aleksilassila.litematica.printer.printer.action.ChainBreakAction;
-import me.aleksilassila.litematica.printer.printer.ActionManager;
 import me.aleksilassila.litematica.printer.printer.action.ClickAction;
+import me.aleksilassila.litematica.printer.printer.ActionManager;
 import me.aleksilassila.litematica.printer.printer.MissingMaterialTracker;
-import me.aleksilassila.litematica.printer.interfaces.compat.ChainVeinCompat;
 import me.aleksilassila.litematica.printer.utils.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -29,10 +30,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class Print extends Module {
     public final static String NAME = "print";
@@ -178,7 +175,7 @@ public class Print extends Module {
 
     @Override
     protected TransactionKey getSearchTransactionKey(
-            AsyncSearchCoordinator.SearchBlockSnapshot block,
+            SearchSnapshots.SearchBlockSnapshot block,
             Object searchContext) {
         PrintSearchContext search = (PrintSearchContext) searchContext;
         BlockState required = block.requiredState();

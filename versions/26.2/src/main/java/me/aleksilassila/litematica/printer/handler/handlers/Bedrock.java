@@ -1,19 +1,18 @@
 package me.aleksilassila.litematica.printer.handler.handlers;
 
-import me.aleksilassila.litematica.printer.I18n;
-import me.aleksilassila.litematica.printer.utils.ModUtils;
+import java.util.concurrent.atomic.AtomicReference;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.core.spatial.PlayerHeightFilter;
 import me.aleksilassila.litematica.printer.enums.HighlightType;
-import me.aleksilassila.litematica.printer.handler.AsyncSearchCoordinator;
 import me.aleksilassila.litematica.printer.handler.Module;
+import me.aleksilassila.litematica.printer.handler.search.SearchSnapshots;
 import me.aleksilassila.litematica.printer.handler.TransactionKey;
+import me.aleksilassila.litematica.printer.I18n;
 import me.aleksilassila.litematica.printer.interfaces.compat.BedrockCompat;
 import me.aleksilassila.litematica.printer.utils.MessageUtils;
+import me.aleksilassila.litematica.printer.utils.ModUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Blocks;
-
-import java.util.concurrent.atomic.AtomicReference;
 
 public class Bedrock extends Module {
     public final static String NAME = "bedrock";
@@ -73,7 +72,7 @@ public class Bedrock extends Module {
 
     @Override
     protected TransactionKey getSearchTransactionKey(
-            AsyncSearchCoordinator.SearchBlockSnapshot block,
+            SearchSnapshots.SearchBlockSnapshot block,
             Object searchContext) {
         return block.currentState().is(Blocks.BEDROCK)
                 ? TransactionKey.HOMOGENEOUS : null;

@@ -3,15 +3,20 @@ package me.aleksilassila.litematica.printer.handler.handlers;
 import fi.dy.masa.malilib.config.options.ConfigBoolean;
 import fi.dy.masa.malilib.config.options.ConfigOptionList;
 import fi.dy.masa.malilib.config.options.ConfigStringList;
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.Getter;
-import me.aleksilassila.litematica.printer.I18n;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.AreaSelectionType;
 import me.aleksilassila.litematica.printer.enums.FillBlockModeType;
 import me.aleksilassila.litematica.printer.enums.HighlightType;
-import me.aleksilassila.litematica.printer.handler.AsyncSearchCoordinator;
 import me.aleksilassila.litematica.printer.handler.Module;
+import me.aleksilassila.litematica.printer.handler.search.SearchSnapshots;
 import me.aleksilassila.litematica.printer.handler.TransactionKey;
+import me.aleksilassila.litematica.printer.I18n;
 import me.aleksilassila.litematica.printer.printer.*;
 import me.aleksilassila.litematica.printer.printer.action.Action;
 import me.aleksilassila.litematica.printer.utils.*;
@@ -24,12 +29,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class Fill extends Module {
     public final static String NAME = "fill";
@@ -161,7 +160,7 @@ public class Fill extends Module {
 
     @Override
     protected TransactionKey getSearchTransactionKey(
-            AsyncSearchCoordinator.SearchBlockSnapshot block,
+            SearchSnapshots.SearchBlockSnapshot block,
             Object searchContext) {
         BlockState state = block.currentState();
         if (state.isAir() || state.getBlock() instanceof LiquidBlock) {

@@ -3,30 +3,30 @@ package me.aleksilassila.litematica.printer.gametest;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import fi.dy.masa.malilib.util.LayerMode;
-import jdk.jfr.Configuration;
-import jdk.jfr.Recording;
-import jdk.jfr.RecordingState;
-import me.aleksilassila.litematica.printer.config.Configs;
-import me.aleksilassila.litematica.printer.enums.RadiusShapeType;
-import me.aleksilassila.litematica.printer.enums.SelectionType;
-import me.aleksilassila.litematica.printer.handler.AsyncSearchCoordinator;
-import me.aleksilassila.litematica.printer.handler.ModuleManager;
-import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
-import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
-import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
-
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import jdk.jfr.Configuration;
+import jdk.jfr.Recording;
+import jdk.jfr.RecordingState;
+import me.aleksilassila.litematica.printer.config.Configs;
+import me.aleksilassila.litematica.printer.enums.RadiusShapeType;
+import me.aleksilassila.litematica.printer.enums.SelectionType;
+import me.aleksilassila.litematica.printer.handler.ModuleManager;
+import me.aleksilassila.litematica.printer.handler.search.AsyncSearchCoordinator;
+import me.aleksilassila.litematica.printer.handler.search.SearchProfile;
+import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
+import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
+import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class FullPrintPerformanceGameTest implements FabricClientGameTest {
@@ -79,7 +79,7 @@ public final class FullPrintPerformanceGameTest implements FabricClientGameTest 
 
             recording = createRecording();
             if (recording != null) recording.start();
-            AsyncSearchCoordinator.resetRoundProfileForTesting();
+            SearchProfile.resetRoundProfileForTesting();
             FullPrintProfileMetrics.start();
             metricsActive = true;
             long startedNanos = System.nanoTime();
@@ -127,8 +127,8 @@ public final class FullPrintPerformanceGameTest implements FabricClientGameTest 
             FullPrintProfileMetrics.Snapshot metrics =
                     FullPrintProfileMetrics.stop();
             metricsActive = false;
-            List<AsyncSearchCoordinator.RoundProfile> rounds =
-                    AsyncSearchCoordinator.drainRoundProfilesForTesting();
+            List<SearchProfile.RoundProfile> rounds =
+                    SearchProfile.drainRoundProfilesForTesting();
             stopAndDump(recording);
             recording = null;
 
@@ -293,7 +293,7 @@ public final class FullPrintPerformanceGameTest implements FabricClientGameTest 
         Configs.Print.ENABLED.setBooleanValue(false);
         ModuleManager.GUI.resetScanState();
         ModuleManager.PRINT.resetScanState();
-        AsyncSearchCoordinator.resetRoundProfileForTesting();
+        SearchProfile.resetRoundProfileForTesting();
         TestSchematicRegion.clear();
 
         var schematic = SchematicWorldHandler.getSchematicWorld();
@@ -537,7 +537,7 @@ public final class FullPrintPerformanceGameTest implements FabricClientGameTest 
             long publishNanos,
             long stateReads,
             long printJobs) {
-        static ScanTotals from(List<AsyncSearchCoordinator.RoundProfile> profiles) {
+        static ScanTotals from(List<SearchProfile.RoundProfile> profiles) {
             long scan = 0L;
             long plan = 0L;
             long capture = 0L;
@@ -546,14 +546,14 @@ public final class FullPrintPerformanceGameTest implements FabricClientGameTest 
             long publish = 0L;
             long reads = 0L;
             long jobs = 0L;
-            for (AsyncSearchCoordinator.RoundProfile profile : profiles) {
+            for (SearchProfile.RoundProfile profile : profiles) {
                 scan += profile.scanNanos();
                 plan += profile.planNanos();
                 capture += profile.captureNanos();
                 search += profile.searchNanos();
                 completion += profile.completionNanos();
                 publish += profile.publishNanos();
-                for (AsyncSearchCoordinator.RequestProfile request : profile.requests()) {
+                for (SearchProfile.RequestProfile request : profile.requests()) {
                     reads += request.stateReads();
                     if (request.moduleId().equals("print")) {
                         jobs += request.jobCount();

@@ -3,31 +3,30 @@ package me.aleksilassila.litematica.printer.gametest;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import fi.dy.masa.malilib.util.LayerMode;
+import java.util.HashMap;
+import java.util.Map;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.core.dependency.DependencyCheck.Reason;
 import me.aleksilassila.litematica.printer.enums.SelectionType;
 import me.aleksilassila.litematica.printer.handler.ModuleManager;
-import me.aleksilassila.litematica.printer.handler.PlacementGuideTestAccess;
+import me.aleksilassila.litematica.printer.handler.search.PlacementGuideTestAccess;
 import me.aleksilassila.litematica.printer.printer.ActionManager;
 import me.aleksilassila.litematica.printer.printer.PlacementGuide;
 import me.aleksilassila.litematica.printer.printer.PlacementSafety;
-import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
+import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.WallSide;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class PlacementSafetyGameTest implements FabricClientGameTest {

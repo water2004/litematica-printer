@@ -1,6 +1,8 @@
 package me.aleksilassila.litematica.printer.handler;
 
 import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import me.aleksilassila.litematica.printer.config.Configs;
@@ -8,15 +10,13 @@ import me.aleksilassila.litematica.printer.core.status.PrinterStatus;
 import me.aleksilassila.litematica.printer.core.status.PrinterWaitReason;
 import me.aleksilassila.litematica.printer.enums.ScanState;
 import me.aleksilassila.litematica.printer.handler.handlers.*;
+import me.aleksilassila.litematica.printer.handler.search.AsyncSearchCoordinator;
+import me.aleksilassila.litematica.printer.interfaces.compat.QuickShulkerCompat;
+import me.aleksilassila.litematica.printer.interfaces.compat.TakeItOutCompat;
 import me.aleksilassila.litematica.printer.printer.ActionManager;
 import me.aleksilassila.litematica.printer.printer.MissingMaterialTracker;
 import me.aleksilassila.litematica.printer.utils.ConfigUtils;
-import me.aleksilassila.litematica.printer.interfaces.compat.QuickShulkerCompat;
-import me.aleksilassila.litematica.printer.interfaces.compat.TakeItOutCompat;
 import net.minecraft.client.Minecraft;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class ModuleManager {
     public static final Minecraft mc = Minecraft.getInstance();

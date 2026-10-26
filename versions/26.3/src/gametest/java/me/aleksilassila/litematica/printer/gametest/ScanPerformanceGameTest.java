@@ -3,23 +3,23 @@ package me.aleksilassila.litematica.printer.gametest;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import fi.dy.masa.malilib.util.LayerMode;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.List;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.RadiusShapeType;
 import me.aleksilassila.litematica.printer.enums.SelectionType;
-import me.aleksilassila.litematica.printer.handler.AsyncSearchCoordinator;
 import me.aleksilassila.litematica.printer.handler.ModuleManager;
-import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
+import me.aleksilassila.litematica.printer.handler.search.AsyncSearchCoordinator;
+import me.aleksilassila.litematica.printer.handler.search.SearchProfile;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
+import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class ScanPerformanceGameTest implements FabricClientGameTest {
@@ -69,12 +69,12 @@ public final class ScanPerformanceGameTest implements FabricClientGameTest {
                     context.runOnClient(client -> {
                         ModuleManager.GUI.resetScanState();
                         ModuleManager.PRINT.resetScanState();
-                        AsyncSearchCoordinator.resetRoundProfileForTesting();
+                        SearchProfile.resetRoundProfileForTesting();
                         Configs.Core.WORK_SWITCH.setBooleanValue(true);
                     });
                 }
                 context.waitFor(client -> completedPrintProfile() != null, 1200);
-                AsyncSearchCoordinator.RoundProfile profile =
+                SearchProfile.RoundProfile profile =
                         context.computeOnClient(client -> {
                             Configs.Core.WORK_SWITCH.setBooleanValue(false);
                             return completedPrintProfile();
@@ -98,7 +98,7 @@ public final class ScanPerformanceGameTest implements FabricClientGameTest {
                 Configs.Core.SEARCH_THREADS.setIntegerValue(1);
                 ModuleManager.GUI.resetScanState();
                 ModuleManager.PRINT.resetScanState();
-                AsyncSearchCoordinator.resetRoundProfileForTesting();
+                SearchProfile.resetRoundProfileForTesting();
                 Configs.Core.WORK_SWITCH.setBooleanValue(true);
             });
             context.waitFor(client -> {
@@ -114,7 +114,7 @@ public final class ScanPerformanceGameTest implements FabricClientGameTest {
                 if (scanned > 0L && scanned < total) {
                     observedProducerPartialProgress.set(true);
                 }
-                return AsyncSearchCoordinator.getLastRoundProfileForTesting() != null;
+                return SearchProfile.getLastRoundProfileForTesting() != null;
             }, 1200);
             context.runOnClient(client ->
                     Configs.Core.WORK_SWITCH.setBooleanValue(false));
@@ -201,14 +201,14 @@ public final class ScanPerformanceGameTest implements FabricClientGameTest {
 
         ModuleManager.GUI.resetScanState();
         ModuleManager.PRINT.resetScanState();
-        AsyncSearchCoordinator.resetRoundProfileForTesting();
+        SearchProfile.resetRoundProfileForTesting();
         Configs.Core.WORK_SWITCH.setBooleanValue(true);
     }
 
-    private static void assertProfile(AsyncSearchCoordinator.RoundProfile profile) {
+    private static void assertProfile(SearchProfile.RoundProfile profile) {
         if (profile == null) throw new AssertionError("Scan profile was not published");
-        AsyncSearchCoordinator.RequestProfile gui = request(profile, "gui");
-        AsyncSearchCoordinator.RequestProfile print = request(profile, "print");
+        SearchProfile.RequestProfile gui = request(profile, "gui");
+        SearchProfile.RequestProfile print = request(profile, "print");
         if (profile.requests().size() != 2) {
             throw new AssertionError("Expected GUI and Print requests only: "
                     + profile.requests());
@@ -257,17 +257,17 @@ public final class ScanPerformanceGameTest implements FabricClientGameTest {
         }
     }
 
-    private static AsyncSearchCoordinator.RequestProfile request(
-            AsyncSearchCoordinator.RoundProfile profile, String id) {
+    private static SearchProfile.RequestProfile request(
+            SearchProfile.RoundProfile profile, String id) {
         return profile.requests().stream()
                 .filter(request -> request.moduleId().equals(id))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("Missing scan request " + id));
     }
 
-    private static AsyncSearchCoordinator.RoundProfile completedPrintProfile() {
-        AsyncSearchCoordinator.RoundProfile profile =
-                AsyncSearchCoordinator.getLastRoundProfileForTesting();
+    private static SearchProfile.RoundProfile completedPrintProfile() {
+        SearchProfile.RoundProfile profile =
+                SearchProfile.getLastRoundProfileForTesting();
         if (profile == null) return null;
         return profile.requests().stream()
                 .anyMatch(request -> request.moduleId().equals("print"))
@@ -275,7 +275,7 @@ public final class ScanPerformanceGameTest implements FabricClientGameTest {
     }
 
     private static void printProfile(
-            AsyncSearchCoordinator.RoundProfile profile, int iteration) {
+            SearchProfile.RoundProfile profile, int iteration) {
         String label = System.getProperty(
                 "litematica-printer.gametest.scanProfileLabel", "unspecified");
         System.out.println("[ScanProfile] label=" + label
@@ -284,7 +284,7 @@ public final class ScanPerformanceGameTest implements FabricClientGameTest {
                 + " snapshots=" + profile.capturedTileSnapshots()
                 + " planMs=" + profile.planNanos() / 1_000_000.0D
                 + " scanMs=" + profile.scanNanos() / 1_000_000.0D);
-        for (AsyncSearchCoordinator.RequestProfile request : profile.requests()) {
+        for (SearchProfile.RequestProfile request : profile.requests()) {
             System.out.println("[ScanProfile] module=" + request.moduleId()
                     + " bounds=" + request.boundsVolume()
                     + " tiles=" + request.tileCount()

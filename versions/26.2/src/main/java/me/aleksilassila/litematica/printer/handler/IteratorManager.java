@@ -3,19 +3,17 @@ package me.aleksilassila.litematica.printer.handler;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.malilib.util.LayerMode;
 import fi.dy.masa.malilib.util.position.LayerRange;
+import java.util.Objects;
 import me.aleksilassila.litematica.printer.config.Configs;
-import me.aleksilassila.litematica.printer.enums.IterationOrderType;
 import me.aleksilassila.litematica.printer.core.spatial.PlayerHeightFilter;
+import me.aleksilassila.litematica.printer.enums.IterationOrderType;
 import me.aleksilassila.litematica.printer.printer.PrinterBox;
 import me.aleksilassila.litematica.printer.utils.ConfigUtils;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
 
 /**
  * 搜索范围管理器。

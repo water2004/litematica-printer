@@ -1,23 +1,23 @@
 package me.aleksilassila.litematica.printer.handler.handlers;
 
 import fi.dy.masa.malilib.config.options.ConfigBase;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.List;
+import java.util.Set;
 import lombok.Getter;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.core.spatial.PlayerHeightFilter;
 import me.aleksilassila.litematica.printer.enums.BlockMatchingType;
-import me.aleksilassila.litematica.printer.handler.AsyncSearchCoordinator;
 import me.aleksilassila.litematica.printer.handler.Module;
 import me.aleksilassila.litematica.printer.handler.ModuleManager;
+import me.aleksilassila.litematica.printer.handler.search.AsyncSearchCoordinator;
+import me.aleksilassila.litematica.printer.handler.search.SearchGeometry;
+import me.aleksilassila.litematica.printer.handler.search.SearchSnapshots;
 import me.aleksilassila.litematica.printer.printer.PrinterBox;
 import me.aleksilassila.litematica.printer.utils.LitematicaUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.LiquidBlock;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * GUI 统计处理器 — 与作业生产者共用同一异步小快照搜索管线。
@@ -68,8 +68,8 @@ public class GUI extends Module {
     }
 
     @Override
-    protected AsyncSearchCoordinator.WorkspaceFilter workspaceFilter() {
-        return AsyncSearchCoordinator.WorkspaceFilter.NONE;
+    protected SearchGeometry.WorkspaceFilter workspaceFilter() {
+        return SearchGeometry.WorkspaceFilter.NONE;
     }
 
     @Override
@@ -106,14 +106,14 @@ public class GUI extends Module {
     }
 
     @Override
-    protected AsyncSearchCoordinator.SearchTileResult searchTile(
+    protected SearchSnapshots.SearchTileResult searchTile(
             Object searchContext,
-            AsyncSearchCoordinator.SearchTileSnapshot snapshot,
+            SearchSnapshots.SearchTileSnapshot snapshot,
             long targetBit) {
         GuiSearchContext context = (GuiSearchContext) searchContext;
         MutableStats stats = new MutableStats();
 
-        AsyncSearchCoordinator.SearchBlockSnapshot block = snapshot.cursor(targetBit);
+        SearchSnapshots.SearchBlockSnapshot block = snapshot.cursor(targetBit);
         while (block.advance()) {
             if (context.printEnabled()
                     && block.requiredState() != null
@@ -158,7 +158,7 @@ public class GUI extends Module {
             }
         }
 
-        return new AsyncSearchCoordinator.SearchTileResult(
+        return new SearchSnapshots.SearchTileResult(
                 snapshot.ordinal(),
                 snapshot.scannedPositions(),
                 block.acceptedPositions(),
@@ -167,13 +167,13 @@ public class GUI extends Module {
     }
 
     @Override
-    protected void publishSearchRound(
+    public void publishSearchRound(
             AsyncSearchCoordinator.SearchRequest request,
-            List<AsyncSearchCoordinator.SearchTileResult> results) {
+            List<SearchSnapshots.SearchTileResult> results) {
         if (!isSearchRequestCurrent(request)) return;
 
         MutableStats totals = new MutableStats();
-        for (AsyncSearchCoordinator.SearchTileResult result : results) {
+        for (SearchSnapshots.SearchTileResult result : results) {
             if (result.payload() instanceof GuiStats stats) totals.add(stats);
         }
         totalProgress.publish(totals.totalTotal, totals.totalFinished);

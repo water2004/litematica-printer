@@ -1,14 +1,14 @@
-package me.aleksilassila.litematica.printer.handler;
+package me.aleksilassila.litematica.printer.handler.search;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import me.aleksilassila.litematica.printer.handler.search.SnapshotPages;
 import me.aleksilassila.litematica.printer.printer.SchematicBlockContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 /** Test-only access to the package-private immutable snapshot implementation. */
 public final class PlacementGuideTestAccess {
@@ -27,7 +27,7 @@ public final class PlacementGuideTestAccess {
         return new SchematicBlockContext(client, currentView, requiredView, center);
     }
 
-    private static AsyncSearchCoordinator.SnapshotBlockView denseView(
+    private static SnapshotPages.SnapshotBlockView denseView(
             BlockPos center,
             BlockState centerState,
             Map<BlockPos, BlockState> neighbors) {
@@ -48,33 +48,33 @@ public final class PlacementGuideTestAccess {
             maxZ = Math.max(maxZ, pos.getZ());
         }
 
-        int minPageX = Math.floorDiv(minX, AsyncSearchCoordinator.SNAPSHOT_PAGE_EDGE);
-        int minPageY = Math.floorDiv(minY, AsyncSearchCoordinator.SNAPSHOT_PAGE_EDGE);
-        int minPageZ = Math.floorDiv(minZ, AsyncSearchCoordinator.SNAPSHOT_PAGE_EDGE);
-        int maxPageX = Math.floorDiv(maxX, AsyncSearchCoordinator.SNAPSHOT_PAGE_EDGE);
-        int maxPageY = Math.floorDiv(maxY, AsyncSearchCoordinator.SNAPSHOT_PAGE_EDGE);
-        int maxPageZ = Math.floorDiv(maxZ, AsyncSearchCoordinator.SNAPSHOT_PAGE_EDGE);
+        int minPageX = Math.floorDiv(minX, SnapshotPages.SNAPSHOT_PAGE_EDGE);
+        int minPageY = Math.floorDiv(minY, SnapshotPages.SNAPSHOT_PAGE_EDGE);
+        int minPageZ = Math.floorDiv(minZ, SnapshotPages.SNAPSHOT_PAGE_EDGE);
+        int maxPageX = Math.floorDiv(maxX, SnapshotPages.SNAPSHOT_PAGE_EDGE);
+        int maxPageY = Math.floorDiv(maxY, SnapshotPages.SNAPSHOT_PAGE_EDGE);
+        int maxPageZ = Math.floorDiv(maxZ, SnapshotPages.SNAPSHOT_PAGE_EDGE);
         int pagesX = maxPageX - minPageX + 1;
         int pagesY = maxPageY - minPageY + 1;
         int pagesZ = maxPageZ - minPageZ + 1;
-        var pages = new AsyncSearchCoordinator.SnapshotPage[
+        var pages = new SnapshotPages.SnapshotPage[
                 pagesX * pagesY * pagesZ];
         int pageIndex = 0;
         for (int pageX = minPageX; pageX <= maxPageX; pageX++) {
             for (int pageY = minPageY; pageY <= maxPageY; pageY++) {
                 for (int pageZ = minPageZ; pageZ <= maxPageZ; pageZ++) {
                     int pageMinX = Math.max(
-                            minX, pageX * AsyncSearchCoordinator.SNAPSHOT_PAGE_EDGE);
+                            minX, pageX * SnapshotPages.SNAPSHOT_PAGE_EDGE);
                     int pageMinY = Math.max(
-                            minY, pageY * AsyncSearchCoordinator.SNAPSHOT_PAGE_EDGE);
+                            minY, pageY * SnapshotPages.SNAPSHOT_PAGE_EDGE);
                     int pageMinZ = Math.max(
-                            minZ, pageZ * AsyncSearchCoordinator.SNAPSHOT_PAGE_EDGE);
+                            minZ, pageZ * SnapshotPages.SNAPSHOT_PAGE_EDGE);
                     int pageMaxX = Math.min(maxX,
-                            (pageX + 1) * AsyncSearchCoordinator.SNAPSHOT_PAGE_EDGE - 1);
+                            (pageX + 1) * SnapshotPages.SNAPSHOT_PAGE_EDGE - 1);
                     int pageMaxY = Math.min(maxY,
-                            (pageY + 1) * AsyncSearchCoordinator.SNAPSHOT_PAGE_EDGE - 1);
+                            (pageY + 1) * SnapshotPages.SNAPSHOT_PAGE_EDGE - 1);
                     int pageMaxZ = Math.min(maxZ,
-                            (pageZ + 1) * AsyncSearchCoordinator.SNAPSHOT_PAGE_EDGE - 1);
+                            (pageZ + 1) * SnapshotPages.SNAPSHOT_PAGE_EDGE - 1);
                     int pageSizeX = pageMaxX - pageMinX + 1;
                     int pageSizeY = pageMaxY - pageMinY + 1;
                     int pageSizeZ = pageMaxZ - pageMinZ + 1;
@@ -91,14 +91,14 @@ public final class PlacementGuideTestAccess {
                             }
                         }
                     }
-                    pages[pageIndex++] = new AsyncSearchCoordinator.SnapshotPage(
+                    pages[pageIndex++] = new SnapshotPages.SnapshotPage(
                             states,
                             pageMinX, pageMinY, pageMinZ,
                             pageSizeX, pageSizeY, pageSizeZ);
                 }
             }
         }
-        return new AsyncSearchCoordinator.SnapshotBlockView(
+        return new SnapshotPages.SnapshotBlockView(
                 pages, minPageX, minPageY, minPageZ, pagesX, pagesY, pagesZ,
                 Blocks.AIR.defaultBlockState(), -64, 384);
     }

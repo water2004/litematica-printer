@@ -1,8 +1,9 @@
 package me.aleksilassila.litematica.printer.printer;
 
 import fi.dy.masa.litematica.world.WorldSchematic;
+import java.util.Optional;
 import lombok.ToString;
-import me.aleksilassila.litematica.printer.handler.AsyncSearchCoordinator;
+import me.aleksilassila.litematica.printer.handler.search.SnapshotPages;
 import me.aleksilassila.litematica.printer.utils.BlockUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -10,12 +11,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.SignalGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
-
-import java.util.Optional;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.SignalGetter;
 import org.jetbrains.annotations.Nullable;
 
 @ToString
@@ -55,8 +54,8 @@ public class SchematicBlockContext {
 
     public SchematicBlockContext(
             Minecraft client,
-            AsyncSearchCoordinator.SnapshotBlockView currentView,
-            AsyncSearchCoordinator.SnapshotBlockView requiredView,
+            SnapshotPages.SnapshotBlockView currentView,
+            SnapshotPages.SnapshotBlockView requiredView,
             BlockPos blockPos) {
         this.client = client;
         this.level = null;
@@ -114,8 +113,8 @@ public class SchematicBlockContext {
     /** Missing snapshot pages/unloaded world chunks are not evidence of air. */
     public boolean hasStatesAt(BlockPos pos) {
         if (snapshot) {
-            return ((AsyncSearchCoordinator.SnapshotBlockView) currentView).containsState(pos)
-                    && ((AsyncSearchCoordinator.SnapshotBlockView) requiredView).containsState(pos);
+            return ((SnapshotPages.SnapshotBlockView) currentView).containsState(pos)
+                    && ((SnapshotPages.SnapshotBlockView) requiredView).containsState(pos);
         }
         return level != null && level.hasChunkAt(pos);
     }

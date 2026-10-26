@@ -1,14 +1,30 @@
 package me.aleksilassila.litematica.printer.handler;
 
-import fi.dy.masa.malilib.config.options.ConfigBoolean;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import fi.dy.masa.litematica.world.WorldSchematic;
+import fi.dy.masa.malilib.config.options.ConfigBoolean;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+import java.util.List;
+import java.util.Objects;
+import java.util.Queue;
 import lombok.Getter;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.core.job.JobPool;
 import me.aleksilassila.litematica.printer.core.spatial.PlayerHeightFilter;
 import me.aleksilassila.litematica.printer.core.status.PrinterWaitReason;
 import me.aleksilassila.litematica.printer.enums.*;
+import me.aleksilassila.litematica.printer.handler.search.AsyncSearchCoordinator;
+import me.aleksilassila.litematica.printer.handler.search.SearchGeometry;
+import me.aleksilassila.litematica.printer.handler.search.SearchSnapshots;
 import me.aleksilassila.litematica.printer.printer.*;
 import me.aleksilassila.litematica.printer.utils.ConfigUtils;
 import me.aleksilassila.litematica.printer.utils.LitematicaUtils;
@@ -20,25 +36,11 @@ import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
 public abstract class Module extends ConfigUtils {
     private static final ScheduledExecutorService TIMEOUT_SCHEDULER =
@@ -484,7 +486,7 @@ public abstract class Module extends ConfigUtils {
         WorldSchematic schematic = includeSchematicSnapshot()
                 ? SchematicWorldHandler.getSchematicWorld()
                 : null;
-        if (workspaceFilter() == AsyncSearchCoordinator.WorkspaceFilter.SCHEMATIC
+        if (workspaceFilter() == SearchGeometry.WorkspaceFilter.SCHEMATIC
                 && schematic == null) {
             return null;
         }
@@ -492,16 +494,16 @@ public abstract class Module extends ConfigUtils {
         RadiusShapeType shape =
                 Configs.Core.ITERATOR_SHAPE.getOptionListValue() instanceof RadiusShapeType value
                         ? value : RadiusShapeType.SPHERE;
-        AsyncSearchCoordinator.SearchBounds bounds = new AsyncSearchCoordinator.SearchBounds(
+        SearchGeometry.SearchBounds bounds = new SearchGeometry.SearchBounds(
                 currentBox.minX, currentBox.minY, currentBox.minZ,
                 currentBox.maxX, currentBox.maxY, currentBox.maxZ,
                 currentBox.iterationMode,
                 currentBox.xIncrement, currentBox.yIncrement, currentBox.zIncrement);
 
-        List<AsyncSearchCoordinator.SearchBounds> selectionBoxes = List.of();
-        if (workspaceFilter() == AsyncSearchCoordinator.WorkspaceFilter.SELECTION) {
+        List<SearchGeometry.SearchBounds> selectionBoxes = List.of();
+        if (workspaceFilter() == SearchGeometry.WorkspaceFilter.SELECTION) {
             selectionBoxes = LitematicaUtils.getSelectionBoxesSnapshot().stream()
-                    .map(value -> new AsyncSearchCoordinator.SearchBounds(
+                    .map(value -> new SearchGeometry.SearchBounds(
                             value.minX, value.minY, value.minZ,
                             value.maxX, value.maxY, value.maxZ,
                             value.iterationMode,
@@ -530,20 +532,20 @@ public abstract class Module extends ConfigUtils {
     /**
      * 搜索线程入口。默认实现只产生不可变坐标和事务键，不接触模块动作状态。
      */
-    final AsyncSearchCoordinator.SearchTileResult searchSnapshotTile(
+    public final SearchSnapshots.SearchTileResult searchSnapshotTile(
             Object searchContext,
-            AsyncSearchCoordinator.SearchTileSnapshot snapshot,
+            SearchSnapshots.SearchTileSnapshot snapshot,
             long targetBit) {
         return searchTile(searchContext, snapshot, targetBit);
     }
 
-    protected AsyncSearchCoordinator.SearchTileResult searchTile(
+    protected SearchSnapshots.SearchTileResult searchTile(
             Object searchContext,
-            AsyncSearchCoordinator.SearchTileSnapshot snapshot,
+            SearchSnapshots.SearchTileSnapshot snapshot,
             long targetBit) {
         List<JobPool.Job<BlockPos, TransactionKey>> jobs = new ArrayList<>();
         SearchCandidateInfo lastCandidate = null;
-        AsyncSearchCoordinator.SearchBlockSnapshot block = snapshot.cursor(targetBit);
+        SearchSnapshots.SearchBlockSnapshot block = snapshot.cursor(targetBit);
         while (block.advance()) {
             TransactionKey key = getSearchTransactionKey(block, searchContext);
             if (key == null) continue;
@@ -551,7 +553,7 @@ public abstract class Module extends ConfigUtils {
             lastCandidate = new SearchCandidateInfo(
                     block.pos(), block.currentState(), block.requiredState());
         }
-        return new AsyncSearchCoordinator.SearchTileResult(
+        return new SearchSnapshots.SearchTileResult(
                 snapshot.ordinal(),
                 snapshot.scannedPositions(),
                 List.copyOf(jobs),
@@ -561,14 +563,14 @@ public abstract class Module extends ConfigUtils {
     /**
      * 调度线程发布一整轮结果。所有工作线程此时均已完成。
      */
-    protected void publishSearchRound(
+    public void publishSearchRound(
             AsyncSearchCoordinator.SearchRequest request,
-            List<AsyncSearchCoordinator.SearchTileResult> results) {
+            List<SearchSnapshots.SearchTileResult> results) {
         if (!isSearchRequestCurrent(request)) return;
 
         List<JobPool.Job<BlockPos, TransactionKey>> jobs = new ArrayList<>();
         SearchCandidateInfo lastCandidate = null;
-        for (AsyncSearchCoordinator.SearchTileResult result : results) {
+        for (SearchSnapshots.SearchTileResult result : results) {
             jobs.addAll(result.jobs());
             if (result.payload() instanceof SearchCandidateInfo block) {
                 lastCandidate = block;
@@ -590,7 +592,7 @@ public abstract class Module extends ConfigUtils {
         }
     }
 
-    protected void searchRoundStarted(
+    public void searchRoundStarted(
             AsyncSearchCoordinator.SearchRequest request, long totalPositions) {
         if (!isSearchRequestCurrent(request)) return;
         producerScannedPositions = 0L;
@@ -598,7 +600,7 @@ public abstract class Module extends ConfigUtils {
         if (scanState != ScanState.WAITING) scanState = ScanState.COLLECT;
     }
 
-    protected void searchRoundProgress(
+    public void searchRoundProgress(
             AsyncSearchCoordinator.SearchRequest request,
             long scannedPositions,
             long totalPositions) {
@@ -626,7 +628,7 @@ public abstract class Module extends ConfigUtils {
      */
     @Nullable
     protected TransactionKey getSearchTransactionKey(
-            AsyncSearchCoordinator.SearchBlockSnapshot block,
+            SearchSnapshots.SearchBlockSnapshot block,
             Object searchContext) {
         return null;
     }
@@ -647,10 +649,10 @@ public abstract class Module extends ConfigUtils {
         return 0;
     }
 
-    protected AsyncSearchCoordinator.WorkspaceFilter workspaceFilter() {
+    protected SearchGeometry.WorkspaceFilter workspaceFilter() {
         return needSchematic
-                ? AsyncSearchCoordinator.WorkspaceFilter.SCHEMATIC
-                : AsyncSearchCoordinator.WorkspaceFilter.SELECTION;
+                ? SearchGeometry.WorkspaceFilter.SCHEMATIC
+                : SearchGeometry.WorkspaceFilter.SELECTION;
     }
 
     protected boolean canSearch() {

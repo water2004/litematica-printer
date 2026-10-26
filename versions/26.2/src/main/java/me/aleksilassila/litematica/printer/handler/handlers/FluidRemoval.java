@@ -1,10 +1,13 @@
 package me.aleksilassila.litematica.printer.handler.handlers;
 
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.List;
 import me.aleksilassila.litematica.printer.config.Configs;
 import me.aleksilassila.litematica.printer.enums.AreaSelectionType;
 import me.aleksilassila.litematica.printer.enums.HighlightType;
-import me.aleksilassila.litematica.printer.handler.AsyncSearchCoordinator;
 import me.aleksilassila.litematica.printer.handler.Module;
+import me.aleksilassila.litematica.printer.handler.search.SearchSnapshots;
 import me.aleksilassila.litematica.printer.handler.TransactionKey;
 import me.aleksilassila.litematica.printer.printer.*;
 import me.aleksilassila.litematica.printer.printer.action.Action;
@@ -16,10 +19,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.FluidState;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class FluidRemoval extends Module {
     public final static String NAME = "fluid";
@@ -104,7 +103,7 @@ public class FluidRemoval extends Module {
     @Override
     @SuppressWarnings("unchecked")
     protected TransactionKey getSearchTransactionKey(
-            AsyncSearchCoordinator.SearchBlockSnapshot block,
+            SearchSnapshots.SearchBlockSnapshot block,
             Object searchContext) {
         List<net.minecraft.world.level.material.Fluid> searchedFluids =
                 (List<net.minecraft.world.level.material.Fluid>) searchContext;
