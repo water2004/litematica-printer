@@ -1,0 +1,2657 @@
+{
+  "versions": {
+    "1.21": {
+      "loader": "0.16.0",
+      "versions": {
+        "fabric-api": "0.100.2+1.21",
+        "malilib": "0.21.10",
+        "litematica": "0.19.61"
+      },
+      "dependencies": [
+        {
+          "name": "fabric-api-0.100.2+1.21.jar",
+          "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/IHIHC1yO/fabric-api-0.100.2%2B1.21.jar",
+          "sha256": "8d5cf88db34ad79df2ab507c7520b93e7cc9a2dc28f0b40517da7387b085a609"
+        },
+        {
+          "name": "malilib-fabric-1.21-0.21.10.jar",
+          "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/C99LEy6r/malilib-fabric-1.21-0.21.10.jar",
+          "sha256": "fed24701279ed7d55ea9e1bce9d4528e3f679ef9883c1ab7fb7a8c6a3fcd2915"
+        },
+        {
+          "name": "litematica-fabric-1.21-0.19.61.jar",
+          "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/o7i8oi1Z/litematica-fabric-1.21-0.19.61.jar",
+          "sha256": "81b66009d4e0868e9e3e2e1593e0942ba0c651ddd8300586ae1ffbd227b6ba24"
+        }
+      ]
+    },
+    "1.21.1": {
+      "loader": "0.16.0",
+      "versions": {
+        "fabric-api": "0.102.0+1.21.1",
+        "malilib": "0.21.10",
+        "litematica": "0.19.61"
+      },
+      "dependencies": [
+        {
+          "name": "fabric-api-0.102.0+1.21.1.jar",
+          "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/VAjB0MYF/fabric-api-0.102.0%2B1.21.1.jar",
+          "sha256": "fd021e3ea8d043805207f39d43ac4b358629b30f0d9280ffc5a886a433291bd1"
+        },
+        {
+          "name": "malilib-fabric-1.21-0.21.10.jar",
+          "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/C99LEy6r/malilib-fabric-1.21-0.21.10.jar",
+          "sha256": "fed24701279ed7d55ea9e1bce9d4528e3f679ef9883c1ab7fb7a8c6a3fcd2915"
+        },
+        {
+          "name": "litematica-fabric-1.21-0.19.61.jar",
+          "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/o7i8oi1Z/litematica-fabric-1.21-0.19.61.jar",
+          "sha256": "81b66009d4e0868e9e3e2e1593e0942ba0c651ddd8300586ae1ffbd227b6ba24"
+        }
+      ]
+    },
+    "1.21.2": {
+      "loader": "0.16.8",
+      "versions": {
+        "fabric-api": "0.106.1+1.21.2",
+        "malilib": "0.22.8",
+        "litematica": "0.20.9"
+      },
+      "dependencies": [
+        {
+          "name": "fabric-api-0.106.1+1.21.2.jar",
+          "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/UEjZZNue/fabric-api-0.106.1%2B1.21.2.jar",
+          "sha256": "d306e1cf9348bc13292bbdcec19a417a50d6dc538121eec02d10704e6b9e2ee8"
+        },
+        {
+          "name": "malilib-fabric-1.21.3-0.22.8.jar",
+          "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/YyAlxssn/malilib-fabric-1.21.3-0.22.8.jar",
+          "sha256": "3f87cbc2fb582896e8308f23b9526d14015f37e207834e62608ca2b802a84127"
+        },
+        {
+          "name": "litematica-fabric-1.21.3-0.20.9.jar",
+          "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/diPHpcNy/litematica-fabric-1.21.3-0.20.9.jar",
+          "sha256": "e43f65b382878791f9a9a305b5f9e9fa675e4f7550f5e7358ec5272c2475a547"
+        }
+      ]
+    },
+    "1.21.3": {
+      "loader": "0.16.8",
+      "versions": {
+        "fabric-api": "0.106.1+1.21.3",
+        "malilib": "0.22.8",
+        "litematica": "0.20.9"
+      },
+      "dependencies": [
+        {
+          "name": "fabric-api-0.106.1+1.21.3.jar",
+          "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/dhD4I4lJ/fabric-api-0.106.1%2B1.21.3.jar",
+          "sha256": "fe6c2f18b8f1d097a74d712a88899474c909fcd73bb83d8f3d63715eb479fe2c"
+        },
+        {
+          "name": "malilib-fabric-1.21.3-0.22.8.jar",
+          "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/YyAlxssn/malilib-fabric-1.21.3-0.22.8.jar",
+          "sha256": "3f87cbc2fb582896e8308f23b9526d14015f37e207834e62608ca2b802a84127"
+        },
+        {
+          "name": "litematica-fabric-1.21.3-0.20.9.jar",
+          "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/diPHpcNy/litematica-fabric-1.21.3-0.20.9.jar",
+          "sha256": "e43f65b382878791f9a9a305b5f9e9fa675e4f7550f5e7358ec5272c2475a547"
+        }
+      ]
+    },
+    "1.21.4": {
+      "loader": "0.16.9",
+      "versions": {
+        "fabric-api": "0.110.5+1.21.4",
+        "malilib": "0.23.5",
+        "litematica": "0.21.7"
+      },
+      "dependencies": [
+        {
+          "name": "fabric-api-0.110.5+1.21.4.jar",
+          "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/Oh9IKZRD/fabric-api-0.110.5%2B1.21.4.jar",
+          "sha256": "ba77c70ae9b239e05f256cd64266b958528701ff6fc0088afc4be2e04bc167cb"
+        },
+        {
+          "name": "malilib-fabric-1.21.4-0.23.5.jar",
+          "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/ifi4uRpL/malilib-fabric-1.21.4-0.23.5.jar",
+          "sha256": "07e2c7569378e37059b35c0cf7a6530554f756737c8e341e1a8c2312dc2d4548"
+        },
+        {
+          "name": "litematica-fabric-1.21.4-0.21.7.jar",
+          "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/Z7jnVo9V/litematica-fabric-1.21.4-0.21.7.jar",
+          "sha256": "19fbf46ddc0776c2ff2a1be4cac627b3a236cc4682ce93d01c858e1437e93d4d"
+        }
+      ]
+    },
+    "1.21.5": {
+      "loader": "0.16.10",
+      "versions": {
+        "fabric-api": "0.119.5+1.21.5",
+        "malilib": "0.24.3",
+        "litematica": "0.22.5"
+      },
+      "dependencies": [
+        {
+          "name": "fabric-api-0.119.5+1.21.5.jar",
+          "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/MNJwZRWx/fabric-api-0.119.5%2B1.21.5.jar",
+          "sha256": "c4176a3a9dadc24391749a6f8dbe43cda69503e8113db71a8880d8d9b409fc9f"
+        },
+        {
+          "name": "malilib-fabric-1.21.5-0.24.3.jar",
+          "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/YrRUsIk9/malilib-fabric-1.21.5-0.24.3.jar",
+          "sha256": "81a7bbea53c702a3155f44c19c315d9c9028d901c2b8bfc90ebcb62551a08e59"
+        },
+        {
+          "name": "litematica-fabric-1.21.5-0.22.5.jar",
+          "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/f9S0ZzGY/litematica-fabric-1.21.5-0.22.5.jar",
+          "sha256": "9969ba282f3b9489bc85b3f0e0668cdc1a127e82ef31797c3473cd00f2785c9f"
+        }
+      ]
+    },
+    "1.21.6": {
+      "loader": "0.16.13",
+      "versions": {
+        "fabric-api": "0.128.0+1.21.6",
+        "malilib": "0.25.7",
+        "litematica": "0.23.7"
+      },
+      "dependencies": [
+        {
+          "name": "fabric-api-0.128.0+1.21.6.jar",
+          "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/b2dnY6PN/fabric-api-0.128.0%2B1.21.6.jar",
+          "sha256": "087f3ec475ed380c716fc05509614ff3f18437df43ff10f3f3231ad23c72ea87"
+        },
+        {
+          "name": "malilib-fabric-1.21.8-0.25.7.jar",
+          "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/2kC79eY3/malilib-fabric-1.21.8-0.25.7.jar",
+          "sha256": "4f26699e52a73b3cfe8e98e7588617a99052b23add3352f8c559c133716ec92f"
+        },
+        {
+          "name": "litematica-fabric-1.21.8-0.23.7.jar",
+          "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/GJMDd9Zq/litematica-fabric-1.21.8-0.23.7.jar",
+          "sha256": "65bcd10312e93038489a0c2e43f65cc815f9cb3ce38f923848a637277bce55ae"
+        }
+      ]
+    },
+    "1.21.7": {
+      "loader": "0.16.13",
+      "versions": {
+        "fabric-api": "0.128.1+1.21.7",
+        "malilib": "0.25.7",
+        "litematica": "0.23.7"
+      },
+      "dependencies": [
+        {
+          "name": "fabric-api-0.128.1+1.21.7.jar",
+          "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/sLmbxWpX/fabric-api-0.128.1%2B1.21.7.jar",
+          "sha256": "04729f23a915a190f3269dcdafd49e9cc75d3c35ff0bbd1769376dcff547751f"
+        },
+        {
+          "name": "malilib-fabric-1.21.8-0.25.7.jar",
+          "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/2kC79eY3/malilib-fabric-1.21.8-0.25.7.jar",
+          "sha256": "4f26699e52a73b3cfe8e98e7588617a99052b23add3352f8c559c133716ec92f"
+        },
+        {
+          "name": "litematica-fabric-1.21.8-0.23.7.jar",
+          "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/GJMDd9Zq/litematica-fabric-1.21.8-0.23.7.jar",
+          "sha256": "65bcd10312e93038489a0c2e43f65cc815f9cb3ce38f923848a637277bce55ae"
+        }
+      ]
+    },
+    "1.21.8": {
+      "loader": "0.16.13",
+      "versions": {
+        "fabric-api": "0.129.0+1.21.8",
+        "malilib": "0.25.7",
+        "litematica": "0.23.7"
+      },
+      "dependencies": [
+        {
+          "name": "fabric-api-0.129.0+1.21.8.jar",
+          "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/X2hTodix/fabric-api-0.129.0%2B1.21.8.jar",
+          "sha256": "fe31a897f9886011914e3e8c292a2774d8427fe0cb2e3611cb8ce18289c612a7"
+        },
+        {
+          "name": "malilib-fabric-1.21.8-0.25.7.jar",
+          "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/2kC79eY3/malilib-fabric-1.21.8-0.25.7.jar",
+          "sha256": "4f26699e52a73b3cfe8e98e7588617a99052b23add3352f8c559c133716ec92f"
+        },
+        {
+          "name": "litematica-fabric-1.21.8-0.23.7.jar",
+          "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/GJMDd9Zq/litematica-fabric-1.21.8-0.23.7.jar",
+          "sha256": "65bcd10312e93038489a0c2e43f65cc815f9cb3ce38f923848a637277bce55ae"
+        }
+      ]
+    },
+    "1.21.9": {
+      "loader": "0.17.0",
+      "versions": {
+        "fabric-api": "0.133.14+1.21.9",
+        "malilib": "0.26.7",
+        "litematica": "0.24.8"
+      },
+      "dependencies": [
+        {
+          "name": "fabric-api-0.133.14+1.21.9.jar",
+          "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/rWWImuoz/fabric-api-0.133.14%2B1.21.9.jar",
+          "sha256": "cb76e917c48e82e2d63255104629399622334ff3a34878dc53bc91ae8c608abd"
+        },
+        {
+          "name": "malilib-fabric-1.21.10-0.26.7.jar",
+          "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/PdAcB2av/malilib-fabric-1.21.10-0.26.7.jar",
+          "sha256": "37a360de28627c3495b57bb7aad3e854d7bdcbe64531f390d913dba30d6171a5"
+        },
+        {
+          "name": "litematica-fabric-1.21.10-0.24.8.jar",
+          "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/g2Be4qSQ/litematica-fabric-1.21.10-0.24.8.jar",
+          "sha256": "9a25b46c6e5d756a505dc14e31313a60eeca7321e7e799f90d1a33eec538a928"
+        }
+      ]
+    },
+    "1.21.10": {
+      "loader": "0.17.0",
+      "versions": {
+        "fabric-api": "0.134.1+1.21.10",
+        "malilib": "0.26.7",
+        "litematica": "0.24.8"
+      },
+      "dependencies": [
+        {
+          "name": "fabric-api-0.134.1+1.21.10.jar",
+          "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/2diTWKwa/fabric-api-0.134.1%2B1.21.10.jar",
+          "sha256": "f73dfb4065c3a82c09444fb44b377ff497b92cd036cebbebb63f4f6e6a547705"
+        },
+        {
+          "name": "malilib-fabric-1.21.10-0.26.7.jar",
+          "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/PdAcB2av/malilib-fabric-1.21.10-0.26.7.jar",
+          "sha256": "37a360de28627c3495b57bb7aad3e854d7bdcbe64531f390d913dba30d6171a5"
+        },
+        {
+          "name": "litematica-fabric-1.21.10-0.24.8.jar",
+          "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/g2Be4qSQ/litematica-fabric-1.21.10-0.24.8.jar",
+          "sha256": "9a25b46c6e5d756a505dc14e31313a60eeca7321e7e799f90d1a33eec538a928"
+        }
+      ]
+    },
+    "1.21.11": {
+      "loader": "0.17.3",
+      "versions": {
+        "fabric-api": "0.139.4+1.21.11",
+        "malilib": "0.27.15",
+        "litematica": "0.26.11"
+      },
+      "dependencies": [
+        {
+          "name": "fabric-api-0.139.4+1.21.11.jar",
+          "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/RDb9rvBm/fabric-api-0.139.4%2B1.21.11.jar",
+          "sha256": "3d379228d2b966956b227781c5db2ac8ad89428d4e1f98787baca332a97e9c5e"
+        },
+        {
+          "name": "malilib-fabric-1.21.11-0.27.15.jar",
+          "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/ZcQ4QNNZ/malilib-fabric-1.21.11-0.27.15.jar",
+          "sha256": "358fc788f65e07be328ddf81a5f3b60503fff36940e0dc18f965d87273b6d72c"
+        },
+        {
+          "name": "litematica-fabric-1.21.11-0.26.11.jar",
+          "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/R9maucI8/litematica-fabric-1.21.11-0.26.11.jar",
+          "sha256": "94ab7db7e17941c8b66c3cec4ffe727eeb9cdcb141e57dc671e7ff750e04a1d0"
+        }
+      ]
+    }
+  },
+  "files": [
+    {
+      "minecraft": "1.21",
+      "repository": "water2004/ChainVeinFabric",
+      "release": 382907789,
+      "name": "ChainVeinFabric-4.1.0+1.21.jar",
+      "sha256": "924c3618f4148252e1cae8e235da9420434a7dae19093acde2c3d6f241b1aa87",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "chainveinfabric",
+        "version": "4.1.0+1.21",
+        "name": "ChainVeinFabric",
+        "description": "",
+        "authors": [],
+        "contact": {},
+        "license": "GPL-3.0",
+        "icon": "assets/icon.png",
+        "environment": "*",
+        "entrypoints": {
+          "client": [
+            "org.edtp.chainveinfabric.client.ChainveinfabricClient"
+          ],
+          "main": [
+            "org.edtp.chainveinfabric.Chainveinfabric"
+          ],
+          "modmenu": [
+            "org.edtp.chainveinfabric.client.compat.modmenu.ModMenuImpl"
+          ]
+        },
+        "mixins": [
+          "chainveinfabric.mixins.json",
+          {
+            "config": "chainveinfabric.client.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "depends": {
+          "fabricloader": ">=0.16.0",
+          "fabric-api": ">=0.100.2+1.21",
+          "java": ">=21",
+          "minecraft": "1.21",
+          "malilib": ">=0.21.10"
+        },
+        "suggests": {
+          "litematica": ">=0.19.61",
+          "quickshulker": "*"
+        }
+      },
+      "fingerprint": "90e395d767b8095b52d4d7620cf57ad2d4f25db1f1c5bca72ee1a5981f22d93c",
+      "classes": 135,
+      "artifact": 12552426556,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21",
+      "repository": "water2004/litematica-printer",
+      "release": 417572852,
+      "name": "litematica-printer-1.1.3+1.21.jar",
+      "sha256": "82dfa84fb6fbb1afbfe1c677902859416f2b20acba9eaa4a90576527c2c82083",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "litematica-printer",
+        "version": "1.1.3+1.21",
+        "icon": "assets/litematica-printer/icon.png",
+        "name": "Litematica Printer",
+        "description": "An extension for Litematica that adds printing, filling, fluid removal, and bedrock breaking as independent modules.",
+        "authors": [
+          "aleksilassila",
+          "zhaixianyu",
+          "BlinkWhite",
+          "bunnyi116"
+        ],
+        "contact": {
+          "website": "https://space.bilibili.com/514411062",
+          "homepage": "https://github.com/water2004/litematica-printer",
+          "sources": "https://github.com/water2004/litematica-printer"
+        },
+        "license": "AGPL-3.0",
+        "environment": "client",
+        "entrypoints": {
+          "client": [
+            "me.aleksilassila.litematica.printer.LitematicaPrinterMod"
+          ],
+          "modmenu": [
+            "me.aleksilassila.litematica.printer.interfaces.compat.ModMenuCompat"
+          ]
+        },
+        "mixins": [
+          "litematica-printer.mixins.json"
+        ],
+        "depends": {
+          "minecraft": "1.21",
+          "malilib": ">=0.21.10",
+          "litematica": ">=0.19.61",
+          "fabricloader": ">=0.16.0",
+          "java": ">=21",
+          "fabric-api": ">=0.100.2+1.21"
+        },
+        "suggests": {
+          "chainveinfabric": ">=3.0.0"
+        },
+        "jars": [
+          {
+            "file": "META-INF/jars/pinyin4j-2.5.1.jar"
+          }
+        ]
+      },
+      "fingerprint": "51c978f6c9431618903b6a77de25bcd4dc5028052d28606f7e850b33c5f8eb0b",
+      "classes": 205,
+      "artifact": 12552426556,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21",
+      "repository": "water2004/quickshulker",
+      "release": 392814921,
+      "name": "quickshulker-4.0.1+1.21.jar",
+      "sha256": "5af94cd0065bfe1bc25cb3f94993086a8a8dbf269b599940111d3e04b6b98027",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "quickshulker",
+        "version": "4.0.1+1.21",
+        "name": "Quick Shulker",
+        "description": "Quickly open Shulker boxes and more",
+        "authors": [
+          "kyrptonaught",
+          "MoRanpcy",
+          "Hao_cen",
+          "Grayer0113"
+        ],
+        "contact": {
+          "homepage": "https://github.com/MoRanpcy/quickshulker",
+          "sources": "https://github.com/MoRanpcy/quickshulker",
+          "issues": "https://github.com/MoRanpcy/quickshulker/issues"
+        },
+        "custom": {
+          "modmenu": {
+            "links": {
+              "modmenu.homepage": "https://www.curseforge.com/minecraft/mc-mods/quick-shulker",
+              "modmenu.sources": "https://github.com/kyrptonaught/quickshulker"
+            }
+          }
+        },
+        "license": "MIT",
+        "icon": "assets/quickshulker/icon.png",
+        "environment": "*",
+        "mixins": [
+          {
+            "config": "quickshulker.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "quickshulker-compat.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "shulkerutils.mixins.json",
+            "environment": "client"
+          },
+          {
+            "config": "kyrptconfig.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "entrypoints": {
+          "main": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "quickshulker": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "client": [
+            "net.kyrptonaught.quickshulker.client.QuickShulkerModClient"
+          ],
+          "modmenu": [
+            "net.kyrptonaught.quickshulker.compat.modmenu.ModMenuIntegration"
+          ]
+        },
+        "depends": {
+          "minecraft": "1.21",
+          "fabricloader": ">=0.16.0",
+          "fabric-api": ">=0.100.2+1.21",
+          "java": ">=21"
+        },
+        "accessWidener": "quickshulker.accesswidener",
+        "jars": [
+          {
+            "file": "META-INF/jars/conditional-mixin-fabric-0.6.4.jar"
+          }
+        ]
+      },
+      "fingerprint": "4e74feca39eeadc297b2ca7144752107019fb443e5ec32b4d8a118bab91bdbff",
+      "classes": 160,
+      "artifact": 12552426556,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.1",
+      "repository": "water2004/ChainVeinFabric",
+      "release": 382907789,
+      "name": "ChainVeinFabric-4.1.0+1.21.1.jar",
+      "sha256": "1624ac284c19582e2a9911a5bc604b75aff3eb329d4cfc6faae1a0936e699194",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "chainveinfabric",
+        "version": "4.1.0+1.21.1",
+        "name": "ChainVeinFabric",
+        "description": "",
+        "authors": [],
+        "contact": {},
+        "license": "GPL-3.0",
+        "icon": "assets/icon.png",
+        "environment": "*",
+        "entrypoints": {
+          "client": [
+            "org.edtp.chainveinfabric.client.ChainveinfabricClient"
+          ],
+          "main": [
+            "org.edtp.chainveinfabric.Chainveinfabric"
+          ],
+          "modmenu": [
+            "org.edtp.chainveinfabric.client.compat.modmenu.ModMenuImpl"
+          ]
+        },
+        "mixins": [
+          "chainveinfabric.mixins.json",
+          {
+            "config": "chainveinfabric.client.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "depends": {
+          "fabricloader": ">=0.16.0",
+          "fabric-api": ">=0.102.0+1.21.1",
+          "java": ">=21",
+          "minecraft": "1.21.1",
+          "malilib": ">=0.21.10"
+        },
+        "suggests": {
+          "litematica": ">=0.19.61",
+          "quickshulker": "*"
+        }
+      },
+      "fingerprint": "acad1dfbcff504cae1a028755b7030661f8301e37389e4d01bed1327e4c045e6",
+      "classes": 135,
+      "artifact": 12552331747,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.1",
+      "repository": "water2004/litematica-printer",
+      "release": 417572852,
+      "name": "litematica-printer-1.1.3+1.21.1.jar",
+      "sha256": "96b1737b4eaca54208016bf2dceb468874665af21cf620cbab149b6171cdafe0",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "litematica-printer",
+        "version": "1.1.3+1.21.1",
+        "icon": "assets/litematica-printer/icon.png",
+        "name": "Litematica Printer",
+        "description": "An extension for Litematica that adds printing, filling, fluid removal, and bedrock breaking as independent modules.",
+        "authors": [
+          "aleksilassila",
+          "zhaixianyu",
+          "BlinkWhite",
+          "bunnyi116"
+        ],
+        "contact": {
+          "website": "https://space.bilibili.com/514411062",
+          "homepage": "https://github.com/water2004/litematica-printer",
+          "sources": "https://github.com/water2004/litematica-printer"
+        },
+        "license": "AGPL-3.0",
+        "environment": "client",
+        "entrypoints": {
+          "client": [
+            "me.aleksilassila.litematica.printer.LitematicaPrinterMod"
+          ],
+          "modmenu": [
+            "me.aleksilassila.litematica.printer.interfaces.compat.ModMenuCompat"
+          ]
+        },
+        "mixins": [
+          "litematica-printer.mixins.json"
+        ],
+        "depends": {
+          "minecraft": "1.21.1",
+          "malilib": ">=0.21.10",
+          "litematica": ">=0.19.61",
+          "fabricloader": ">=0.16.0",
+          "java": ">=21",
+          "fabric-api": ">=0.102.0+1.21.1"
+        },
+        "suggests": {
+          "chainveinfabric": ">=3.0.0"
+        },
+        "jars": [
+          {
+            "file": "META-INF/jars/pinyin4j-2.5.1.jar"
+          }
+        ]
+      },
+      "fingerprint": "fe5a948380a02784f5ee36ba5ee179d4c3074e5c4c7e58ad0ec33f07715b2219",
+      "classes": 205,
+      "artifact": 12552331747,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.1",
+      "repository": "water2004/quickshulker",
+      "release": 392814921,
+      "name": "quickshulker-4.0.1+1.21.1.jar",
+      "sha256": "b7a8dfd96d57e44b9fb000b7dea5ac7cd68584fa6a12fc2a1f982c1419d82010",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "quickshulker",
+        "version": "4.0.1+1.21.1",
+        "name": "Quick Shulker",
+        "description": "Quickly open Shulker boxes and more",
+        "authors": [
+          "kyrptonaught",
+          "MoRanpcy",
+          "Hao_cen",
+          "Grayer0113"
+        ],
+        "contact": {
+          "homepage": "https://github.com/MoRanpcy/quickshulker",
+          "sources": "https://github.com/MoRanpcy/quickshulker",
+          "issues": "https://github.com/MoRanpcy/quickshulker/issues"
+        },
+        "custom": {
+          "modmenu": {
+            "links": {
+              "modmenu.homepage": "https://www.curseforge.com/minecraft/mc-mods/quick-shulker",
+              "modmenu.sources": "https://github.com/kyrptonaught/quickshulker"
+            }
+          }
+        },
+        "license": "MIT",
+        "icon": "assets/quickshulker/icon.png",
+        "environment": "*",
+        "mixins": [
+          {
+            "config": "quickshulker.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "quickshulker-compat.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "shulkerutils.mixins.json",
+            "environment": "client"
+          },
+          {
+            "config": "kyrptconfig.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "entrypoints": {
+          "main": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "quickshulker": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "client": [
+            "net.kyrptonaught.quickshulker.client.QuickShulkerModClient"
+          ],
+          "modmenu": [
+            "net.kyrptonaught.quickshulker.compat.modmenu.ModMenuIntegration"
+          ]
+        },
+        "depends": {
+          "minecraft": "1.21.1",
+          "fabricloader": ">=0.16.0",
+          "fabric-api": ">=0.102.0+1.21.1",
+          "java": ">=21"
+        },
+        "accessWidener": "quickshulker.accesswidener",
+        "jars": [
+          {
+            "file": "META-INF/jars/conditional-mixin-fabric-0.6.4.jar"
+          }
+        ]
+      },
+      "fingerprint": "ebc84f25ae506b2983084274661052a9cdb417b1f2f4864e4ef5bf0d7078045d",
+      "classes": 160,
+      "artifact": 12552331747,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.2",
+      "repository": "water2004/ChainVeinFabric",
+      "release": 382907789,
+      "name": "ChainVeinFabric-4.1.0+1.21.2.jar",
+      "sha256": "4d58b170ebfe48e3164353ec1d14a63b55ed82c4a7306015a70b87d0fecf4372",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "chainveinfabric",
+        "version": "4.1.0+1.21.2",
+        "name": "ChainVeinFabric",
+        "description": "",
+        "authors": [],
+        "contact": {},
+        "license": "GPL-3.0",
+        "icon": "assets/icon.png",
+        "environment": "*",
+        "entrypoints": {
+          "client": [
+            "org.edtp.chainveinfabric.client.ChainveinfabricClient"
+          ],
+          "main": [
+            "org.edtp.chainveinfabric.Chainveinfabric"
+          ],
+          "modmenu": [
+            "org.edtp.chainveinfabric.client.compat.modmenu.ModMenuImpl"
+          ]
+        },
+        "mixins": [
+          "chainveinfabric.mixins.json",
+          {
+            "config": "chainveinfabric.client.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "depends": {
+          "fabricloader": ">=0.16.8",
+          "fabric-api": ">=0.106.1+1.21.2",
+          "java": ">=21",
+          "minecraft": "1.21.2",
+          "malilib": ">=0.22.8"
+        },
+        "suggests": {
+          "litematica": ">=0.20.9",
+          "quickshulker": "*"
+        }
+      },
+      "fingerprint": "8ba05b09dd59eab2ac6a6d0b1fe76eaa3b5574b018cd80b63d3a2a15b2cbaeb7",
+      "classes": 135,
+      "artifact": 12552590730,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.2",
+      "repository": "water2004/litematica-printer",
+      "release": 417572852,
+      "name": "litematica-printer-1.1.3+1.21.2.jar",
+      "sha256": "cf8ba88c120f8b30e871004a176a2e7aeaeb913083ef6c2070c8ea507593ab3c",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "litematica-printer",
+        "version": "1.1.3+1.21.2",
+        "icon": "assets/litematica-printer/icon.png",
+        "name": "Litematica Printer",
+        "description": "An extension for Litematica that adds printing, filling, fluid removal, and bedrock breaking as independent modules.",
+        "authors": [
+          "aleksilassila",
+          "zhaixianyu",
+          "BlinkWhite",
+          "bunnyi116"
+        ],
+        "contact": {
+          "website": "https://space.bilibili.com/514411062",
+          "homepage": "https://github.com/water2004/litematica-printer",
+          "sources": "https://github.com/water2004/litematica-printer"
+        },
+        "license": "AGPL-3.0",
+        "environment": "client",
+        "entrypoints": {
+          "client": [
+            "me.aleksilassila.litematica.printer.LitematicaPrinterMod"
+          ],
+          "modmenu": [
+            "me.aleksilassila.litematica.printer.interfaces.compat.ModMenuCompat"
+          ]
+        },
+        "mixins": [
+          "litematica-printer.mixins.json"
+        ],
+        "depends": {
+          "minecraft": "1.21.2",
+          "malilib": ">=0.22.8",
+          "litematica": ">=0.20.9",
+          "fabricloader": ">=0.16.8",
+          "java": ">=21",
+          "fabric-api": ">=0.106.1+1.21.2"
+        },
+        "suggests": {
+          "chainveinfabric": ">=3.0.0"
+        },
+        "jars": [
+          {
+            "file": "META-INF/jars/pinyin4j-2.5.1.jar"
+          }
+        ]
+      },
+      "fingerprint": "78863cc39e20536b6077e12ee09d92e9def23baa1650b7847e5c14a24622a8d7",
+      "classes": 205,
+      "artifact": 12552590730,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.2",
+      "repository": "water2004/quickshulker",
+      "release": 392814921,
+      "name": "quickshulker-4.0.1+1.21.2.jar",
+      "sha256": "32bc7afca1be2cdf1d29cbc2791283bf6974331764efdef2534876e45a682f26",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "quickshulker",
+        "version": "4.0.1+1.21.2",
+        "name": "Quick Shulker",
+        "description": "Quickly open Shulker boxes and more",
+        "authors": [
+          "kyrptonaught",
+          "MoRanpcy",
+          "Hao_cen",
+          "Grayer0113"
+        ],
+        "contact": {
+          "homepage": "https://github.com/MoRanpcy/quickshulker",
+          "sources": "https://github.com/MoRanpcy/quickshulker",
+          "issues": "https://github.com/MoRanpcy/quickshulker/issues"
+        },
+        "custom": {
+          "modmenu": {
+            "links": {
+              "modmenu.homepage": "https://www.curseforge.com/minecraft/mc-mods/quick-shulker",
+              "modmenu.sources": "https://github.com/kyrptonaught/quickshulker"
+            }
+          }
+        },
+        "license": "MIT",
+        "icon": "assets/quickshulker/icon.png",
+        "environment": "*",
+        "mixins": [
+          {
+            "config": "quickshulker.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "quickshulker-compat.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "shulkerutils.mixins.json",
+            "environment": "client"
+          },
+          {
+            "config": "kyrptconfig.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "entrypoints": {
+          "main": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "quickshulker": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "client": [
+            "net.kyrptonaught.quickshulker.client.QuickShulkerModClient"
+          ],
+          "modmenu": [
+            "net.kyrptonaught.quickshulker.compat.modmenu.ModMenuIntegration"
+          ]
+        },
+        "depends": {
+          "minecraft": "1.21.2",
+          "fabricloader": ">=0.16.8",
+          "fabric-api": ">=0.106.1+1.21.2",
+          "java": ">=21"
+        },
+        "accessWidener": "quickshulker.accesswidener",
+        "jars": [
+          {
+            "file": "META-INF/jars/conditional-mixin-fabric-0.6.4.jar"
+          }
+        ]
+      },
+      "fingerprint": "9e2943643ac6af2483b60593e077386a478536f1d265875c429fb433b2c35611",
+      "classes": 158,
+      "artifact": 12552590730,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.3",
+      "repository": "water2004/ChainVeinFabric",
+      "release": 382907789,
+      "name": "ChainVeinFabric-4.1.0+1.21.3.jar",
+      "sha256": "8f7d8ddbd8a7947dbb0eeb14324ff4a9bd952c417edb4fd480282223ff26cf86",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "chainveinfabric",
+        "version": "4.1.0+1.21.3",
+        "name": "ChainVeinFabric",
+        "description": "",
+        "authors": [],
+        "contact": {},
+        "license": "GPL-3.0",
+        "icon": "assets/icon.png",
+        "environment": "*",
+        "entrypoints": {
+          "client": [
+            "org.edtp.chainveinfabric.client.ChainveinfabricClient"
+          ],
+          "main": [
+            "org.edtp.chainveinfabric.Chainveinfabric"
+          ],
+          "modmenu": [
+            "org.edtp.chainveinfabric.client.compat.modmenu.ModMenuImpl"
+          ]
+        },
+        "mixins": [
+          "chainveinfabric.mixins.json",
+          {
+            "config": "chainveinfabric.client.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "depends": {
+          "fabricloader": ">=0.16.8",
+          "fabric-api": ">=0.106.1+1.21.3",
+          "java": ">=21",
+          "minecraft": "1.21.3",
+          "malilib": ">=0.22.8"
+        },
+        "suggests": {
+          "litematica": ">=0.20.9",
+          "quickshulker": "*"
+        }
+      },
+      "fingerprint": "53fac81e024bc1458def01f6aa28c6422caa4be7ae5740a3f2c6dbd10ebf5a26",
+      "classes": 135,
+      "artifact": 12552082707,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.3",
+      "repository": "water2004/litematica-printer",
+      "release": 417572852,
+      "name": "litematica-printer-1.1.3+1.21.3.jar",
+      "sha256": "ef9f65c257871abb12723eb200416eb0944686599c391749d41e3dd47f67baeb",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "litematica-printer",
+        "version": "1.1.3+1.21.3",
+        "icon": "assets/litematica-printer/icon.png",
+        "name": "Litematica Printer",
+        "description": "An extension for Litematica that adds printing, filling, fluid removal, and bedrock breaking as independent modules.",
+        "authors": [
+          "aleksilassila",
+          "zhaixianyu",
+          "BlinkWhite",
+          "bunnyi116"
+        ],
+        "contact": {
+          "website": "https://space.bilibili.com/514411062",
+          "homepage": "https://github.com/water2004/litematica-printer",
+          "sources": "https://github.com/water2004/litematica-printer"
+        },
+        "license": "AGPL-3.0",
+        "environment": "client",
+        "entrypoints": {
+          "client": [
+            "me.aleksilassila.litematica.printer.LitematicaPrinterMod"
+          ],
+          "modmenu": [
+            "me.aleksilassila.litematica.printer.interfaces.compat.ModMenuCompat"
+          ]
+        },
+        "mixins": [
+          "litematica-printer.mixins.json"
+        ],
+        "depends": {
+          "minecraft": "1.21.3",
+          "malilib": ">=0.22.8",
+          "litematica": ">=0.20.9",
+          "fabricloader": ">=0.16.8",
+          "java": ">=21",
+          "fabric-api": ">=0.106.1+1.21.3"
+        },
+        "suggests": {
+          "chainveinfabric": ">=3.0.0"
+        },
+        "jars": [
+          {
+            "file": "META-INF/jars/pinyin4j-2.5.1.jar"
+          }
+        ]
+      },
+      "fingerprint": "a94103945eaa34971597982c1a6e169471242590406dd8b416b552198bcc120d",
+      "classes": 205,
+      "artifact": 12552082707,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.3",
+      "repository": "water2004/quickshulker",
+      "release": 392814921,
+      "name": "quickshulker-4.0.1+1.21.3.jar",
+      "sha256": "4faf8efd9f1c03dd2f55f267cfa27c04afed7afb50688dd7055b8da703f159c5",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "quickshulker",
+        "version": "4.0.1+1.21.3",
+        "name": "Quick Shulker",
+        "description": "Quickly open Shulker boxes and more",
+        "authors": [
+          "kyrptonaught",
+          "MoRanpcy",
+          "Hao_cen",
+          "Grayer0113"
+        ],
+        "contact": {
+          "homepage": "https://github.com/MoRanpcy/quickshulker",
+          "sources": "https://github.com/MoRanpcy/quickshulker",
+          "issues": "https://github.com/MoRanpcy/quickshulker/issues"
+        },
+        "custom": {
+          "modmenu": {
+            "links": {
+              "modmenu.homepage": "https://www.curseforge.com/minecraft/mc-mods/quick-shulker",
+              "modmenu.sources": "https://github.com/kyrptonaught/quickshulker"
+            }
+          }
+        },
+        "license": "MIT",
+        "icon": "assets/quickshulker/icon.png",
+        "environment": "*",
+        "mixins": [
+          {
+            "config": "quickshulker.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "quickshulker-compat.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "shulkerutils.mixins.json",
+            "environment": "client"
+          },
+          {
+            "config": "kyrptconfig.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "entrypoints": {
+          "main": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "quickshulker": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "client": [
+            "net.kyrptonaught.quickshulker.client.QuickShulkerModClient"
+          ],
+          "modmenu": [
+            "net.kyrptonaught.quickshulker.compat.modmenu.ModMenuIntegration"
+          ]
+        },
+        "depends": {
+          "minecraft": "1.21.3",
+          "fabricloader": ">=0.16.8",
+          "fabric-api": ">=0.106.1+1.21.3",
+          "java": ">=21"
+        },
+        "accessWidener": "quickshulker.accesswidener",
+        "jars": [
+          {
+            "file": "META-INF/jars/conditional-mixin-fabric-0.6.4.jar"
+          }
+        ]
+      },
+      "fingerprint": "e2d732fe48aa4c3cdb25893a7bb3961361e8f83ef58bcd77da01c1b051eb4598",
+      "classes": 158,
+      "artifact": 12552082707,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.4",
+      "repository": "water2004/ChainVeinFabric",
+      "release": 382907789,
+      "name": "ChainVeinFabric-4.1.0+1.21.4.jar",
+      "sha256": "6a727eac96419a00736424f45cf3c22db4369ba4e45b47779a2ffe690f0d3dcf",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "chainveinfabric",
+        "version": "4.1.0+1.21.4",
+        "name": "ChainVeinFabric",
+        "description": "",
+        "authors": [],
+        "contact": {},
+        "license": "GPL-3.0",
+        "icon": "assets/icon.png",
+        "environment": "*",
+        "entrypoints": {
+          "client": [
+            "org.edtp.chainveinfabric.client.ChainveinfabricClient"
+          ],
+          "main": [
+            "org.edtp.chainveinfabric.Chainveinfabric"
+          ],
+          "modmenu": [
+            "org.edtp.chainveinfabric.client.compat.modmenu.ModMenuImpl"
+          ]
+        },
+        "mixins": [
+          "chainveinfabric.mixins.json",
+          {
+            "config": "chainveinfabric.client.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "depends": {
+          "fabricloader": ">=0.16.9",
+          "fabric-api": ">=0.110.5+1.21.4",
+          "java": ">=21",
+          "minecraft": "1.21.4",
+          "malilib": ">=0.23.5"
+        },
+        "suggests": {
+          "litematica": ">=0.21.7",
+          "quickshulker": "*"
+        }
+      },
+      "fingerprint": "28f609d76a014be65fc2a66301ba4391d409a3347fce8cfde115d17b43537dd8",
+      "classes": 135,
+      "artifact": 12551814513,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.4",
+      "repository": "water2004/litematica-printer",
+      "release": 417572852,
+      "name": "litematica-printer-1.1.3+1.21.4.jar",
+      "sha256": "a4d689bf30f52e7c270c8c6b1c5542f9f6686671fc7973ab38453d6cbf08f664",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "litematica-printer",
+        "version": "1.1.3+1.21.4",
+        "icon": "assets/litematica-printer/icon.png",
+        "name": "Litematica Printer",
+        "description": "An extension for Litematica that adds printing, filling, fluid removal, and bedrock breaking as independent modules.",
+        "authors": [
+          "aleksilassila",
+          "zhaixianyu",
+          "BlinkWhite",
+          "bunnyi116"
+        ],
+        "contact": {
+          "website": "https://space.bilibili.com/514411062",
+          "homepage": "https://github.com/water2004/litematica-printer",
+          "sources": "https://github.com/water2004/litematica-printer"
+        },
+        "license": "AGPL-3.0",
+        "environment": "client",
+        "entrypoints": {
+          "client": [
+            "me.aleksilassila.litematica.printer.LitematicaPrinterMod"
+          ],
+          "modmenu": [
+            "me.aleksilassila.litematica.printer.interfaces.compat.ModMenuCompat"
+          ]
+        },
+        "mixins": [
+          "litematica-printer.mixins.json"
+        ],
+        "depends": {
+          "minecraft": "1.21.4",
+          "malilib": ">=0.23.5",
+          "litematica": ">=0.21.7",
+          "fabricloader": ">=0.16.9",
+          "java": ">=21",
+          "fabric-api": ">=0.110.5+1.21.4"
+        },
+        "suggests": {
+          "chainveinfabric": ">=3.0.0"
+        },
+        "jars": [
+          {
+            "file": "META-INF/jars/pinyin4j-2.5.1.jar"
+          }
+        ]
+      },
+      "fingerprint": "a25855baab76d130b327627db5aa668580bb065593e248ebbf63a9ff1e5742a2",
+      "classes": 205,
+      "artifact": 12551814513,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.4",
+      "repository": "water2004/quickshulker",
+      "release": 392814921,
+      "name": "quickshulker-4.0.1+1.21.4.jar",
+      "sha256": "aae3d8e2fed51198165d2366b29ff259c633cc9fb2e2152566ce64ace4916f6c",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "quickshulker",
+        "version": "4.0.1+1.21.4",
+        "name": "Quick Shulker",
+        "description": "Quickly open Shulker boxes and more",
+        "authors": [
+          "kyrptonaught",
+          "MoRanpcy",
+          "Hao_cen",
+          "Grayer0113"
+        ],
+        "contact": {
+          "homepage": "https://github.com/MoRanpcy/quickshulker",
+          "sources": "https://github.com/MoRanpcy/quickshulker",
+          "issues": "https://github.com/MoRanpcy/quickshulker/issues"
+        },
+        "custom": {
+          "modmenu": {
+            "links": {
+              "modmenu.homepage": "https://www.curseforge.com/minecraft/mc-mods/quick-shulker",
+              "modmenu.sources": "https://github.com/kyrptonaught/quickshulker"
+            }
+          }
+        },
+        "license": "MIT",
+        "icon": "assets/quickshulker/icon.png",
+        "environment": "*",
+        "mixins": [
+          {
+            "config": "quickshulker.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "quickshulker-compat.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "shulkerutils.mixins.json",
+            "environment": "client"
+          },
+          {
+            "config": "kyrptconfig.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "entrypoints": {
+          "main": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "quickshulker": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "client": [
+            "net.kyrptonaught.quickshulker.client.QuickShulkerModClient"
+          ],
+          "modmenu": [
+            "net.kyrptonaught.quickshulker.compat.modmenu.ModMenuIntegration"
+          ]
+        },
+        "depends": {
+          "minecraft": "1.21.4",
+          "fabricloader": ">=0.16.9",
+          "fabric-api": ">=0.110.5+1.21.4",
+          "java": ">=21"
+        },
+        "accessWidener": "quickshulker.accesswidener",
+        "jars": [
+          {
+            "file": "META-INF/jars/conditional-mixin-fabric-0.6.4.jar"
+          }
+        ]
+      },
+      "fingerprint": "3155767d181cd22ce5d516641f6ea0090de2a27679217439d73e4870aee4d31e",
+      "classes": 158,
+      "artifact": 12551814513,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.5",
+      "repository": "water2004/ChainVeinFabric",
+      "release": 382907789,
+      "name": "ChainVeinFabric-4.1.0+1.21.5.jar",
+      "sha256": "a4fee9801d8d7f7a8ec97e7e27e70afb4cc50b1c8931474f3a38f1d030d144de",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "chainveinfabric",
+        "version": "4.1.0+1.21.5",
+        "name": "ChainVeinFabric",
+        "description": "",
+        "authors": [],
+        "contact": {},
+        "license": "GPL-3.0",
+        "icon": "assets/icon.png",
+        "environment": "*",
+        "entrypoints": {
+          "client": [
+            "org.edtp.chainveinfabric.client.ChainveinfabricClient"
+          ],
+          "main": [
+            "org.edtp.chainveinfabric.Chainveinfabric"
+          ],
+          "modmenu": [
+            "org.edtp.chainveinfabric.client.compat.modmenu.ModMenuImpl"
+          ]
+        },
+        "mixins": [
+          "chainveinfabric.mixins.json",
+          {
+            "config": "chainveinfabric.client.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "depends": {
+          "fabricloader": ">=0.16.10",
+          "fabric-api": ">=0.119.5+1.21.5",
+          "java": ">=21",
+          "minecraft": "1.21.5",
+          "malilib": ">=0.24.3"
+        },
+        "suggests": {
+          "litematica": ">=0.22.5",
+          "quickshulker": "*"
+        }
+      },
+      "fingerprint": "09e5615ff1008002ffd204294be57113bf22ade87b16a0dddfb8d2cf1e81e94e",
+      "classes": 135,
+      "artifact": 12552073069,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.5",
+      "repository": "water2004/litematica-printer",
+      "release": 417572852,
+      "name": "litematica-printer-1.1.3+1.21.5.jar",
+      "sha256": "9d869d630a642b3986f07b8d49da8a3d2dd2ba7b4127f4721342c41f9b112356",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "litematica-printer",
+        "version": "1.1.3+1.21.5",
+        "icon": "assets/litematica-printer/icon.png",
+        "name": "Litematica Printer",
+        "description": "An extension for Litematica that adds printing, filling, fluid removal, and bedrock breaking as independent modules.",
+        "authors": [
+          "aleksilassila",
+          "zhaixianyu",
+          "BlinkWhite",
+          "bunnyi116"
+        ],
+        "contact": {
+          "website": "https://space.bilibili.com/514411062",
+          "homepage": "https://github.com/water2004/litematica-printer",
+          "sources": "https://github.com/water2004/litematica-printer"
+        },
+        "license": "AGPL-3.0",
+        "environment": "client",
+        "entrypoints": {
+          "client": [
+            "me.aleksilassila.litematica.printer.LitematicaPrinterMod"
+          ],
+          "modmenu": [
+            "me.aleksilassila.litematica.printer.interfaces.compat.ModMenuCompat"
+          ]
+        },
+        "mixins": [
+          "litematica-printer.mixins.json"
+        ],
+        "depends": {
+          "minecraft": "1.21.5",
+          "malilib": ">=0.24.3",
+          "litematica": ">=0.22.5",
+          "fabricloader": ">=0.16.10",
+          "java": ">=21",
+          "fabric-api": ">=0.119.5+1.21.5"
+        },
+        "suggests": {
+          "chainveinfabric": ">=3.0.0"
+        },
+        "jars": [
+          {
+            "file": "META-INF/jars/pinyin4j-2.5.1.jar"
+          }
+        ]
+      },
+      "fingerprint": "f166c0fec6603b2559f204eff7eb48a7251739736b7da6add44823b58bf0980d",
+      "classes": 205,
+      "artifact": 12552073069,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.5",
+      "repository": "water2004/quickshulker",
+      "release": 392814921,
+      "name": "quickshulker-4.0.1+1.21.5.jar",
+      "sha256": "d847aa3cb5c8260a7dfde0f39d166df744334bc8363f615038c4b4438fc40991",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "quickshulker",
+        "version": "4.0.1+1.21.5",
+        "name": "Quick Shulker",
+        "description": "Quickly open Shulker boxes and more",
+        "authors": [
+          "kyrptonaught",
+          "MoRanpcy",
+          "Hao_cen",
+          "Grayer0113"
+        ],
+        "contact": {
+          "homepage": "https://github.com/MoRanpcy/quickshulker",
+          "sources": "https://github.com/MoRanpcy/quickshulker",
+          "issues": "https://github.com/MoRanpcy/quickshulker/issues"
+        },
+        "custom": {
+          "modmenu": {
+            "links": {
+              "modmenu.homepage": "https://www.curseforge.com/minecraft/mc-mods/quick-shulker",
+              "modmenu.sources": "https://github.com/kyrptonaught/quickshulker"
+            }
+          }
+        },
+        "license": "MIT",
+        "icon": "assets/quickshulker/icon.png",
+        "environment": "*",
+        "mixins": [
+          {
+            "config": "quickshulker.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "quickshulker-compat.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "shulkerutils.mixins.json",
+            "environment": "client"
+          },
+          {
+            "config": "kyrptconfig.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "entrypoints": {
+          "main": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "quickshulker": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "client": [
+            "net.kyrptonaught.quickshulker.client.QuickShulkerModClient"
+          ],
+          "modmenu": [
+            "net.kyrptonaught.quickshulker.compat.modmenu.ModMenuIntegration"
+          ]
+        },
+        "depends": {
+          "minecraft": "1.21.5",
+          "fabricloader": ">=0.16.10",
+          "fabric-api": ">=0.119.5+1.21.5",
+          "java": ">=21"
+        },
+        "accessWidener": "quickshulker.accesswidener",
+        "jars": [
+          {
+            "file": "META-INF/jars/conditional-mixin-fabric-0.6.4.jar"
+          }
+        ]
+      },
+      "fingerprint": "c093085abd2b85698aa500d40cf717d2483934dc6d62c878a9f50d986ca47306",
+      "classes": 158,
+      "artifact": 12552073069,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.6",
+      "repository": "water2004/ChainVeinFabric",
+      "release": 382907789,
+      "name": "ChainVeinFabric-4.1.0+1.21.6.jar",
+      "sha256": "f7dbf70b2c28c74c3951df9a9cb97b0d65bb0f1410e1a017be947616b4c52b53",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "chainveinfabric",
+        "version": "4.1.0+1.21.6",
+        "name": "ChainVeinFabric",
+        "description": "",
+        "authors": [],
+        "contact": {},
+        "license": "GPL-3.0",
+        "icon": "assets/icon.png",
+        "environment": "*",
+        "entrypoints": {
+          "client": [
+            "org.edtp.chainveinfabric.client.ChainveinfabricClient"
+          ],
+          "main": [
+            "org.edtp.chainveinfabric.Chainveinfabric"
+          ],
+          "modmenu": [
+            "org.edtp.chainveinfabric.client.compat.modmenu.ModMenuImpl"
+          ]
+        },
+        "mixins": [
+          "chainveinfabric.mixins.json",
+          {
+            "config": "chainveinfabric.client.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "depends": {
+          "fabricloader": ">=0.16.13",
+          "fabric-api": ">=0.128.0+1.21.6",
+          "java": ">=21",
+          "minecraft": "1.21.6",
+          "malilib": ">=0.25.7"
+        },
+        "suggests": {
+          "litematica": ">=0.23.7",
+          "quickshulker": "*"
+        }
+      },
+      "fingerprint": "8add600286e27d04b1a9d1d4189a5ae1704a033a1dd33f9d997dd0bb21339ff3",
+      "classes": 135,
+      "artifact": 12551983111,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.6",
+      "repository": "water2004/litematica-printer",
+      "release": 417572852,
+      "name": "litematica-printer-1.1.3+1.21.6.jar",
+      "sha256": "466784e382a6572508a34806016650e5a6c121f6d07232cebb7b4efcb54c85cd",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "litematica-printer",
+        "version": "1.1.3+1.21.6",
+        "icon": "assets/litematica-printer/icon.png",
+        "name": "Litematica Printer",
+        "description": "An extension for Litematica that adds printing, filling, fluid removal, and bedrock breaking as independent modules.",
+        "authors": [
+          "aleksilassila",
+          "zhaixianyu",
+          "BlinkWhite",
+          "bunnyi116"
+        ],
+        "contact": {
+          "website": "https://space.bilibili.com/514411062",
+          "homepage": "https://github.com/water2004/litematica-printer",
+          "sources": "https://github.com/water2004/litematica-printer"
+        },
+        "license": "AGPL-3.0",
+        "environment": "client",
+        "entrypoints": {
+          "client": [
+            "me.aleksilassila.litematica.printer.LitematicaPrinterMod"
+          ],
+          "modmenu": [
+            "me.aleksilassila.litematica.printer.interfaces.compat.ModMenuCompat"
+          ]
+        },
+        "mixins": [
+          "litematica-printer.mixins.json"
+        ],
+        "depends": {
+          "minecraft": "1.21.6",
+          "malilib": ">=0.25.7",
+          "litematica": ">=0.23.7",
+          "fabricloader": ">=0.16.13",
+          "java": ">=21",
+          "fabric-api": ">=0.128.0+1.21.6"
+        },
+        "suggests": {
+          "chainveinfabric": ">=3.0.0"
+        },
+        "jars": [
+          {
+            "file": "META-INF/jars/pinyin4j-2.5.1.jar"
+          }
+        ]
+      },
+      "fingerprint": "a549e4607755db2d359713c0938714037fa0b6f965a41e1e7e0d12145809174e",
+      "classes": 205,
+      "artifact": 12551983111,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.6",
+      "repository": "water2004/quickshulker",
+      "release": 392814921,
+      "name": "quickshulker-4.0.1+1.21.6.jar",
+      "sha256": "632fb8e756801d8ce79007c56241b17114b443df1719f9adc1d514b42f7783b3",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "quickshulker",
+        "version": "4.0.1+1.21.6",
+        "name": "Quick Shulker",
+        "description": "Quickly open Shulker boxes and more",
+        "authors": [
+          "kyrptonaught",
+          "MoRanpcy",
+          "Hao_cen",
+          "Grayer0113"
+        ],
+        "contact": {
+          "homepage": "https://github.com/MoRanpcy/quickshulker",
+          "sources": "https://github.com/MoRanpcy/quickshulker",
+          "issues": "https://github.com/MoRanpcy/quickshulker/issues"
+        },
+        "custom": {
+          "modmenu": {
+            "links": {
+              "modmenu.homepage": "https://www.curseforge.com/minecraft/mc-mods/quick-shulker",
+              "modmenu.sources": "https://github.com/kyrptonaught/quickshulker"
+            }
+          }
+        },
+        "license": "MIT",
+        "icon": "assets/quickshulker/icon.png",
+        "environment": "*",
+        "mixins": [
+          {
+            "config": "quickshulker.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "quickshulker-compat.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "shulkerutils.mixins.json",
+            "environment": "client"
+          },
+          {
+            "config": "kyrptconfig.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "entrypoints": {
+          "main": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "quickshulker": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "client": [
+            "net.kyrptonaught.quickshulker.client.QuickShulkerModClient"
+          ],
+          "modmenu": [
+            "net.kyrptonaught.quickshulker.compat.modmenu.ModMenuIntegration"
+          ]
+        },
+        "depends": {
+          "minecraft": "1.21.6",
+          "fabricloader": ">=0.16.13",
+          "fabric-api": ">=0.128.0+1.21.6",
+          "java": ">=21"
+        },
+        "accessWidener": "quickshulker.accesswidener",
+        "jars": [
+          {
+            "file": "META-INF/jars/conditional-mixin-fabric-0.6.4.jar"
+          }
+        ]
+      },
+      "fingerprint": "232b9ba21cc0ae53cd06f7510c5f0e5d32ea6579ce95665c494fa899dd079d4b",
+      "classes": 158,
+      "artifact": 12551983111,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.7",
+      "repository": "water2004/ChainVeinFabric",
+      "release": 382907789,
+      "name": "ChainVeinFabric-4.1.0+1.21.7.jar",
+      "sha256": "e2c041d476f506bc1b0a3ad094adbe255a15e6aa5adbb1c164ac60100db3efd3",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "chainveinfabric",
+        "version": "4.1.0+1.21.7",
+        "name": "ChainVeinFabric",
+        "description": "",
+        "authors": [],
+        "contact": {},
+        "license": "GPL-3.0",
+        "icon": "assets/icon.png",
+        "environment": "*",
+        "entrypoints": {
+          "client": [
+            "org.edtp.chainveinfabric.client.ChainveinfabricClient"
+          ],
+          "main": [
+            "org.edtp.chainveinfabric.Chainveinfabric"
+          ],
+          "modmenu": [
+            "org.edtp.chainveinfabric.client.compat.modmenu.ModMenuImpl"
+          ]
+        },
+        "mixins": [
+          "chainveinfabric.mixins.json",
+          {
+            "config": "chainveinfabric.client.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "depends": {
+          "fabricloader": ">=0.16.13",
+          "fabric-api": ">=0.128.1+1.21.7",
+          "java": ">=21",
+          "minecraft": "1.21.7",
+          "malilib": ">=0.25.7"
+        },
+        "suggests": {
+          "litematica": ">=0.23.7",
+          "quickshulker": "*"
+        }
+      },
+      "fingerprint": "644524cecc2612c1bd7b8136a01bd0015175d0cdbe09f4927cfb9ccea004cb89",
+      "classes": 135,
+      "artifact": 12552595231,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.7",
+      "repository": "water2004/litematica-printer",
+      "release": 417572852,
+      "name": "litematica-printer-1.1.3+1.21.7.jar",
+      "sha256": "2f69fcb5f0c2e9f95476e45577dbdb2056ae4bac41295b6f1704fa77baeff00a",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "litematica-printer",
+        "version": "1.1.3+1.21.7",
+        "icon": "assets/litematica-printer/icon.png",
+        "name": "Litematica Printer",
+        "description": "An extension for Litematica that adds printing, filling, fluid removal, and bedrock breaking as independent modules.",
+        "authors": [
+          "aleksilassila",
+          "zhaixianyu",
+          "BlinkWhite",
+          "bunnyi116"
+        ],
+        "contact": {
+          "website": "https://space.bilibili.com/514411062",
+          "homepage": "https://github.com/water2004/litematica-printer",
+          "sources": "https://github.com/water2004/litematica-printer"
+        },
+        "license": "AGPL-3.0",
+        "environment": "client",
+        "entrypoints": {
+          "client": [
+            "me.aleksilassila.litematica.printer.LitematicaPrinterMod"
+          ],
+          "modmenu": [
+            "me.aleksilassila.litematica.printer.interfaces.compat.ModMenuCompat"
+          ]
+        },
+        "mixins": [
+          "litematica-printer.mixins.json"
+        ],
+        "depends": {
+          "minecraft": "1.21.7",
+          "malilib": ">=0.25.7",
+          "litematica": ">=0.23.7",
+          "fabricloader": ">=0.16.13",
+          "java": ">=21",
+          "fabric-api": ">=0.128.1+1.21.7"
+        },
+        "suggests": {
+          "chainveinfabric": ">=3.0.0"
+        },
+        "jars": [
+          {
+            "file": "META-INF/jars/pinyin4j-2.5.1.jar"
+          }
+        ]
+      },
+      "fingerprint": "8bdb41f0e5ad091ca64935277e055da47affab961b09a3ff2955ff07895bff94",
+      "classes": 205,
+      "artifact": 12552595231,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.7",
+      "repository": "water2004/quickshulker",
+      "release": 392814921,
+      "name": "quickshulker-4.0.1+1.21.7.jar",
+      "sha256": "9270c4e27b0aa69a91e8efeb2ecd1c80cc8346b7c33863a51e758dd5d9d3d363",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "quickshulker",
+        "version": "4.0.1+1.21.7",
+        "name": "Quick Shulker",
+        "description": "Quickly open Shulker boxes and more",
+        "authors": [
+          "kyrptonaught",
+          "MoRanpcy",
+          "Hao_cen",
+          "Grayer0113"
+        ],
+        "contact": {
+          "homepage": "https://github.com/MoRanpcy/quickshulker",
+          "sources": "https://github.com/MoRanpcy/quickshulker",
+          "issues": "https://github.com/MoRanpcy/quickshulker/issues"
+        },
+        "custom": {
+          "modmenu": {
+            "links": {
+              "modmenu.homepage": "https://www.curseforge.com/minecraft/mc-mods/quick-shulker",
+              "modmenu.sources": "https://github.com/kyrptonaught/quickshulker"
+            }
+          }
+        },
+        "license": "MIT",
+        "icon": "assets/quickshulker/icon.png",
+        "environment": "*",
+        "mixins": [
+          {
+            "config": "quickshulker.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "quickshulker-compat.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "shulkerutils.mixins.json",
+            "environment": "client"
+          },
+          {
+            "config": "kyrptconfig.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "entrypoints": {
+          "main": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "quickshulker": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "client": [
+            "net.kyrptonaught.quickshulker.client.QuickShulkerModClient"
+          ],
+          "modmenu": [
+            "net.kyrptonaught.quickshulker.compat.modmenu.ModMenuIntegration"
+          ]
+        },
+        "depends": {
+          "minecraft": "1.21.7",
+          "fabricloader": ">=0.16.13",
+          "fabric-api": ">=0.128.1+1.21.7",
+          "java": ">=21"
+        },
+        "accessWidener": "quickshulker.accesswidener",
+        "jars": [
+          {
+            "file": "META-INF/jars/conditional-mixin-fabric-0.6.4.jar"
+          }
+        ]
+      },
+      "fingerprint": "748e8e94459ceff6f78aac2d457a88666d63b0ee2c8610c059dfd30f655f0a6c",
+      "classes": 158,
+      "artifact": 12552595231,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.8",
+      "repository": "water2004/ChainVeinFabric",
+      "release": 382907789,
+      "name": "ChainVeinFabric-4.1.0+1.21.8.jar",
+      "sha256": "e173f7cf55fc15d0ca2170d13e8e5169755b15183ca9d78c56a25e5abeef460a",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "chainveinfabric",
+        "version": "4.1.0+1.21.8",
+        "name": "ChainVeinFabric",
+        "description": "",
+        "authors": [],
+        "contact": {},
+        "license": "GPL-3.0",
+        "icon": "assets/icon.png",
+        "environment": "*",
+        "entrypoints": {
+          "client": [
+            "org.edtp.chainveinfabric.client.ChainveinfabricClient"
+          ],
+          "main": [
+            "org.edtp.chainveinfabric.Chainveinfabric"
+          ],
+          "modmenu": [
+            "org.edtp.chainveinfabric.client.compat.modmenu.ModMenuImpl"
+          ]
+        },
+        "mixins": [
+          "chainveinfabric.mixins.json",
+          {
+            "config": "chainveinfabric.client.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "depends": {
+          "fabricloader": ">=0.16.13",
+          "fabric-api": ">=0.129.0+1.21.8",
+          "java": ">=21",
+          "minecraft": "1.21.8",
+          "malilib": ">=0.25.7"
+        },
+        "suggests": {
+          "litematica": ">=0.23.7",
+          "quickshulker": "*"
+        }
+      },
+      "fingerprint": "25a97eb0afc7e1ffccfbb5d7bfd5f4d13c8210a88bef9093532e23cd216dfce9",
+      "classes": 135,
+      "artifact": 12552033036,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.8",
+      "repository": "water2004/litematica-printer",
+      "release": 417572852,
+      "name": "litematica-printer-1.1.3+1.21.8.jar",
+      "sha256": "9377c95f452a7ed6a0d4dad431e7780dc3ce91b3174f7016d6197d83e5d69faa",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "litematica-printer",
+        "version": "1.1.3+1.21.8",
+        "icon": "assets/litematica-printer/icon.png",
+        "name": "Litematica Printer",
+        "description": "An extension for Litematica that adds printing, filling, fluid removal, and bedrock breaking as independent modules.",
+        "authors": [
+          "aleksilassila",
+          "zhaixianyu",
+          "BlinkWhite",
+          "bunnyi116"
+        ],
+        "contact": {
+          "website": "https://space.bilibili.com/514411062",
+          "homepage": "https://github.com/water2004/litematica-printer",
+          "sources": "https://github.com/water2004/litematica-printer"
+        },
+        "license": "AGPL-3.0",
+        "environment": "client",
+        "entrypoints": {
+          "client": [
+            "me.aleksilassila.litematica.printer.LitematicaPrinterMod"
+          ],
+          "modmenu": [
+            "me.aleksilassila.litematica.printer.interfaces.compat.ModMenuCompat"
+          ]
+        },
+        "mixins": [
+          "litematica-printer.mixins.json"
+        ],
+        "depends": {
+          "minecraft": "1.21.8",
+          "malilib": ">=0.25.7",
+          "litematica": ">=0.23.7",
+          "fabricloader": ">=0.16.13",
+          "java": ">=21",
+          "fabric-api": ">=0.129.0+1.21.8"
+        },
+        "suggests": {
+          "chainveinfabric": ">=3.0.0"
+        },
+        "jars": [
+          {
+            "file": "META-INF/jars/pinyin4j-2.5.1.jar"
+          }
+        ]
+      },
+      "fingerprint": "dd3bfe9d9b13932d29a21bed8b555be17f49963b9d9e642aabf4956ac7f7c719",
+      "classes": 205,
+      "artifact": 12552033036,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.8",
+      "repository": "water2004/quickshulker",
+      "release": 392814921,
+      "name": "quickshulker-4.0.1+1.21.8.jar",
+      "sha256": "111c26bdda366b5d6ac94e2a7d595ed5b462ab23d2d05b837df5bbc2437632cd",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "quickshulker",
+        "version": "4.0.1+1.21.8",
+        "name": "Quick Shulker",
+        "description": "Quickly open Shulker boxes and more",
+        "authors": [
+          "kyrptonaught",
+          "MoRanpcy",
+          "Hao_cen",
+          "Grayer0113"
+        ],
+        "contact": {
+          "homepage": "https://github.com/MoRanpcy/quickshulker",
+          "sources": "https://github.com/MoRanpcy/quickshulker",
+          "issues": "https://github.com/MoRanpcy/quickshulker/issues"
+        },
+        "custom": {
+          "modmenu": {
+            "links": {
+              "modmenu.homepage": "https://www.curseforge.com/minecraft/mc-mods/quick-shulker",
+              "modmenu.sources": "https://github.com/kyrptonaught/quickshulker"
+            }
+          }
+        },
+        "license": "MIT",
+        "icon": "assets/quickshulker/icon.png",
+        "environment": "*",
+        "mixins": [
+          {
+            "config": "quickshulker.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "quickshulker-compat.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "shulkerutils.mixins.json",
+            "environment": "client"
+          },
+          {
+            "config": "kyrptconfig.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "entrypoints": {
+          "main": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "quickshulker": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "client": [
+            "net.kyrptonaught.quickshulker.client.QuickShulkerModClient"
+          ],
+          "modmenu": [
+            "net.kyrptonaught.quickshulker.compat.modmenu.ModMenuIntegration"
+          ]
+        },
+        "depends": {
+          "minecraft": "1.21.8",
+          "fabricloader": ">=0.16.13",
+          "fabric-api": ">=0.129.0+1.21.8",
+          "java": ">=21"
+        },
+        "accessWidener": "quickshulker.accesswidener",
+        "jars": [
+          {
+            "file": "META-INF/jars/conditional-mixin-fabric-0.6.4.jar"
+          }
+        ]
+      },
+      "fingerprint": "4e18aff2260714aae96dbc5b3fbde341b196407bad17b69bb9a27798a5677855",
+      "classes": 158,
+      "artifact": 12552033036,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.9",
+      "repository": "water2004/ChainVeinFabric",
+      "release": 382907789,
+      "name": "ChainVeinFabric-4.1.0+1.21.9.jar",
+      "sha256": "2bfea79590f323634a4a8cfe22a37b5fa3d3d7887d1e154e615bedbad662fac1",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "chainveinfabric",
+        "version": "4.1.0+1.21.9",
+        "name": "ChainVeinFabric",
+        "description": "",
+        "authors": [],
+        "contact": {},
+        "license": "GPL-3.0",
+        "icon": "assets/icon.png",
+        "environment": "*",
+        "entrypoints": {
+          "client": [
+            "org.edtp.chainveinfabric.client.ChainveinfabricClient"
+          ],
+          "main": [
+            "org.edtp.chainveinfabric.Chainveinfabric"
+          ],
+          "modmenu": [
+            "org.edtp.chainveinfabric.client.compat.modmenu.ModMenuImpl"
+          ]
+        },
+        "mixins": [
+          "chainveinfabric.mixins.json",
+          {
+            "config": "chainveinfabric.client.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "depends": {
+          "fabricloader": ">=0.17.0",
+          "fabric-api": ">=0.133.14+1.21.9",
+          "java": ">=21",
+          "minecraft": "1.21.9",
+          "malilib": ">=0.26.7"
+        },
+        "suggests": {
+          "litematica": ">=0.24.8",
+          "quickshulker": "*"
+        }
+      },
+      "fingerprint": "9878aac8166a0c22d62a05c1f03e32b64b2700cb585e0e212f6123eb63d71294",
+      "classes": 135,
+      "artifact": 12551114953,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.9",
+      "repository": "water2004/litematica-printer",
+      "release": 417572852,
+      "name": "litematica-printer-1.1.3+1.21.9.jar",
+      "sha256": "82de4d8859be2a4ef0cf38cdaeb7a7f1e6576695887328a575fc19919f7354b1",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "litematica-printer",
+        "version": "1.1.3+1.21.9",
+        "icon": "assets/litematica-printer/icon.png",
+        "name": "Litematica Printer",
+        "description": "An extension for Litematica that adds printing, filling, fluid removal, and bedrock breaking as independent modules.",
+        "authors": [
+          "aleksilassila",
+          "zhaixianyu",
+          "BlinkWhite",
+          "bunnyi116"
+        ],
+        "contact": {
+          "website": "https://space.bilibili.com/514411062",
+          "homepage": "https://github.com/water2004/litematica-printer",
+          "sources": "https://github.com/water2004/litematica-printer"
+        },
+        "license": "AGPL-3.0",
+        "environment": "client",
+        "entrypoints": {
+          "client": [
+            "me.aleksilassila.litematica.printer.LitematicaPrinterMod"
+          ],
+          "modmenu": [
+            "me.aleksilassila.litematica.printer.interfaces.compat.ModMenuCompat"
+          ]
+        },
+        "mixins": [
+          "litematica-printer.mixins.json"
+        ],
+        "depends": {
+          "minecraft": "1.21.9",
+          "malilib": ">=0.26.7",
+          "litematica": ">=0.24.8",
+          "fabricloader": ">=0.17.0",
+          "java": ">=21",
+          "fabric-api": ">=0.133.14+1.21.9"
+        },
+        "suggests": {
+          "chainveinfabric": ">=3.0.0"
+        },
+        "jars": [
+          {
+            "file": "META-INF/jars/pinyin4j-2.5.1.jar"
+          }
+        ]
+      },
+      "fingerprint": "3759ece9c15820ea6cc2240c1afa3c4bdafb85ce1ad50d898925d56202f954b2",
+      "classes": 205,
+      "artifact": 12551114953,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.9",
+      "repository": "water2004/quickshulker",
+      "release": 392814921,
+      "name": "quickshulker-4.0.1+1.21.9.jar",
+      "sha256": "d726bdff311e156d7cb44b40a68dcd7eb38c120a6f595185ef89bd9f96362beb",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "quickshulker",
+        "version": "4.0.1+1.21.9",
+        "name": "Quick Shulker",
+        "description": "Quickly open Shulker boxes and more",
+        "authors": [
+          "kyrptonaught",
+          "MoRanpcy",
+          "Hao_cen",
+          "Grayer0113"
+        ],
+        "contact": {
+          "homepage": "https://github.com/MoRanpcy/quickshulker",
+          "sources": "https://github.com/MoRanpcy/quickshulker",
+          "issues": "https://github.com/MoRanpcy/quickshulker/issues"
+        },
+        "custom": {
+          "modmenu": {
+            "links": {
+              "modmenu.homepage": "https://www.curseforge.com/minecraft/mc-mods/quick-shulker",
+              "modmenu.sources": "https://github.com/kyrptonaught/quickshulker"
+            }
+          }
+        },
+        "license": "MIT",
+        "icon": "assets/quickshulker/icon.png",
+        "environment": "*",
+        "mixins": [
+          {
+            "config": "quickshulker.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "quickshulker-compat.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "shulkerutils.mixins.json",
+            "environment": "client"
+          },
+          {
+            "config": "kyrptconfig.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "entrypoints": {
+          "main": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "quickshulker": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "client": [
+            "net.kyrptonaught.quickshulker.client.QuickShulkerModClient"
+          ],
+          "modmenu": [
+            "net.kyrptonaught.quickshulker.compat.modmenu.ModMenuIntegration"
+          ]
+        },
+        "depends": {
+          "minecraft": "1.21.9",
+          "fabricloader": ">=0.17.0",
+          "fabric-api": ">=0.133.14+1.21.9",
+          "java": ">=21"
+        },
+        "accessWidener": "quickshulker.accesswidener",
+        "jars": [
+          {
+            "file": "META-INF/jars/conditional-mixin-fabric-0.6.4.jar"
+          }
+        ]
+      },
+      "fingerprint": "f0cd932a2c6ec360b0a02f1a849e8672e6183936f474d8559a9fc3df87111f17",
+      "classes": 158,
+      "artifact": 12551114953,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.10",
+      "repository": "water2004/ChainVeinFabric",
+      "release": 411959495,
+      "name": "ChainVeinFabric-4.1.2+1.21.10.jar",
+      "sha256": "ce0acb2154e217c629f680a7c0a01059a2e04b220568cdcacaba6a28820863ef",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "chainveinfabric",
+        "version": "4.1.2+1.21.10",
+        "name": "ChainVeinFabric",
+        "description": "",
+        "authors": [],
+        "contact": {},
+        "license": "GPL-3.0",
+        "icon": "assets/icon.png",
+        "environment": "*",
+        "entrypoints": {
+          "client": [
+            "org.edtp.chainveinfabric.client.ChainveinfabricClient"
+          ],
+          "main": [
+            "org.edtp.chainveinfabric.Chainveinfabric"
+          ],
+          "modmenu": [
+            "org.edtp.chainveinfabric.client.compat.modmenu.ModMenuImpl"
+          ]
+        },
+        "mixins": [
+          "chainveinfabric.mixins.json",
+          {
+            "config": "chainveinfabric.client.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "depends": {
+          "fabricloader": ">=0.17.0",
+          "fabric-api": ">=0.134.1+1.21.10",
+          "java": ">=21",
+          "minecraft": "1.21.10",
+          "malilib": ">=0.26.7"
+        },
+        "suggests": {
+          "litematica": ">=0.24.8",
+          "quickshulker": "*"
+        }
+      },
+      "fingerprint": "8bdffeed1af93dfce8886662d7d5699131e1b6c29d14a253a326c088624b150a",
+      "classes": 135,
+      "artifact": 12552520652,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.10",
+      "repository": "water2004/litematica-printer",
+      "release": 417572852,
+      "name": "litematica-printer-1.1.3+1.21.10.jar",
+      "sha256": "a49b39440a3d1b80c9d600c627e462e329cd2f7c3ef539aa7d53e258ec1cd083",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "litematica-printer",
+        "version": "1.1.3+1.21.10",
+        "icon": "assets/litematica-printer/icon.png",
+        "name": "Litematica Printer",
+        "description": "An extension for Litematica that adds printing, filling, fluid removal, and bedrock breaking as independent modules.",
+        "authors": [
+          "aleksilassila",
+          "zhaixianyu",
+          "BlinkWhite",
+          "bunnyi116"
+        ],
+        "contact": {
+          "website": "https://space.bilibili.com/514411062",
+          "homepage": "https://github.com/water2004/litematica-printer",
+          "sources": "https://github.com/water2004/litematica-printer"
+        },
+        "license": "AGPL-3.0",
+        "environment": "client",
+        "entrypoints": {
+          "client": [
+            "me.aleksilassila.litematica.printer.LitematicaPrinterMod"
+          ],
+          "modmenu": [
+            "me.aleksilassila.litematica.printer.interfaces.compat.ModMenuCompat"
+          ]
+        },
+        "mixins": [
+          "litematica-printer.mixins.json"
+        ],
+        "depends": {
+          "minecraft": "1.21.10",
+          "malilib": ">=0.26.7",
+          "litematica": ">=0.24.8",
+          "fabricloader": ">=0.17.0",
+          "java": ">=21",
+          "fabric-api": ">=0.134.1+1.21.10"
+        },
+        "suggests": {
+          "chainveinfabric": ">=3.0.0"
+        },
+        "jars": [
+          {
+            "file": "META-INF/jars/pinyin4j-2.5.1.jar"
+          }
+        ]
+      },
+      "fingerprint": "fb1cf8c9185990c1d5c1b124ee3442a47744057563581c0c44a8e49ed347209f",
+      "classes": 205,
+      "artifact": 12552520652,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.10",
+      "repository": "water2004/quickshulker",
+      "release": 392814921,
+      "name": "quickshulker-4.0.1+1.21.10.jar",
+      "sha256": "f3d11c5dfdc71ec08aceda9473336aaa1ca92cb892a815c2331b58c4cdf1842f",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "quickshulker",
+        "version": "4.0.1+1.21.10",
+        "name": "Quick Shulker",
+        "description": "Quickly open Shulker boxes and more",
+        "authors": [
+          "kyrptonaught",
+          "MoRanpcy",
+          "Hao_cen",
+          "Grayer0113"
+        ],
+        "contact": {
+          "homepage": "https://github.com/MoRanpcy/quickshulker",
+          "sources": "https://github.com/MoRanpcy/quickshulker",
+          "issues": "https://github.com/MoRanpcy/quickshulker/issues"
+        },
+        "custom": {
+          "modmenu": {
+            "links": {
+              "modmenu.homepage": "https://www.curseforge.com/minecraft/mc-mods/quick-shulker",
+              "modmenu.sources": "https://github.com/kyrptonaught/quickshulker"
+            }
+          }
+        },
+        "license": "MIT",
+        "icon": "assets/quickshulker/icon.png",
+        "environment": "*",
+        "mixins": [
+          {
+            "config": "quickshulker.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "quickshulker-compat.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "shulkerutils.mixins.json",
+            "environment": "client"
+          },
+          {
+            "config": "kyrptconfig.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "entrypoints": {
+          "main": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "quickshulker": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "client": [
+            "net.kyrptonaught.quickshulker.client.QuickShulkerModClient"
+          ],
+          "modmenu": [
+            "net.kyrptonaught.quickshulker.compat.modmenu.ModMenuIntegration"
+          ]
+        },
+        "depends": {
+          "minecraft": "1.21.10",
+          "fabricloader": ">=0.17.0",
+          "fabric-api": ">=0.134.1+1.21.10",
+          "java": ">=21"
+        },
+        "accessWidener": "quickshulker.accesswidener",
+        "jars": [
+          {
+            "file": "META-INF/jars/conditional-mixin-fabric-0.6.4.jar"
+          }
+        ]
+      },
+      "fingerprint": "5c4780301b07d0a6194d80c104722de8818c5c365b65943ccfe3c0e11bdee1df",
+      "classes": 158,
+      "artifact": 12552520652,
+      "ciRun": 40072764075
+    },
+    {
+      "minecraft": "1.21.11",
+      "repository": "water2004/ChainVeinFabric",
+      "release": 411959495,
+      "name": "ChainVeinFabric-4.1.2+1.21.11.jar",
+      "sha256": "541e4480030f08c07939e808a3874503c4749e04864bfaf6d03f1492c644d4ba",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "chainveinfabric",
+        "version": "4.1.2+1.21.11",
+        "name": "ChainVeinFabric",
+        "description": "",
+        "authors": [],
+        "contact": {},
+        "license": "GPL-3.0",
+        "icon": "assets/icon.png",
+        "environment": "*",
+        "entrypoints": {
+          "client": [
+            "org.edtp.chainveinfabric.client.ChainveinfabricClient"
+          ],
+          "main": [
+            "org.edtp.chainveinfabric.Chainveinfabric"
+          ],
+          "modmenu": [
+            "org.edtp.chainveinfabric.client.compat.modmenu.ModMenuImpl"
+          ]
+        },
+        "mixins": [
+          "chainveinfabric.mixins.json",
+          {
+            "config": "chainveinfabric.client.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "depends": {
+          "fabricloader": ">=0.17.3",
+          "fabric-api": ">=0.139.4+1.21.11",
+          "java": ">=21",
+          "minecraft": "1.21.11",
+          "malilib": ">=0.27.15"
+        },
+        "suggests": {
+          "litematica": ">=0.26.11",
+          "quickshulker": "*"
+        }
+      },
+      "fingerprint": "079ca13eee3acbb51026ff50e0e28613f679e6ed6b9bf9e6d923d193c8afd666",
+      "classes": 135,
+      "artifact": null,
+      "ciRun": null
+    },
+    {
+      "minecraft": "1.21.11",
+      "repository": "water2004/litematica-printer",
+      "release": 417572852,
+      "name": "litematica-printer-1.1.3+1.21.11.jar",
+      "sha256": "0777e698fb8e50eb186fa0217b2dcd9ea4acdcdfda659d740bd2a7206b71a0d3",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "litematica-printer",
+        "version": "1.1.3+1.21.11",
+        "icon": "assets/litematica-printer/icon.png",
+        "name": "Litematica Printer",
+        "description": "An extension for Litematica that adds printing, filling, fluid removal, and bedrock breaking as independent modules.",
+        "authors": [
+          "aleksilassila",
+          "zhaixianyu",
+          "BlinkWhite",
+          "bunnyi116"
+        ],
+        "contact": {
+          "website": "https://space.bilibili.com/514411062",
+          "homepage": "https://github.com/water2004/litematica-printer",
+          "sources": "https://github.com/water2004/litematica-printer"
+        },
+        "license": "AGPL-3.0",
+        "environment": "client",
+        "entrypoints": {
+          "client": [
+            "me.aleksilassila.litematica.printer.LitematicaPrinterMod"
+          ],
+          "modmenu": [
+            "me.aleksilassila.litematica.printer.interfaces.compat.ModMenuCompat"
+          ]
+        },
+        "mixins": [
+          "litematica-printer.mixins.json"
+        ],
+        "depends": {
+          "minecraft": "1.21.11",
+          "malilib": ">=0.27.15",
+          "litematica": ">=0.26.11",
+          "fabricloader": ">=0.17.3",
+          "java": ">=21",
+          "fabric-api": ">=0.139.4+1.21.11"
+        },
+        "suggests": {
+          "chainveinfabric": ">=3.0.0"
+        },
+        "jars": [
+          {
+            "file": "META-INF/jars/pinyin4j-2.5.1.jar"
+          }
+        ]
+      },
+      "fingerprint": "05e124fa0c33c3244c9511910766168bcbe3e3d1d127d05ec15442f006a60918",
+      "classes": 205,
+      "artifact": null,
+      "ciRun": null
+    },
+    {
+      "minecraft": "1.21.11",
+      "repository": "water2004/quickshulker",
+      "release": 392814921,
+      "name": "quickshulker-4.0.1+1.21.11.jar",
+      "sha256": "87fc9696c3a52b18e7977e351b2b5d62752e3d0f33be18ee1024ef0ee1c058e8",
+      "metadata": {
+        "schemaVersion": 1,
+        "id": "quickshulker",
+        "version": "4.0.1+1.21.11",
+        "name": "Quick Shulker",
+        "description": "Quickly open Shulker boxes and more",
+        "authors": [
+          "kyrptonaught",
+          "MoRanpcy",
+          "Hao_cen",
+          "Grayer0113"
+        ],
+        "contact": {
+          "homepage": "https://github.com/MoRanpcy/quickshulker",
+          "sources": "https://github.com/MoRanpcy/quickshulker",
+          "issues": "https://github.com/MoRanpcy/quickshulker/issues"
+        },
+        "custom": {
+          "modmenu": {
+            "links": {
+              "modmenu.homepage": "https://www.curseforge.com/minecraft/mc-mods/quick-shulker",
+              "modmenu.sources": "https://github.com/kyrptonaught/quickshulker"
+            }
+          }
+        },
+        "license": "MIT",
+        "icon": "assets/quickshulker/icon.png",
+        "environment": "*",
+        "mixins": [
+          {
+            "config": "quickshulker.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "quickshulker-compat.mixins.json",
+            "environment": "*"
+          },
+          {
+            "config": "shulkerutils.mixins.json",
+            "environment": "client"
+          },
+          {
+            "config": "kyrptconfig.mixins.json",
+            "environment": "client"
+          }
+        ],
+        "entrypoints": {
+          "main": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "quickshulker": [
+            "net.kyrptonaught.quickshulker.QuickShulkerMod"
+          ],
+          "client": [
+            "net.kyrptonaught.quickshulker.client.QuickShulkerModClient"
+          ],
+          "modmenu": [
+            "net.kyrptonaught.quickshulker.compat.modmenu.ModMenuIntegration"
+          ]
+        },
+        "depends": {
+          "minecraft": "1.21.11",
+          "fabricloader": ">=0.17.3",
+          "fabric-api": ">=0.139.4+1.21.11",
+          "java": ">=21"
+        },
+        "accessWidener": "quickshulker.accesswidener",
+        "jars": [
+          {
+            "file": "META-INF/jars/conditional-mixin-fabric-0.6.4.jar"
+          }
+        ]
+      },
+      "fingerprint": "d0654d33825161aab40f8635adef9565b10ec7883b1520bb8dcfc3d8e72c835c",
+      "classes": 158,
+      "artifact": null,
+      "ciRun": null
+    }
+  ],
+  "reusedCI": {
+    "run": 40072764075,
+    "sha": "2ed963a057e88a0a3481353bd9bd5f77980d4c0b"
+  },
+  "newVersion": "1.21.11",
+  "scope": "minimum dependency functional compatibility; historical packet-loss limitations remain",
+  "legacy12111": {
+    "name": "quickshulker-3.1.0-1.21.11.jar",
+    "url": "https://github.com/MoRanpcy/quickshulker/releases/download/3.1.0-1.21.11/quickshulker-3.1.0-1.21.11.jar",
+    "sha256": "f04bf1baf8e0f9f20ff4e5dd44562d1ceac4809c36dc139c0c4213b26966cc29"
+  }
+}

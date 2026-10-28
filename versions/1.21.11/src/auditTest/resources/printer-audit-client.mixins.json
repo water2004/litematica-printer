@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "package": "me.aleksilassila.litematica.printer.audit.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "refmap": "auditTest-litematica-printer.refmap.json",
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "client": [
+    "AuditServuxClientMixin",
+    "AuditClientUseMixin"
+  ],
+  "mixins": [
+    "AuditNetworkSendMixin"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "refmap": "litematica-printer.refmap.json",
+  "package": "me.aleksilassila.litematica.printer.mixin.printer",
+  "compatibilityLevel": "${compatibility_level}",
+  "mixins": [
+    "litematica.EasyPlaceUtilsAccessor",
+    "litematica.InventoryUtilsAccessor",
+    "litematica.MixinEntityDataManager",
+    "litematica.MixinInventoryUtils",
+    "litematica.MixinMaterialListUtils",
+    "malilib.config.MixinConfigBase",
+    "malilib.config.MixinIConfigBase",
+    "mc.MixinBlockItem",
+    "mc.MixinConnection",
+    "mc.MixinGui",
+    "mc.MixinHud",
+    "mc.ServerboundMovePlayerPacketAccessor"
+  ],
+  "client": [
+    "litematica.gui.MixinLitematicaGuiMainMenu",
+    "malilib.MixinAbstractCraftingMenu",
+    "malilib.MixinGuiStringListEdit",
+    "mc.MixinClientCommonPacketListener",
+    "mc.MixinClientLevel",
+    "mc.MixinClientPacketListener",
+    "mc.MixinGui",
+    "mc.MixinLocalPlayer",
+    "mc.MixinMinecraft",
+    "mc.MixinMultiPlayerGameMode"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

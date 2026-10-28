@@ -1,0 +1,8 @@
+{
+  "required": true,
+  "package": "me.aleksilassila.litematica.printer.smoke.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "refmap": "smokeTest-litematica-printer.refmap.json",
+  "client": ["MouseHandlerAccess"],
+  "injectors": {"defaultRequire": 1}
+}

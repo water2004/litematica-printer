@@ -1,0 +1,12 @@
+{
+  "quickshulker": {
+    "sha": "680dfe2481b68f86af57955042df81a0d6ab8a8e",
+    "tree": "cd9eccc57eb302a9f64203c331a2e623c17c6f22",
+    "branch": "dory/1.21.11"
+  },
+  "ChainVeinFabric": {
+    "sha": "95c68f657356d4619517cb003b738492a5147bf4",
+    "tree": "dcf56fb0acf95f9f22d0a439edf1ebc99a402802",
+    "branch": "dory/1.21.11"
+  }
+}

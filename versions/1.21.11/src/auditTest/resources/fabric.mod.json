@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "printer_audit",
+  "version": "1.0.0",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "me.aleksilassila.litematica.printer.audit.PrinterAuditClient"
+    ]
+  },
+  "depends": {
+    "minecraft": "1.21.11",
+    "litematica-printer": "*",
+    "fabric-api": "*",
+    "network_chaos_fabric": "*"
+  },
+  "mixins": [
+    "printer-audit-client.mixins.json"
+  ]
+}
