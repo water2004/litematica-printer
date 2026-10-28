@@ -1,0 +1,10 @@
+{
+  "repository": "water2004/litematica-printer",
+  "releaseTags": {
+    "417572852": "v1.1.3"
+  },
+  "protectedRefs": {
+    "main": "58d0048b196d2d136dd9cff72919d5f6b3f96c5a",
+    "master": "bf4a89d7e275a288899b3c37ecde2f20959373e9"
+  }
+}
