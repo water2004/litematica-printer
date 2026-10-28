@@ -53,5 +53,12 @@
     "litematica-printer-1.1.3+1.21.11.jar": "dd9f9f001dccd7342995516a87edb0a230ca64b8ad633dfcc2e72d3d0366e90d",
     "quickshulker-4.0.1+1.21.11.jar": "6dccc393dec872985ac1df90806b4a9a773b270d12f3269b4da9a54cc23e406a"
   },
-  "collectorRevision": 2
+  "collectorRevision": 4,
+  "mc10ResourceSha256": {
+    "assets/litematica-printer/lang/en_us.json": "2666b33044ec5047c2389032fd2e5b84312e3d4762881a2523eda0fae8423b82",
+    "assets/litematica-printer/lang/lzh.json": "078a5b38fbd7d1ffa03017d5aa5b3a385136c7108858ce2e88aeb6998554c364",
+    "assets/litematica-printer/lang/ru_ru.json": "ab383e64b55c6adf70c21145484780fe617ee55a5e822476040bffd9305faa29",
+    "assets/litematica-printer/lang/zh_cn.json": "4a1e5582f31eddba998427f46ea8de9ee2e5c6c101a157130340b6b3f4fde145",
+    "assets/litematica-printer/lang/zh_tw.json": "536c3749827187d8018c0d9f53aa9e7617ab8f4dc43a950712c63fcde0a1277d"
+  }
 }

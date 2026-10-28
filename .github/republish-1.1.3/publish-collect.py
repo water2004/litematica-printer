@@ -52,13 +52,23 @@ def restamp(raw,mc):
                 data=data.replace(('1.1.5+'+mc).encode(),('1.1.3+'+mc).encode())
             dst.writestr(info,data)
     return out.getvalue()
+def restore_resources(raw,resources):
+    out=io.BytesIO()
+    with zipfile.ZipFile(io.BytesIO(raw)) as src,zipfile.ZipFile(out,'w') as dst:
+        for info in src.infolist():dst.writestr(info,resources.get(info.filename,src.read(info.filename)))
+    return out.getvalue()
 for run,source in [(40072764075,'2ed963a057e88a0a3481353bd9bd5f77980d4c0b'),(40090454633,'80b2d225f56038e0d9a40f07c151fc965ab8b108'),(CONFIG['candidateRun'],CONFIG['candidateSource'])]:
     value=get('actions/runs/'+str(run))
     assert value['conclusion']=='success' and value['head_sha']==source,('Pinned test run did not pass',run)
+NEW_ARCHIVE=archive(CONFIG['candidateArtifact'],CONFIG['candidateRun'],CONFIG['candidateSource'])
+new_printer=next(n for n in NEW_ARCHIVE.namelist() if n.endswith('litematica-printer-1.1.3+1.21.11.jar'))
+with zipfile.ZipFile(io.BytesIO(NEW_ARCHIVE.read(new_printer))) as new_jar:
+    ORIGINAL_MC10_TEXT={n:new_jar.read(n) for n in CONFIG['mc10ResourceSha256']}
+    assert all(hashlib.sha256(raw).hexdigest()==CONFIG['mc10ResourceSha256'][n] for n,raw in ORIGINAL_MC10_TEXT.items())
 def collect_version(mc):
     rows=[r for r in MANIFEST['files'] if r['minecraft']==mc]
     proof=[];fallback=None
-    if mc=='1.21.11':z=archive(CONFIG['candidateArtifact'],CONFIG['candidateRun'],CONFIG['candidateSource'])
+    if mc=='1.21.11':z=NEW_ARCHIVE
     else:z=archive(rows[0]['artifact'],40072764075,'2ed963a057e88a0a3481353bd9bd5f77980d4c0b')
     for row in rows:
         names=[n for n in z.namelist() if n.endswith('/'+row['name']) or n==row['name']]
@@ -73,12 +83,14 @@ def collect_version(mc):
                 canonical=name.split('/')[-1].replace('litematica-printer-1.1.5+','litematica-printer-1.1.3+')
                 if canonical!=row['name']:continue
                 raw=fallback.read(name);stamped=row['repository']==REPO
-                if stamped:raw=restamp(raw,mc)
+                if stamped:
+                    raw=restamp(raw,mc)
+                    if mc=='1.21.10':raw=restore_resources(raw,ORIGINAL_MC10_TEXT)
                 if matches(raw,row):selected=(raw,name,stamped,CONFIG['restoredArtifacts'][mc]);break
         assert selected is not None,('No pinned tested artifact matches every preserved class/resource',mc,row['name'])
         raw,name,stamped,artifact=selected
         path=OUT/mc/row['name'];path.parent.mkdir(exist_ok=True);path.write_bytes(raw)
-        proof.append({**{k:row[k] for k in ['minecraft','repository','release','name','metadata','fingerprint','runtimeFingerprint','classes']},'sha256':hashlib.sha256(raw).hexdigest(),'localTestedArchiveSha256':row['sha256'],'sourceArtifact':artifact,'sourceEntry':name,'versionLabelsRestoredOnly':stamped,'buildProvenanceDiffers':fp(raw)[1]!=row['fingerprint']})
+        proof.append({**{k:row[k] for k in ['minecraft','repository','release','name','metadata','fingerprint','runtimeFingerprint','classes']},'sha256':hashlib.sha256(raw).hexdigest(),'localTestedArchiveSha256':row['sha256'],'sourceArtifact':artifact,'sourceEntry':name,'versionLabelsRestored':stamped,'restoredTextEntries':list(ORIGINAL_MC10_TEXT) if stamped and mc=='1.21.10' else [],'buildProvenanceDiffers':fp(raw)[1]!=row['fingerprint']})
     z.close()
     if fallback is not None:fallback.close()
     print('VERIFIED_ALL_ENTRIES',mc,len(proof),flush=True)
