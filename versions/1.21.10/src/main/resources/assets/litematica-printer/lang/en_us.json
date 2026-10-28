@@ -43,7 +43,7 @@
   "litematica-printer.config.easyPlaceProtocol": "Use Easy Place Protocol",
   "litematica-printer.config.easyPlaceProtocol.desc": "Use Servex's easy place protocol to handle block placement correction during printing.\n§lNote:§r This feature only works in single-player or on servers with Servux installed.",
   "litematica-printer.config.servuxHandConfirmation": "Confirm Held Item with Servux",
-  "litematica-printer.config.servuxHandConfirmation.desc": "After switching items, wait for Servux to confirm the server-authoritative main hand before printing. The printer pauses if Servux is unavailable. While enabled, placement uses server block updates instead of local prediction, so dropped placement packets cannot create predicted support blocks.",
+  "litematica-printer.config.servuxHandConfirmation.desc": "After switching items, wait for Servux to confirm the server-authoritative main hand before printing. The printer pauses if Servux is unavailable.",
   "litematica-printer.message.servuxHandConfirmationUnavailable": "Servux hand confirmation is enabled, but no compatible Servux server is available.",
   "litematica-printer.config.fill": "Filling",
   "litematica-printer.config.fill.desc": "Within the selection range, place blocks configured in §6Fill Block List§r.",

@@ -43,7 +43,7 @@
   "litematica-printer.config.easyPlaceProtocol": "使用轻松放置协议",
   "litematica-printer.config.easyPlaceProtocol.desc": "打印时使用Servex的轻松放置协议处理放置方块时的矫正。\n§l提示:§r 此功能仅在单人游戏或安装了Servux的服务器上生效。",
   "litematica-printer.config.servuxHandConfirmation": "使用 Servux 确认手持物品",
-  "litematica-printer.config.servuxHandConfirmation.desc": "切换物品后，等待 Servux 确认服务端权威主手与目标一致，再继续打印。无法连接兼容的 Servux 时打印机会暂停。 开启时，放置以服务器方块更新为准，不使用本地预测，防止丢失放置包后把预测方块当成支撑。",
+  "litematica-printer.config.servuxHandConfirmation.desc": "切换物品后，等待 Servux 确认服务端权威主手与目标一致，再继续打印。无法连接兼容的 Servux 时打印机会暂停。",
   "litematica-printer.message.servuxHandConfirmationUnavailable": "已启用 Servux 手持确认，但当前没有可用的兼容 Servux 服务端。",
   "litematica-printer.config.fill": "填充",
   "litematica-printer.config.fill.desc": "在选区范围内，放置§6填充方块列表§r中配置的方块。",

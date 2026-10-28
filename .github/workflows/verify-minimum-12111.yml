@@ -2,7 +2,17 @@ name: Verify minimum MC 1.21.11 candidate
 on:
   push:
     branches: ['dory/minimum-1.21.11-release-1.1.3']
-    paths-ignore: ['.github/republish-1.1.3/publish-*', '.github/workflows/append-minimum-1.1.3.yml']
+    paths:
+      - 'versions/1.21.11/**'
+      - 'core/**'
+      - 'buildSrc/**'
+      - 'gradle.properties'
+      - 'build.gradle'
+      - '.github/scripts/candidate12111.py'
+      - '.github/scripts/candidate-functional.py'
+      - '.github/scripts/mapped-ci.gradle'
+      - '.github/republish-1.1.3/manifest.json'
+      - '.github/republish-1.1.3/sources.json' 
   workflow_dispatch:
 permissions:
   contents: read

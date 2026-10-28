@@ -30,18 +30,18 @@
     "fabricApiVersion": "0.102.0+1.21",
     "quick": {
       "name": "quickshulker-4.0.1+1.21.jar",
-      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1%2B26.3/quickshulker-4.0.1%2B1.21.jar",
-      "sha256": "ec6aff5f3488a2c5d1e87a48822079f7a0115f252a6c7946357665d9b1f2a22f"
+      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1+26.3/quickshulker-4.0.1+1.21.jar",
+      "sha256": "5af94cd0065bfe1bc25cb3f94993086a8a8dbf269b599940111d3e04b6b98027"
     },
     "chain": {
       "name": "ChainVeinFabric-4.1.0+1.21.jar",
-      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.0/ChainVeinFabric-4.1.0%2B1.21.jar",
-      "sha256": "56760b0c61f514edfc1e59d8094cf4749960f76c5012395dadb806623f81a7f5"
+      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.0/ChainVeinFabric-4.1.0+1.21.jar",
+      "sha256": "924c3618f4148252e1cae8e235da9420434a7dae19093acde2c3d6f241b1aa87"
     },
     "printerRelease": {
       "name": "litematica-printer-1.1.3+1.21.jar",
-      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3%2B1.21.jar",
-      "sha256": "b83c47f87126b4dea60c2a2c1be91ead5ee1ae22c25e11c4bb66eaf9aced3924"
+      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3+1.21.jar",
+      "sha256": "3fde85c13c659e8f253a919e1afe14aca5890d25bd1f7a35fd51189a4aa4df13"
     },
     "legacy": {
       "name": "quickshulker-3.1.0-1.21.1.jar",
@@ -97,18 +97,18 @@
     "fabricApiVersion": "0.116.17+1.21.1",
     "quick": {
       "name": "quickshulker-4.0.1+1.21.1.jar",
-      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1%2B26.3/quickshulker-4.0.1%2B1.21.1.jar",
-      "sha256": "223c1c889dcae374a8a487e6cf6863bdd8d7234f5c3b34917c69f28f73e70d35"
+      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1+26.3/quickshulker-4.0.1+1.21.1.jar",
+      "sha256": "b7a8dfd96d57e44b9fb000b7dea5ac7cd68584fa6a12fc2a1f982c1419d82010"
     },
     "chain": {
       "name": "ChainVeinFabric-4.1.0+1.21.1.jar",
-      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.0/ChainVeinFabric-4.1.0%2B1.21.1.jar",
-      "sha256": "623265d325753a922175b3747d4ed918c37a74cb65569ff222ca04f69e69ce94"
+      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.0/ChainVeinFabric-4.1.0+1.21.1.jar",
+      "sha256": "1624ac284c19582e2a9911a5bc604b75aff3eb329d4cfc6faae1a0936e699194"
     },
     "printerRelease": {
       "name": "litematica-printer-1.1.3+1.21.1.jar",
-      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3%2B1.21.1.jar",
-      "sha256": "dd49ace25c6af1be0626cf4006deb2dfbbf132083f95ca0a8b67ead4ca8e7273"
+      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3+1.21.1.jar",
+      "sha256": "55df4d57d4af0017ee6c6660e5fefd3324b818b6aad3ed0b929037fc53045fb0"
     },
     "legacy": {
       "name": "quickshulker-3.1.0-1.21.1.jar",
@@ -164,18 +164,18 @@
     "fabricApiVersion": "0.106.1+1.21.2",
     "quick": {
       "name": "quickshulker-4.0.1+1.21.2.jar",
-      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1%2B26.3/quickshulker-4.0.1%2B1.21.2.jar",
-      "sha256": "e9f69f36a787c82304de2e97925dffd282d8df42e70255efd624b1b5057056d3"
+      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1+26.3/quickshulker-4.0.1+1.21.2.jar",
+      "sha256": "32bc7afca1be2cdf1d29cbc2791283bf6974331764efdef2534876e45a682f26"
     },
     "chain": {
       "name": "ChainVeinFabric-4.1.0+1.21.2.jar",
-      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.0/ChainVeinFabric-4.1.0%2B1.21.2.jar",
-      "sha256": "1b27496ed24e44a884885dc47cf9f1ba9826a95c07ff9ce6bc5408254696247a"
+      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.0/ChainVeinFabric-4.1.0+1.21.2.jar",
+      "sha256": "4d58b170ebfe48e3164353ec1d14a63b55ed82c4a7306015a70b87d0fecf4372"
     },
     "printerRelease": {
       "name": "litematica-printer-1.1.3+1.21.2.jar",
-      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3%2B1.21.2.jar",
-      "sha256": "cf5eb88bee0bc8df353150c6de33a73b08566691479506331581162ae5d3cf0c"
+      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3+1.21.2.jar",
+      "sha256": "87794225775be8d3e1a26dfaf01423c57ffa0e7cf433342120a159df6d82cbeb"
     },
     "legacy": {
       "name": "quickshulker-3.1.0-1.21.2.jar",
@@ -231,18 +231,18 @@
     "fabricApiVersion": "0.114.1+1.21.3",
     "quick": {
       "name": "quickshulker-4.0.1+1.21.3.jar",
-      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1%2B26.3/quickshulker-4.0.1%2B1.21.3.jar",
-      "sha256": "fe7be6dc953e790ac77b44f725d3f6751124a0e8469ba5feacfed0afb65effd4"
+      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1+26.3/quickshulker-4.0.1+1.21.3.jar",
+      "sha256": "4faf8efd9f1c03dd2f55f267cfa27c04afed7afb50688dd7055b8da703f159c5"
     },
     "chain": {
       "name": "ChainVeinFabric-4.1.0+1.21.3.jar",
-      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.0/ChainVeinFabric-4.1.0%2B1.21.3.jar",
-      "sha256": "b3942b49e90f6de4e5ab865f317af485100d43aa90491c0b84989d42134e1b43"
+      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.0/ChainVeinFabric-4.1.0+1.21.3.jar",
+      "sha256": "8f7d8ddbd8a7947dbb0eeb14324ff4a9bd952c417edb4fd480282223ff26cf86"
     },
     "printerRelease": {
       "name": "litematica-printer-1.1.3+1.21.3.jar",
-      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3%2B1.21.3.jar",
-      "sha256": "0665f1e2bf6603d80ce6d045cabca8f83d172cece787a3d10c170fb0d436f554"
+      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3+1.21.3.jar",
+      "sha256": "6c506ee61fa4675a0add097f6db671b0f49fe8e05696a46c13e70f8229ed4701"
     },
     "legacy": {
       "name": "quickshulker-3.1.0-1.21.3.jar",
@@ -298,18 +298,18 @@
     "fabricApiVersion": "0.119.4+1.21.4",
     "quick": {
       "name": "quickshulker-4.0.1+1.21.4.jar",
-      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1%2B26.3/quickshulker-4.0.1%2B1.21.4.jar",
-      "sha256": "8c199f4c3bae6b3a698a7db92e4d45f9b8b6b7cbe3b93d2c6de12fc8c5580ed3"
+      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1+26.3/quickshulker-4.0.1+1.21.4.jar",
+      "sha256": "aae3d8e2fed51198165d2366b29ff259c633cc9fb2e2152566ce64ace4916f6c"
     },
     "chain": {
       "name": "ChainVeinFabric-4.1.0+1.21.4.jar",
-      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.0/ChainVeinFabric-4.1.0%2B1.21.4.jar",
-      "sha256": "ef629f51f8b2d491701c7cbecc3e02389e9005fd7c468a66aae3b6b6c1043187"
+      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.0/ChainVeinFabric-4.1.0+1.21.4.jar",
+      "sha256": "6a727eac96419a00736424f45cf3c22db4369ba4e45b47779a2ffe690f0d3dcf"
     },
     "printerRelease": {
       "name": "litematica-printer-1.1.3+1.21.4.jar",
-      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3%2B1.21.4.jar",
-      "sha256": "ad1f1a113f4b891078da4d580cda828030517797a92a54b5dd772dee26cd2fba"
+      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3+1.21.4.jar",
+      "sha256": "40eb2f82bc9f29d2365440934e7ab7eaa3ab0ffd497db7270d1f101c7e1a3502"
     },
     "legacy": {
       "name": "quickshulker-3.1.0-1.21.4.jar",
@@ -365,18 +365,18 @@
     "fabricApiVersion": "0.128.2+1.21.5",
     "quick": {
       "name": "quickshulker-4.0.1+1.21.5.jar",
-      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1%2B26.3/quickshulker-4.0.1%2B1.21.5.jar",
-      "sha256": "185dd0ad178ea6a274b771f30c41c60d230b4fe289e641a102a019e60d0dabb9"
+      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1+26.3/quickshulker-4.0.1+1.21.5.jar",
+      "sha256": "d847aa3cb5c8260a7dfde0f39d166df744334bc8363f615038c4b4438fc40991"
     },
     "chain": {
       "name": "ChainVeinFabric-4.1.0+1.21.5.jar",
-      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.0/ChainVeinFabric-4.1.0%2B1.21.5.jar",
-      "sha256": "aeff0b3523812c09b2fa7a3082cbaf169c5e689104fd2b88a95e419a09ad768e"
+      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.0/ChainVeinFabric-4.1.0+1.21.5.jar",
+      "sha256": "a4fee9801d8d7f7a8ec97e7e27e70afb4cc50b1c8931474f3a38f1d030d144de"
     },
     "printerRelease": {
       "name": "litematica-printer-1.1.3+1.21.5.jar",
-      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3%2B1.21.5.jar",
-      "sha256": "68432b45661ec0a6b46d445753e3d22a4144648ac5c75aa132477c3f05c1fb34"
+      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3+1.21.5.jar",
+      "sha256": "476e5e288b7c97a537d5244421a26d89adcf5651d1524e81f0a19bb9f7186953"
     },
     "legacy": {
       "name": "quickshulker-3.1.0-1.21.5.jar",
@@ -432,18 +432,18 @@
     "fabricApiVersion": "0.128.2+1.21.6",
     "quick": {
       "name": "quickshulker-4.0.1+1.21.6.jar",
-      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1%2B26.3/quickshulker-4.0.1%2B1.21.6.jar",
-      "sha256": "d47efa6d2bea87b432ed3372684594b37b520dc79c6b22edae17fc6e8ee8d3dc"
+      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1+26.3/quickshulker-4.0.1+1.21.6.jar",
+      "sha256": "632fb8e756801d8ce79007c56241b17114b443df1719f9adc1d514b42f7783b3"
     },
     "chain": {
       "name": "ChainVeinFabric-4.1.0+1.21.6.jar",
-      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.0/ChainVeinFabric-4.1.0%2B1.21.6.jar",
-      "sha256": "9990d07f9f5d417b2c81a418970ad6a611674e193a592a2a04f66a588e268a43"
+      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.0/ChainVeinFabric-4.1.0+1.21.6.jar",
+      "sha256": "f7dbf70b2c28c74c3951df9a9cb97b0d65bb0f1410e1a017be947616b4c52b53"
     },
     "printerRelease": {
       "name": "litematica-printer-1.1.3+1.21.6.jar",
-      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3%2B1.21.6.jar",
-      "sha256": "0e5837be51b10036f6961a251152d786f07a6bd577efcc6a649f65d5231d91b8"
+      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3+1.21.6.jar",
+      "sha256": "81862bd8888060d98aa7d92cf0cd54aee11b44bb80abc930ffb7926b8a52a924"
     },
     "legacy": {
       "name": "quickshulker-3.1.0-1.21.6.jar",
@@ -499,18 +499,18 @@
     "fabricApiVersion": "0.129.0+1.21.7",
     "quick": {
       "name": "quickshulker-4.0.1+1.21.7.jar",
-      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1%2B26.3/quickshulker-4.0.1%2B1.21.7.jar",
-      "sha256": "e4b33cbc4007bcc773910f1475cc8094d810b8489591a086c95b12ccb5f12b1b"
+      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1+26.3/quickshulker-4.0.1+1.21.7.jar",
+      "sha256": "9270c4e27b0aa69a91e8efeb2ecd1c80cc8346b7c33863a51e758dd5d9d3d363"
     },
     "chain": {
       "name": "ChainVeinFabric-4.1.0+1.21.7.jar",
-      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.0/ChainVeinFabric-4.1.0%2B1.21.7.jar",
-      "sha256": "be7c23b860d4ccc1e143da4fe42d19ea5370501769dd08f4ef5f934bc2f2f344"
+      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.0/ChainVeinFabric-4.1.0+1.21.7.jar",
+      "sha256": "e2c041d476f506bc1b0a3ad094adbe255a15e6aa5adbb1c164ac60100db3efd3"
     },
     "printerRelease": {
       "name": "litematica-printer-1.1.3+1.21.7.jar",
-      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3%2B1.21.7.jar",
-      "sha256": "1d563ab9781e168d328eb673fd09f264524c69428b251a2875b528dc8b8401dc"
+      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3+1.21.7.jar",
+      "sha256": "14b68b120a67bd8270cb1deb8defa4789bc95e70fad927c2a1be18c58fc1ea1e"
     },
     "legacy": {
       "name": "quickshulker-3.1.0-1.21.7.jar",
@@ -566,18 +566,18 @@
     "fabricApiVersion": "0.136.1+1.21.8",
     "quick": {
       "name": "quickshulker-4.0.1+1.21.8.jar",
-      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1%2B26.3/quickshulker-4.0.1%2B1.21.8.jar",
-      "sha256": "5bec4b766f7f2d5558793607abdb2a1c2ecfd4e2077041c7bb8717596044af09"
+      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1+26.3/quickshulker-4.0.1+1.21.8.jar",
+      "sha256": "111c26bdda366b5d6ac94e2a7d595ed5b462ab23d2d05b837df5bbc2437632cd"
     },
     "chain": {
       "name": "ChainVeinFabric-4.1.0+1.21.8.jar",
-      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.0/ChainVeinFabric-4.1.0%2B1.21.8.jar",
-      "sha256": "843bdb56a501031f673f28586168a05feb171f711f20589296eeb4ee23bab954"
+      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.0/ChainVeinFabric-4.1.0+1.21.8.jar",
+      "sha256": "e173f7cf55fc15d0ca2170d13e8e5169755b15183ca9d78c56a25e5abeef460a"
     },
     "printerRelease": {
       "name": "litematica-printer-1.1.3+1.21.8.jar",
-      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3%2B1.21.8.jar",
-      "sha256": "601ce793aa30f51b563824f684bb221e56b24701073ce0c0ec0c47c0df92c6e9"
+      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3+1.21.8.jar",
+      "sha256": "7776ede5c254deaf1bd516fc6bc20a605de701f4cf256be9ba7ef6849b93ffd5"
     },
     "legacy": {
       "name": "quickshulker-3.1.0-1.21.8.jar",
@@ -633,18 +633,18 @@
     "fabricApiVersion": "0.134.1+1.21.9",
     "quick": {
       "name": "quickshulker-4.0.1+1.21.9.jar",
-      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1%2B26.3/quickshulker-4.0.1%2B1.21.9.jar",
-      "sha256": "55b83a59d6c2efb94b9e2f286e52644fa9f4f65580895439e13aa5664c47404b"
+      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1+26.3/quickshulker-4.0.1+1.21.9.jar",
+      "sha256": "d726bdff311e156d7cb44b40a68dcd7eb38c120a6f595185ef89bd9f96362beb"
     },
     "chain": {
       "name": "ChainVeinFabric-4.1.0+1.21.9.jar",
-      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.0/ChainVeinFabric-4.1.0%2B1.21.9.jar",
-      "sha256": "0dfe8753dde5406687b72467f57563528f4a872c7944abcc03609b54b6c84f13"
+      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.0/ChainVeinFabric-4.1.0+1.21.9.jar",
+      "sha256": "2bfea79590f323634a4a8cfe22a37b5fa3d3d7887d1e154e615bedbad662fac1"
     },
     "printerRelease": {
       "name": "litematica-printer-1.1.3+1.21.9.jar",
-      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3%2B1.21.9.jar",
-      "sha256": "23bb32818a79e0cf17aec850dec50f2eee0b537a93cb5115376295be22273126"
+      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3+1.21.9.jar",
+      "sha256": "09e310d36fd218efed45521139bd23a774152f6b66d13fd5e4932fdb33f9d526"
     },
     "legacy": {
       "name": "quickshulker-3.1.0-1.21.9.jar",
@@ -700,18 +700,18 @@
     "fabricApiVersion": "0.138.4+1.21.10",
     "quick": {
       "name": "quickshulker-4.0.1+1.21.10.jar",
-      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1%2B26.3/quickshulker-4.0.1%2B1.21.10.jar",
-      "sha256": "818263d06b35584ecc8dbe65bd15d29a6250a4c04d4f5432b113f197926d18b0"
+      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1+26.3/quickshulker-4.0.1+1.21.10.jar",
+      "sha256": "f3d11c5dfdc71ec08aceda9473336aaa1ca92cb892a815c2331b58c4cdf1842f"
     },
     "chain": {
       "name": "ChainVeinFabric-4.1.2+1.21.10.jar",
-      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.2/ChainVeinFabric-4.1.2%2B1.21.10.jar",
-      "sha256": "28b6177cb0ac24b8472abd51f9c372b780600ece6ccd2229013e2302ef301671"
+      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.2/ChainVeinFabric-4.1.2+1.21.10.jar",
+      "sha256": "ce0acb2154e217c629f680a7c0a01059a2e04b220568cdcacaba6a28820863ef"
     },
     "printerRelease": {
       "name": "litematica-printer-1.1.3+1.21.10.jar",
-      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3%2B1.21.10.jar",
-      "sha256": "2e8db8906067d77bf0e557b1a2eb66e8f05d35c03645b21ab7036f824aa1e3f1"
+      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3+1.21.10.jar",
+      "sha256": "e6cfccc18cd717d927ba71cbbf7de44e623cddc22c9df80c8599b2edee8dc499"
     },
     "legacy": {
       "name": "quickshulker-3.1.0-1.21.10.jar",
@@ -734,6 +734,45 @@
         "url": "https://github.com/z7087/blockminer/releases/download/1.1.1/blockminer-v1.1.1-mc1.21.10.jar",
         "sha256": "dd079a44ef6ff4f425906ec67d6e080fee94fa64f75c8eda2057c3aed103e653"
       }
+    }
+  },
+  "1.21.11": {
+    "dependencies": [
+      {
+        "name": "fabric-api-0.139.4+1.21.11.jar",
+        "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/RDb9rvBm/fabric-api-0.139.4%2B1.21.11.jar",
+        "sha256": "3d379228d2b966956b227781c5db2ac8ad89428d4e1f98787baca332a97e9c5e"
+      },
+      {
+        "name": "malilib-fabric-1.21.11-0.27.15.jar",
+        "url": "https://cdn.modrinth.com/data/GcWjdA9I/versions/ZcQ4QNNZ/malilib-fabric-1.21.11-0.27.15.jar",
+        "sha256": "358fc788f65e07be328ddf81a5f3b60503fff36940e0dc18f965d87273b6d72c"
+      },
+      {
+        "name": "litematica-fabric-1.21.11-0.26.11.jar",
+        "url": "https://cdn.modrinth.com/data/bEpr0Arc/versions/R9maucI8/litematica-fabric-1.21.11-0.26.11.jar",
+        "sha256": "94ab7db7e17941c8b66c3cec4ffe727eeb9cdcb141e57dc671e7ff750e04a1d0"
+      }
+    ],
+    "chain": {
+      "name": "ChainVeinFabric-4.1.2+1.21.11.jar",
+      "url": "https://github.com/water2004/ChainVeinFabric/releases/download/v4.1.2/ChainVeinFabric-4.1.2+1.21.11.jar",
+      "sha256": "541e4480030f08c07939e808a3874503c4749e04864bfaf6d03f1492c644d4ba"
+    },
+    "printerRelease": {
+      "name": "litematica-printer-1.1.3+1.21.11.jar",
+      "url": "https://github.com/water2004/litematica-printer/releases/download/v1.1.3/litematica-printer-1.1.3+1.21.11.jar",
+      "sha256": "0777e698fb8e50eb186fa0217b2dcd9ea4acdcdfda659d740bd2a7206b71a0d3"
+    },
+    "quick": {
+      "name": "quickshulker-4.0.1+1.21.11.jar",
+      "url": "https://github.com/water2004/quickshulker/releases/download/4.0.1+26.3/quickshulker-4.0.1+1.21.11.jar",
+      "sha256": "87fc9696c3a52b18e7977e351b2b5d62752e3d0f33be18ee1024ef0ee1c058e8"
+    },
+    "legacy": {
+      "name": "quickshulker-3.1.0-1.21.11.jar",
+      "url": "https://github.com/MoRanpcy/quickshulker/releases/download/3.1.0-1.21.11/quickshulker-3.1.0-1.21.11.jar",
+      "sha256": "f04bf1baf8e0f9f20ff4e5dd44562d1ceac4809c36dc139c0c4213b26966cc29"
     }
   }
 }

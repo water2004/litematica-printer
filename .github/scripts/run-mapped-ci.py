@@ -106,7 +106,7 @@ def run(kind, scenario, mode='full', miner='none', servux=False):
             raise AssertionError('Production client process failed: ' + scenario)
         if kind == 'smoke':
             result = (directory / 'printer-smoke-result.txt').read_text(encoding='utf-8').splitlines()
-            expected = 16 if mode == 'nochain' else (19 if mc == '1.21.10' else 18)
+            expected = 16 if mode == 'nochain' else (19 if mc in ('1.21.10','1.21.11') else 18)
             assert result[0] == 'PASS' and len(result) - 1 == expected, (scenario, result)
             assert sum(line.startswith('ice-water-floor-') for line in result) == 5
             assert sum(line.startswith('fill-height-filter-') for line in result) == 3
