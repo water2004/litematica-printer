@@ -1,6 +1,6 @@
 """Collect pinned tested artifacts; reject every class/resource drift before publishing."""
 from pathlib import Path
-import concurrent.futures,hashlib,io,json,os,urllib.request,zipfile
+import concurrent.futures,hashlib,io,json,os,urllib.parse,urllib.request,zipfile
 ROOT=Path(__file__).resolve().parents[2]
 CONFIG=json.loads((ROOT/'.github/republish-1.1.3/publish-config.json').read_text())
 MANIFEST=json.loads((ROOT/'.github/republish-1.1.3/manifest.json').read_text())
@@ -8,9 +8,16 @@ for row in MANIFEST['files']:row['runtimeFingerprint']=CONFIG['runtimeIdentities
 REPO='water2004/litematica-printer'
 TOKEN=os.environ['GH_TOKEN']
 OUT=ROOT/'.ci/minimum-release-files';OUT.mkdir(parents=True,exist_ok=True)
+class ArtifactRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self,request,fp,code,msg,headers,newurl):
+        redirected=super().redirect_request(request,fp,code,msg,headers,newurl)
+        if urllib.parse.urlparse(request.full_url).hostname!=urllib.parse.urlparse(newurl).hostname:
+            redirected.remove_header('Authorization')
+        return redirected
+OPENER=urllib.request.build_opener(ArtifactRedirect())
 def get(path,binary=False):
     req=urllib.request.Request('https://api.github.com/repos/'+REPO+'/'+path,headers={'Authorization':'Bearer '+TOKEN,'Accept':'application/vnd.github+json','User-Agent':'Dory-tested-minimum-artifacts'})
-    with urllib.request.urlopen(req,timeout=180) as r:raw=r.read()
+    with OPENER.open(req,timeout=180) as r:raw=r.read()
     return raw if binary else json.loads(raw)
 def archive(artifact,run,source):
     meta=get('actions/artifacts/'+str(artifact))
