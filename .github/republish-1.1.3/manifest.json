@@ -2504,7 +2504,7 @@
       "repository": "water2004/litematica-printer",
       "release": 417572852,
       "name": "litematica-printer-1.1.3+1.21.11.jar",
-      "sha256": "0777e698fb8e50eb186fa0217b2dcd9ea4acdcdfda659d740bd2a7206b71a0d3",
+      "sha256": "24836585dc8eb30fc2e5cb91d14c7dff3109a3ae2201ea54a6a797f30de2cacf",
       "metadata": {
         "schemaVersion": 1,
         "id": "litematica-printer",
@@ -2553,7 +2553,7 @@
           }
         ]
       },
-      "fingerprint": "05e124fa0c33c3244c9511910766168bcbe3e3d1d127d05ec15442f006a60918",
+      "fingerprint": "f02d2f57e02190d10dc672abd5984a07a8765110d0186fd4c48bb8885ad3cf3c",
       "classes": 205,
       "artifact": null,
       "ciRun": null

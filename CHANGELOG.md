@@ -1,5 +1,10 @@
 # Changelog
 
+#### 2026-11-03 (1.1.3 hotfix, Minecraft 1.21.11)
+
+- Fix Servux hand confirmation when Litematica's `entityDataSync` setting is disabled. Extend the inline synchronization predicates used by the tick loop, metadata handshake, and entity requests while preserving the stored setting.
+- Servux and Litematica must use matching network protocols. Tested pairs: Litematica 0.26.11 / MaLiLib 0.27.15 / Servux 0.9.5, and Litematica 0.26.16 / MaLiLib 0.27.20 / Servux 0.9.9.
+
 #### 2026-7-7 (1.3-beta.4)
 
 - **轮换模式** — 新增热键切换打印→矿→填充→流体→基岩轮换，不再自动启动全局开关，添加 I18n

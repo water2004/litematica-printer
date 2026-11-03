@@ -17,9 +17,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(value = EntityDataManager.class, remap = false)
 public abstract class MixinEntityDataManager {
-    // Litematica 0.26.11 centralizes the existing synchronization predicate.
+    // The tick loop and Servux handshake also read the option directly.
     @ModifyExpressionValue(
-            method = "isEnabled",
+            method = {
+                    "isEnabled",
+                    "onClientTick",
+                    "requestMetadata",
+                    "receiveServuxMetadata",
+                    "requestServuxEntityData"
+            },
             at = @At(value = "INVOKE", target = "Lfi/dy/masa/malilib/config/options/ConfigBooleanHotkeyed;getBooleanValue()Z")
     )
     private boolean enableEntityRequestsForHandConfirmation(boolean original) {
