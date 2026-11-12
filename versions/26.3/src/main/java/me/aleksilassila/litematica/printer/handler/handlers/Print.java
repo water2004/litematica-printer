@@ -290,7 +290,35 @@ public class Print extends Module {
             }
             attempted++;
             if (action instanceof ChainBreakAction) {
-                readyBreaks.add(pos);
+                // ChainVein's client fallback mines with the current main hand.
+                // Resolve the tool before queueing so stone is not mined with a
+                // building block or an empty hand.
+                Item[] breakTools = MaterialPreparation.findHarvestTools(
+                        player, level.getBlockState(pos));
+                if (breakTools.length == 0) {
+                    readyBreaks.add(pos);
+                } else if (!readyBreaks.isEmpty()) {
+                    // Keep one queued batch on one tool; the scanner re-adds
+                    // this position after the current batch is mined.
+                    break;
+                } else {
+                    MaterialPreparation.Result breakSwitch =
+                            MaterialPreparation.prepare(player, breakTools);
+                    if (breakSwitch == MaterialPreparation.Result.READY) {
+                        readyBreaks.add(pos);
+                    } else {
+                        reportPooledJob(pos, false);
+                        if (breakSwitch == MaterialPreparation.Result.UNAVAILABLE) {
+                            setCooldown(pos, ConfigUtils.getBreakCooldown());
+                            addHighlight(pos, HighlightType.FAILED);
+                            recordMissingMaterial(breakTools);
+                        } else {
+                            enterWaiting(pos, breakSwitch.waitingReason());
+                            skipIteration.set(true);
+                        }
+                        break;
+                    }
+                }
             } else {
                 executePreparedPooledJob(pos, key);
             }
