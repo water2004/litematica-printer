@@ -12,6 +12,10 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.state.BlockState;
+
+import java.util.LinkedHashSet;
 
 /** Material acquisition and hand confirmation policy, separate from inventory packet operations. */
 public final class MaterialPreparation {
@@ -102,6 +106,52 @@ public final class MaterialPreparation {
             return Result.WAITING;
         }
         return Result.UNAVAILABLE;
+    }
+
+    private static final Item[] VANILLA_TOOLS = {
+            Items.NETHERITE_PICKAXE, Items.DIAMOND_PICKAXE, Items.IRON_PICKAXE,
+            Items.STONE_PICKAXE, Items.GOLDEN_PICKAXE, Items.WOODEN_PICKAXE,
+            Items.NETHERITE_AXE, Items.DIAMOND_AXE, Items.IRON_AXE,
+            Items.STONE_AXE, Items.GOLDEN_AXE, Items.WOODEN_AXE,
+            Items.NETHERITE_SHOVEL, Items.DIAMOND_SHOVEL, Items.IRON_SHOVEL,
+            Items.STONE_SHOVEL, Items.GOLDEN_SHOVEL, Items.WOODEN_SHOVEL,
+            Items.NETHERITE_HOE, Items.DIAMOND_HOE, Items.IRON_HOE,
+            Items.STONE_HOE, Items.GOLDEN_HOE, Items.WOODEN_HOE
+    };
+
+    private static final Item[] NO_TOOLS = new Item[0];
+
+    /**
+     * Tools that can actually harvest {@code state}, strongest first. Empty when
+     * the current main hand is already correct (blocks that do not require a
+     * correct tool are always mineable). Used before queueing ChainVein breaks,
+     * whose client fallback mines with whatever is currently held.
+     */
+    public static Item[] findHarvestTools(LocalPlayer player, BlockState state) {
+        if (player == null || state == null
+                || !state.requiresCorrectToolForDrops()
+                || player.hasCorrectToolForDrops(state)) {
+            return NO_TOOLS;
+        }
+
+        LinkedHashSet<Item> tools = new LinkedHashSet<>();
+        for (Item item : VANILLA_TOOLS) {
+            // A wrong tier returns exactly 1.0F; a usable tier returns its speed.
+            if (new ItemStack(item).getDestroySpeed(state) > 1.0F) {
+                tools.add(item);
+            }
+        }
+
+        // Prefer vanilla tier ordering, then append modded tools the player has.
+        Inventory inventory = player.getInventory();
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            ItemStack stack = inventory.getItem(i);
+            if (!stack.isEmpty() && stack.getDestroySpeed(state) > 1.0F) {
+                tools.add(stack.getItem());
+            }
+        }
+
+        return tools.isEmpty() ? NO_TOOLS : tools.toArray(new Item[0]);
     }
 
     private static int findItemInInventory(Inventory inventory, Item item) {

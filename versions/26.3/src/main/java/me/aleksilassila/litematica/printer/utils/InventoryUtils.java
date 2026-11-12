@@ -77,8 +77,9 @@ public class InventoryUtils {
     }
 
     public static void setHotbarSlot(int slot, Inventory inventory) {
-        boolean usePacket = Configs.Placement.PRINT_USE_PACKET.getBooleanValue();
-        if (usePacket || ServuxHandItemConfirmation.isEnabled()) {
+        // The server resolves the held item from its own selected slot. A
+        // client-only selection change leaves the server on the old item.
+        if (client.getConnection() != null && getSelectedSlot(inventory) != slot) {
             ServerboundSetCarriedItemPacket packet =
                     new ServerboundSetCarriedItemPacket(slot);
             ServuxHandItemConfirmation.recordSelectedSlotPacket(slot, packet);
@@ -141,14 +142,20 @@ public class InventoryUtils {
             hotbarSlot = InventoryUtilsAccessor.getPickBlockTargetSlot(player);
         }
         if (hotbarSlot != -1) {
-            setHotbarSlot(hotbarSlot, inventory);
             if (EntityUtils.isCreativeMode(player)) {
+                setHotbarSlot(hotbarSlot, inventory);
                 getMainStacks(inventory).set(hotbarSlot, stack.copy());
                 client.gameMode.handleCreativeModeItemAdd(client.player.getMainHandItem(), 36 + hotbarSlot);
                 return true;
             }
             EasyPlaceUtilsAccessor.callSetEasyPlaceLastPickBlockTime();
-            return swapItemToMainHand(stack.copy(), mc);
+            // Vanilla swaps into the hotbar first and selects it afterwards.
+            // Selecting first lets the server resync the old hand back.
+            boolean swapped = swapItemToMainHand(stack.copy(), mc, hotbarSlot);
+            if (swapped) {
+                setHotbarSlot(hotbarSlot, inventory);
+            }
+            return swapped;
         } else {
             showMessageWithCooldown(Message.MessageType.WARNING, "litematica.message.warn.pickblock.no_suitable_slot_found");
             return false;
@@ -156,6 +163,12 @@ public class InventoryUtils {
     }
 
     public static boolean swapItemToMainHand(ItemStack stackReference, Minecraft mc) {
+        Player player = mc.player;
+        if (player == null) return false;
+        return swapItemToMainHand(stackReference, mc, getSelectedSlot(player.getInventory()));
+    }
+
+    public static boolean swapItemToMainHand(ItemStack stackReference, Minecraft mc, int targetHotbarSlot) {
         Player player = mc.player;
         if (player == null) return false;
         if (player.containerMenu != player.inventoryMenu) return false;
@@ -171,7 +184,7 @@ public class InventoryUtils {
             if (connection == null) {
                 return false;
             }
-            int currentHotbarSlot = getSelectedSlot(player.getInventory());
+            int currentHotbarSlot = targetHotbarSlot;
             if (Configs.Placement.PRINT_USE_PACKET.getBooleanValue()
                     || ServuxHandItemConfirmation.isEnabled()) {
                 NonNullList<Slot> slots = player.inventoryMenu.slots;
@@ -181,13 +194,17 @@ public class InventoryUtils {
                     copies.add(slotItem.getItem().copy());
                 }
 
-                Int2ObjectMap<HashedStack> snapshot = new Int2ObjectOpenHashMap<>();
+                // Same order as MultiPlayerGameMode#handleContainerInput:
+                // apply locally first, then describe the post-click state.
+                player.inventoryMenu.clicked(slot, currentHotbarSlot, ContainerInput.SWAP, player);
+
+                Int2ObjectMap<HashedStack> changedSlots = new Int2ObjectOpenHashMap<>();
 
                 for (int j = 0; j < totalSlots; j++) {
                     ItemStack original = copies.get(j);
                     ItemStack current = slots.get(j).getItem();
-                    if (!ItemStack.isSameItem(original, current)) {
-                        snapshot.put(j, HashedStack.create(current, connection.decoratedHashOpsGenenerator()));
+                    if (!ItemStack.matches(original, current)) {
+                        changedSlots.put(j, HashedStack.create(current, connection.decoratedHashOpsGenenerator()));
                     }
                 }
 
@@ -198,13 +215,11 @@ public class InventoryUtils {
                         Shorts.checkedCast(slot),
                         SignedBytes.checkedCast(currentHotbarSlot),
                         ContainerInput.SWAP,
-                        snapshot,
+                        changedSlots,
                         hashedStack
                 );
                 ServuxHandItemConfirmation.recordInventorySwitchPacket(packet);
                 connection.send(packet);
-
-                player.inventoryMenu.clicked(slot, currentHotbarSlot, ContainerInput.SWAP, player);
             } else {
                 if (client.gameMode != null) {
                     client.gameMode.handleContainerInput(player.inventoryMenu.containerId, slot, currentHotbarSlot, ContainerInput.SWAP, player);
@@ -270,6 +285,9 @@ public class InventoryUtils {
                 copies.add(slotItem.getItem().copy());
             }
 
+            // Same order as the vanilla client: apply locally, then snapshot.
+            player.inventoryMenu.clicked(sourceSlot, OFFHAND_SLOT_INDEX, ContainerInput.SWAP, player);
+
             // 版本兼容的快照对象
             Int2ObjectMap<HashedStack> snapshot = new Int2ObjectOpenHashMap<>();
 
@@ -277,7 +295,7 @@ public class InventoryUtils {
             for (int j = 0; j < totalSlots; j++) {
                 ItemStack original = copies.get(j);
                 ItemStack current = slots.get(j).getItem();
-                if (!ItemStack.isSameItem(original, current)) {
+                if (!ItemStack.matches(original, current)) {
                     snapshot.put(j, HashedStack.create(current, connection.decoratedHashOpsGenenerator()));
                 }
             }
@@ -293,9 +311,6 @@ public class InventoryUtils {
                     snapshot,
                     hashedStack
             ));
-
-            // 本地同步交换操作
-            player.inventoryMenu.clicked(sourceSlot, OFFHAND_SLOT_INDEX, ContainerInput.SWAP, player);
         } else {
             // 不使用数据包：本地直接交换到副手
             if (client.gameMode != null) {
